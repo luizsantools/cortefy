@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cortefy — Crie Vídeos Curtos e Virais</title>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <!-- Tailwind CDN for rapid utility classes -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/css/cortefy.css">
+</head>
+<body class="selection:bg-[#00FF66] selection:text-black">
+
+    <!-- Cabeçalho Limpo Estilo Vercel/Resend -->
+    <header class="header-glass py-4 px-6 md:px-12 flex justify-between items-center">
+        <div class="flex items-center gap-4">
+            <img src="/static/logo.svg" alt="Cortefy" class="h-8">
+            <span class="badge-neon hidden sm:inline-flex">
+                <span class="radar-dot"></span>
+                <span>Cortes em Segundos</span>
+            </span>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <div id="telemetry-gemini" class="badge-zinc hidden md:flex items-center gap-2">
+                <span class="radar-dot"></span>
+                <span>Inteligência Artificial Pronta</span>
+            </div>
+            <button onclick="document.getElementById('input-main-url').focus()" class="btn-secondary text-xs">
+                <span>Criar Novo Vídeo</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Conteúdo Principal -->
+    <main class="max-w-5xl mx-auto px-6 py-10 space-y-12">
+
+        <!-- Apresentação -->
+        <section class="text-center space-y-4 pt-4">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-white/10 bg-white/5 text-xs text-zinc-400">
+                <span class="text-[#00FF66]">●</span>
+                <span>Crie vídeos para TikTok, Reels e Shorts em 1 clique</span>
+            </div>
+            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight text-white">
+                Transforme Vídeos Longos em <br>
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#00FF66] to-[#00DF82]">Cortes Prontos para Postar</span>
+            </h1>
+            <p class="text-zinc-400 text-sm md:text-base max-w-2xl mx-auto">
+                Cole o link de qualquer vídeo do YouTube. A inteligência artificial encontra os momentos mais marcantes, cria legendas chamativas e ajusta tudo no formato vertical de celular.
+            </p>
+        </section>
+
+        <!-- Etapa 1: Escolha do Vídeo -->
+        <section class="tech-card p-6 md:p-8 space-y-6">
+            <div class="flex items-center justify-between border-b border-white/5 pb-4">
+                <div class="flex items-center gap-3">
+                    <span class="text-[#00FF66] font-bold text-sm">Passo 1</span>
+                    <h2 class="text-lg font-bold text-white">Escolha o seu Vídeo</h2>
+                </div>
+                <span class="badge-zinc">Super Rápido</span>
+            </div>
+
+            <!-- Campo do Vídeo Principal -->
+            <div class="space-y-2">
+                <label class="block text-xs font-semibold text-zinc-400 tracking-wider">LINK DO VÍDEO DO YOUTUBE</label>
+                <input 
+                    type="text" 
+                    id="input-main-url"
+                    class="tech-input w-full"
+                    placeholder="Cole o link do YouTube aqui (ex: https://www.youtube.com/watch?v=...)"
+                    value="https://www.youtube.com/watch?v=QSw3D_L8hVc"
+                >
+            </div>
+
+            <!-- Opções de Vídeo de Apoio (Tela Dividida) -->
+            <div class="space-y-3 pt-2">
+                <label class="block text-xs font-semibold text-zinc-400 tracking-wider">VÍDEO DE APOIO PARA O TOPO (TELA DIVIDIDA)</label>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Opção A: Cenas do próprio vídeo -->
+                    <div 
+                        id="btn-broll-auto"
+                        onclick="setBRollMode('auto_extract')"
+                        class="tech-card tech-card-active p-4 cursor-pointer flex flex-col justify-between"
+                    >
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm font-bold text-white">✨ Pegar cenas do próprio vídeo</span>
+                            <span class="badge-neon text-[10px]">MAIS FÁCIL</span>
+                        </div>
+                        <p class="text-xs text-zinc-400">
+                            A inteligência artificial encontra automaticamente as partes de ação e do filme que já estão no seu vídeo para colocar no topo da tela.
+                        </p>
+                    </div>
+
+                    <!-- Opção B: Trailer ou Vídeo Externo -->
+                    <div 
+                        id="btn-broll-ext"
+                        onclick="setBRollMode('external')"
+                        class="tech-card p-4 cursor-pointer flex flex-col justify-between"
+                    >
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm font-bold text-white">🎬 Colocar um trailer da internet</span>
+                            <span class="badge-zinc text-[10px]">PERSONALIZADO</span>
+                        </div>
+                        <p class="text-xs text-zinc-400">
+                            Cole o link de um trailer oficial ou cenas de ação do YouTube para passar no topo enquanto a pessoa fala embaixo.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Input Condicional de Vídeo Externo -->
+                <div id="broll-external-input" class="space-y-2 pt-2" style="display: none;">
+                    <label class="block text-xs font-semibold text-zinc-400 tracking-wider">LINK DO TRAILER OU CENA DO YOUTUBE PARA O TOPO</label>
+                    <input 
+                        type="text" 
+                        id="input-broll-url"
+                        class="tech-input w-full"
+                        placeholder="Cole o link do trailer no YouTube"
+                    >
+                </div>
+            </div>
+
+            <!-- Botão de Análise -->
+            <div class="pt-4 flex justify-end">
+                <button id="btn-analyze" onclick="startAnalysis()" class="btn-neon w-full sm:w-auto">
+                    <span>✨ Encontrar Melhores Momentos</span>
+                </button>
+            </div>
+
+            <!-- Barra de Progresso Amigável -->
+            <div id="progress-section" class="space-y-2 pt-2" style="display: none;">
+                <div class="flex justify-between text-xs text-zinc-400 font-medium">
+                    <span id="progress-status">Carregando...</span>
+                    <span id="progress-percent" class="text-[#00FF66] font-bold">0%</span>
+                </div>
+                <div class="progress-neon-bar">
+                    <div id="progress-fill" class="progress-neon-fill" style="width: 0%;"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Etapa 2: Cortes Encontrados -->
+        <section id="cuts-section" class="space-y-6" style="display: none;">
+            <div class="flex items-center justify-between border-b border-white/5 pb-4">
+                <div class="flex items-center gap-3">
+                    <span class="text-[#00FF66] font-bold text-sm">Passo 2</span>
+                    <h2 class="text-lg font-bold text-white">Escolha os Melhores Momentos</h2>
+                </div>
+                <span id="project-title-display" class="badge-zinc truncate max-w-xs"></span>
+            </div>
+
+            <div id="cuts-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Cards de cortes injetados via JavaScript -->
+            </div>
+        </section>
+
+        <!-- Etapa 3: Personalizar e Gerar -->
+        <section id="studio-section" class="tech-card p-6 md:p-8 space-y-6" style="display: none;">
+            <div class="flex items-center justify-between border-b border-white/5 pb-4">
+                <div class="flex items-center gap-3">
+                    <span class="text-[#00FF66] font-bold text-sm">Passo 3</span>
+                    <h2 class="text-lg font-bold text-white">Personalizar e Gerar Vídeo</h2>
+                </div>
+                <span class="badge-neon">Formato Reels e TikTok</span>
+            </div>
+
+            <div class="space-y-2">
+                <span class="text-xs text-zinc-400 font-medium">MOMENTO ESCOLHIDO:</span>
+                <h3 id="studio-cut-title" class="text-xl font-extrabold text-white"></h3>
+                <p id="studio-cut-meta" class="text-xs text-zinc-400"></p>
+            </div>
+
+            <!-- Controles Simples B2C -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
+                <!-- Layout -->
+                <div class="space-y-2">
+                    <label class="block text-xs font-semibold text-zinc-400 tracking-wider">FORMATO DO VÍDEO</label>
+                    <select id="select-layout" class="tech-input w-full">
+                        <option value="split_screen" selected>Tela Dividida (Cena no Topo / Rosto Embaixo)</option>
+                        <option value="portrait">Tela Cheia (Foco no Rosto com Zooms)</option>
+                    </select>
+                </div>
+
+                <!-- Estilo de Legenda -->
+                <div class="space-y-2">
+                    <label class="block text-xs font-semibold text-zinc-400 tracking-wider">ESTILO DAS LEGENDAS</label>
+                    <select id="select-sub-style" class="tech-input w-full">
+                        <option value="yellow_viral" selected>Amarelo Dinâmico (Mais Chamativo)</option>
+                        <option value="cyan_neon">Azul Neon</option>
+                        <option value="white_black">Branco com Borda Preta</option>
+                    </select>
+                </div>
+
+                <!-- Ritmo / Velocidade -->
+                <div class="space-y-2">
+                    <div class="flex justify-between text-xs text-zinc-400 font-medium">
+                        <span>VELOCIDADE DO VÍDEO</span>
+                        <span id="label-speed" class="text-[#00FF66] font-bold">Dinâmico</span>
+                    </div>
+                    <select id="range-speed" class="tech-input w-full">
+                        <option value="1.0">Original (Velocidade Normal)</option>
+                        <option value="1.05" selected>Dinâmico (Prende a Atenção)</option>
+                        <option value="1.15">Rápido (Sem Enrolação)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Progresso de Criação -->
+            <div id="render-progress-section" class="space-y-2 pt-2" style="display: none;">
+                <div class="flex justify-between text-xs text-zinc-400 font-medium">
+                    <span id="render-progress-status">Montando seu vídeo...</span>
+                </div>
+                <div class="progress-neon-bar">
+                    <div id="render-progress-fill" class="progress-neon-fill" style="width: 0%;"></div>
+                </div>
+            </div>
+
+            <div class="pt-4 flex justify-end">
+                <button id="btn-render-cut" onclick="renderCurrentCut()" class="btn-neon w-full sm:w-auto">
+                    <span>🚀 Criar Vídeo Pronto para Postar</span>
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modal do Vídeo Pronto -->
+    <div id="video-modal" class="modal-overlay" style="display: none;">
+        <div class="tech-card p-6 max-w-sm w-full mx-4 flex flex-col items-center gap-4 relative">
+            <button onclick="closeVideoModal()" class="absolute top-4 right-4 text-zinc-400 hover:text-white text-lg">✕</button>
+            
+            <div class="flex items-center gap-2 self-start mb-1">
+                <span class="radar-dot"></span>
+                <span class="text-sm font-bold text-white">Seu Vídeo Está Pronto!</span>
+            </div>
+
+            <!-- Player 9:16 de Celular -->
+            <div class="w-full aspect-[9/16] bg-black rounded-lg overflow-hidden border border-white/10 relative">
+                <video id="modal-video-player" controls class="w-full h-full object-cover"></video>
+            </div>
+
+            <div class="flex gap-3 w-full mt-2">
+                <button onclick="closeVideoModal()" class="btn-secondary flex-1 justify-center">Fechar</button>
+                <a id="modal-download-btn" href="#" class="btn-neon flex-1 justify-center text-center">
+                    Baixar Vídeo (MP4)
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notificações Flutuantes -->
+    <div id="toast-container"></div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

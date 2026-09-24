@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" fill="none">
+  <defs>
+    <linearGradient id="neonGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00FF66"/>
+      <stop offset="100%" stop-color="#00DF82"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+  <!-- Background badge -->
+  <rect width="48" height="48" rx="12" fill="#0A0A0A" stroke="#1F1F1F" stroke-width="1.5"/>
+  <rect x="1" y="1" width="46" height="46" rx="11" fill="none" stroke="url(#neonGlow)" stroke-width="0.75" stroke-opacity="0.3"/>
+  <!-- Cortefy Monogram C + Lightning Blade -->
+  <path d="M 28 12 C 18 12 12 18 12 24 C 12 30 18 36 28 36 C 31 36 33.5 35 35 33.5" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/>
+  <!-- Neon Electric Play Slash -->
+  <path d="M 22 17 L 34 24 L 22 31 Z" fill="url(#neonGlow)" filter="url(#glow)"/>
+</svg>

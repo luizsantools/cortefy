@@ -1,0 +1,22 @@
+# Environment variables
+.env
+.env.local
+
+# Binaries & large media files
+bin/
+temp_audio/
+temp_video/
+outputs/
+*.mp4
+*.wav
+*.m4a
+*.ass
+
+# Python
+__pycache__/
+*.pyc
+
+# Node
+node_modules/
+dist/
+.wrangler/
