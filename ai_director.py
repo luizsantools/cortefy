@@ -27,7 +27,7 @@ class AIDirector:
             self._client = genai.Client(api_key=self.api_key)
         return self._client
 
-    def analyze_virality(self, transcript_segments: List[Dict[str, Any]], video_title: str = "") -> List[Dict[str, Any]]:
+    def analyze_virality(self, transcript_segments: List[Dict[str, Any]], video_title: str = "", genre: str = "") -> List[Dict[str, Any]]:
         """
         Usa o Google Gemini como Diretor Criativo de Vídeos Virais para analisar a transcrição,
         identificar ganchos psicológicos, calcular o Virality Score (0-100) e sugerir cortes de alta retenção.
@@ -35,6 +35,16 @@ class AIDirector:
         # Se não houver transcrição, retorna lista vazia
         if not transcript_segments:
             return []
+
+        genre_instructions = ""
+        if genre and genre != "auto":
+            genre_map = {
+                "podcast": "ESTILO DE CONTEÚDO: Podcast / Entrevista. Priorize diálogos envolventes, histórias pessoais e momentos de debate.",
+                "commentary": "ESTILO DE CONTEÚDO: Comentários / Opinião. Priorize opiniões contundentes, reações e tiradas de efeito.",
+                "academic": "ESTILO DE CONTEÚDO: Aulas / Dicas. Priorize insights claros, ensinamentos práticos e momentos 'eureka'.",
+                "vlog": "ESTILO DE CONTEÚDO: Histórias / Vlogs. Priorize reviravoltas, suspense e storytelling cativante."
+            }
+            genre_instructions = genre_map.get(genre, f"ESTILO DE CONTEÚDO: {genre}.")
 
         # Formata texto da transcrição com timestamps para o modelo
         formatted_transcript = []
@@ -55,6 +65,7 @@ class AIDirector:
 Você é um Diretor de Criação e Editor de Conteúdo Viral Especialista em TikTok, Instagram Reels e YouTube Shorts (nível OpusClip / PlaySquad).
 
 Analise a transcrição abaixo de um vídeo com o tema "{video_title or 'Review / Conversa'}":
+{genre_instructions}
 
 TRANSCRIÇÃO:
 {transcript_text}
@@ -166,7 +177,7 @@ Responda ESTRITAMENTE em formato JSON válido como uma lista de objetos:
             }
         ]
 
-    def analyze_audio_directly(self, audio_path: str, video_title: str = "") -> List[Dict[str, Any]]:
+    def analyze_audio_directly(self, audio_path: str, video_title: str = "", genre: str = "") -> List[Dict[str, Any]]:
         """
         Envia o áudio diretamente para o Gemini 3.6 Flash na nuvem.
         Processa até 1 hora de áudio em menos de 20 segundos!
@@ -175,9 +186,20 @@ Responda ESTRITAMENTE em formato JSON válido como uma lista de objetos:
         if not client or not os.path.exists(audio_path):
             return []
 
+        genre_instructions = ""
+        if genre and genre != "auto":
+            genre_map = {
+                "podcast": "ESTILO DE CONTEÚDO: Podcast / Entrevista. Priorize diálogos envolventes, histórias pessoais e momentos de debate.",
+                "commentary": "ESTILO DE CONTEÚDO: Comentários / Opinião. Priorize opiniões contundentes, reações e tiradas de efeito.",
+                "academic": "ESTILO DE CONTEÚDO: Aulas / Dicas. Priorize insights claros, ensinamentos práticos e momentos 'eureka'.",
+                "vlog": "ESTILO DE CONTEÚDO: Histórias / Vlogs. Priorize reviravoltas, suspense e storytelling cativante."
+            }
+            genre_instructions = genre_map.get(genre, f"ESTILO DE CONTEÚDO: {genre}.")
+
         prompt = f"""
 Você é um Diretor de Criação e Especialista em Vídeos Virais para TikTok, Instagram Reels e YouTube Shorts.
 Ouça com atenção este áudio do vídeo "{video_title or 'Conversa / Review'}".
+{genre_instructions}
 
 Identifique os 4 a 6 MELHORES momentos (com duração entre 30 e 70 segundos) com altíssimo potencial de prender a atenção.
 Para cada corte, retorne:

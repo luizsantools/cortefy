@@ -69,11 +69,21 @@ async def health_check():
         "timestamp": time.time()
     }
 
+@app.get("/api/video-info")
+async def get_video_info(url: str):
+    """Retorna metadados do vídeo para a prévia instantânea (título, capa, duração)."""
+    clean_url = (url or "").strip()
+    if not clean_url:
+        raise HTTPException(status_code=400, detail="URL necessária")
+    info = audio_engine.get_video_metadata(clean_url)
+    return info
+
 @app.post("/api/project/analyze")
 async def start_analysis(payload: Dict[str, Any], background_tasks: BackgroundTasks):
     source_url = payload.get("source_url", "").strip()
     broll_mode = payload.get("broll_mode", "auto_extract")
     broll_url = payload.get("broll_url", "").strip()
+    genre = payload.get("genre", "auto").strip()
 
     if not source_url:
         # Se nenhuma URL foi passada, usa o vídeo padrão de amostra existente
@@ -132,15 +142,15 @@ async def start_analysis(payload: Dict[str, Any], background_tasks: BackgroundTa
 
             update_progress(40, "Identificando os momentos mais marcantes...")
 
-            # 2. Tenta análise direta com Gemini (15 segundos)
-            cuts = ai_director.analyze_audio_directly(audio_path, video_title=video_title)
+            # 2. Tenta análise direta com Gemini (15 segundos) com suporte a gênero
+            cuts = ai_director.analyze_audio_directly(audio_path, video_title=video_title, genre=genre)
             words = []
 
             # 3. Fallback se necessário
             if not cuts:
                 update_progress(60, "Organizando as falas e ganchos...")
                 ingest_res = audio_engine.transcribe_audio_file(audio_path, video_title=video_title, progress_callback=update_progress)
-                cuts = ai_director.analyze_virality(ingest_res["segments"], video_title=video_title)
+                cuts = ai_director.analyze_virality(ingest_res["segments"], video_title=video_title, genre=genre)
                 words = ingest_res.get("words", [])
 
             heartbeat_running = False
@@ -151,6 +161,7 @@ async def start_analysis(payload: Dict[str, Any], background_tasks: BackgroundTa
                 "source_url": source_url,
                 "broll_mode": broll_mode,
                 "broll_url": broll_url,
+                "genre": genre,
                 "title": video_title,
                 "duration": 0,
                 "words": words,

@@ -78,6 +78,42 @@ class AudioIngestEngine:
 
         return audio_output, title
 
+    def get_video_metadata(self, youtube_url: str) -> Dict[str, Any]:
+        """Obtém rapidamente título, duração e miniatura do vídeo sem baixar."""
+        ytdlp_bin = get_bin("yt-dlp")
+        try:
+            cmd = [
+                ytdlp_bin,
+                '--print', '%(title)s\t%(duration)s\t%(thumbnail)s\t%(uploader)s',
+                '--no-warnings',
+                '--skip-download',
+                youtube_url
+            ]
+            res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, creationflags=CREATE_NO_WINDOW)
+            if res.returncode == 0 and res.stdout.strip():
+                parts = res.stdout.strip().split('\t')
+                title = parts[0] if len(parts) > 0 else "Vídeo do YouTube"
+                duration_sec = 0.0
+                if len(parts) > 1 and parts[1]:
+                    try:
+                        duration_sec = float(parts[1])
+                    except ValueError:
+                        duration_sec = 0.0
+                thumb = parts[2] if len(parts) > 2 else ""
+                channel = parts[3] if len(parts) > 3 else ""
+                mins = int(duration_sec // 60)
+                secs = int(duration_sec % 60)
+                return {
+                    "title": title,
+                    "duration": duration_sec,
+                    "duration_formatted": f"{mins:02d}:{secs:02d}",
+                    "thumbnail": thumb,
+                    "channel": channel
+                }
+        except Exception as e:
+            print(f"[AudioIngest] Erro ao extrair metadados: {e}")
+        return {"title": "Vídeo do YouTube", "duration": 0, "duration_formatted": "00:00", "thumbnail": "", "channel": ""}
+
     def ingest_youtube_audio(self, youtube_url: str, progress_callback=None) -> Dict[str, Any]:
         audio_output, title = self.download_youtube_audio(youtube_url, progress_callback=progress_callback)
         return self.transcribe_audio_file(audio_output, video_title=title, progress_callback=progress_callback)

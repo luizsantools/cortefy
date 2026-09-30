@@ -10,6 +10,7 @@ export async function onRequestPost(context) {
         const sourceUrl = (body.source_url || "").trim();
         const brollMode = body.broll_mode || "auto_extract";
         const brollUrl = (body.broll_url || "").trim();
+        const genre = (body.genre || "auto").trim();
 
         const apiKey = env.GEMINI_API_KEY || "";
         const taskId = "task_" + crypto.randomUUID().slice(0, 8);
@@ -20,6 +21,7 @@ export async function onRequestPost(context) {
 Você é um Diretor de Criação Especialista em Cortes Virais para TikTok, Reels e Shorts (nível OpusClip / PlaySquad).
 
 Vídeo de entrada: "${sourceUrl}".
+Estilo de conteúdo selecionado: "${genre}".
 
 Crie entre 4 e 5 cortes altamente virais e atraentes para esse conteúdo.
 Para cada corte, retorne:

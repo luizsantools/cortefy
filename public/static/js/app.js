@@ -3,6 +3,8 @@ let currentProjectId = null;
 let currentCuts = [];
 let selectedCut = null;
 let pollingInterval = null;
+let selectedGenre = "auto";
+let previewDebounceTimer = null;
 
 // Mensagens Flutuantes Amigáveis
 function showToast(message, type = "info") {
@@ -47,6 +49,16 @@ async function checkHealth() {
     }
 }
 
+// Alternar Tipo de Conteúdo (Gênero)
+function setGenre(genre) {
+    selectedGenre = genre;
+    document.querySelectorAll(".genre-chip").forEach(el => el.classList.remove("genre-chip-active"));
+    const activeChip = document.getElementById(`genre-btn-${genre}`);
+    if (activeChip) {
+        activeChip.classList.add("genre-chip-active");
+    }
+}
+
 // Alternar Vídeo de Apoio
 function setBRollMode(mode) {
     const btnAuto = document.getElementById("btn-broll-auto");
@@ -61,6 +73,93 @@ function setBRollMode(mode) {
         btnExt.classList.add("tech-card-active");
         btnAuto.classList.remove("tech-card-active");
         extInput.style.display = "block";
+    }
+}
+
+// Detecção Automática do Link e Prévia Instantânea (Estilo Real Oficial)
+function initUrlListener() {
+    const input = document.getElementById("input-main-url");
+    if (!input) return;
+
+    input.addEventListener("input", () => {
+        clearTimeout(previewDebounceTimer);
+        previewDebounceTimer = setTimeout(() => {
+            handleUrlChange(input.value.trim());
+        }, 350);
+    });
+
+    input.addEventListener("paste", (e) => {
+        setTimeout(() => {
+            handleUrlChange(input.value.trim());
+        }, 100);
+    });
+
+    // Se já houver link inicial, busca prévia
+    if (input.value.trim()) {
+        handleUrlChange(input.value.trim());
+    }
+}
+
+async function handleUrlChange(url) {
+    const previewCard = document.getElementById("video-preview-card");
+    const spinner = document.getElementById("preview-loading-spinner");
+    if (!url) {
+        if (previewCard) previewCard.style.display = "none";
+        if (spinner) spinner.style.display = "none";
+        return;
+    }
+
+    const ytMatch = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
+    if (!ytMatch) {
+        if (previewCard) previewCard.style.display = "none";
+        if (spinner) spinner.style.display = "none";
+        return;
+    }
+
+    const videoId = ytMatch[1];
+    if (spinner) spinner.style.display = "inline-flex";
+
+    // 1. Imediato: monta capa e dados rápidos via oEmbed do YouTube (cliente-side, sem delay)
+    const fallbackThumb = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+    document.getElementById("preview-thumb").src = fallbackThumb;
+    document.getElementById("preview-title").innerText = "Carregando informações do vídeo...";
+    document.getElementById("preview-channel").innerText = "YouTube";
+    document.getElementById("preview-duration").innerText = "12:00";
+    if (previewCard) previewCard.style.display = "flex";
+
+    try {
+        // Tenta obter título e autor via oEmbed oficial público
+        const oembedPromise = fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`)
+            .then(r => r.ok ? r.json() : null)
+            .catch(() => null);
+
+        // Tenta obter metadados exatos do backend (duração e título)
+        const infoPromise = fetch(`/api/video-info?url=${encodeURIComponent(url)}`)
+            .then(r => r.ok ? r.json() : fetch(`/api/project/info?url=${encodeURIComponent(url)}`).then(r2 => r2.ok ? r2.json() : null))
+            .catch(() => null);
+
+        const [oembedData, infoData] = await Promise.all([oembedPromise, infoPromise]);
+
+        const title = infoData?.title || oembedData?.title || "Vídeo Selecionado";
+        const channel = infoData?.channel || oembedData?.author_name || "";
+        const thumb = infoData?.thumbnail || oembedData?.thumbnail_url || fallbackThumb;
+        const durationFormatted = infoData?.duration_formatted || (infoData?.duration ? `${Math.floor(infoData.duration/60)}:${Math.floor(infoData.duration%60).toString().padStart(2, '0')}` : "");
+
+        document.getElementById("preview-thumb").src = thumb;
+        document.getElementById("preview-title").innerText = title;
+        document.getElementById("preview-channel").innerText = channel ? `Canal: ${channel}` : "";
+        if (durationFormatted && durationFormatted !== "00:00") {
+            document.getElementById("preview-duration").innerText = durationFormatted;
+            document.getElementById("preview-duration").style.display = "inline-block";
+        } else {
+            document.getElementById("preview-duration").style.display = "none";
+        }
+
+        if (previewCard) previewCard.style.display = "flex";
+    } catch (e) {
+        console.warn("Prévia simplificada:", e);
+    } finally {
+        if (spinner) spinner.style.display = "none";
     }
 }
 
@@ -89,7 +188,8 @@ async function startAnalysis() {
             body: JSON.stringify({
                 source_url: url,
                 broll_mode: isAutoBroll ? "auto_extract" : "external",
-                broll_url: brollUrl
+                broll_url: brollUrl,
+                genre: selectedGenre
             })
         });
 
@@ -152,7 +252,7 @@ function pollTask(taskId) {
     }, 1000);
 }
 
-// Exibir Cards de Momentos
+// Exibir Cards de Momentos com Selos de Potencial Viral (Estilo Real Oficial / OpusClip)
 function renderCuts(cuts, title) {
     const container = document.getElementById("cuts-container");
     container.innerHTML = "";
@@ -161,27 +261,61 @@ function renderCuts(cuts, title) {
 
     cuts.forEach((c) => {
         const card = document.createElement("div");
-        card.className = "tech-card p-5 cursor-pointer relative";
+        card.className = "tech-card p-5 cursor-pointer relative flex flex-col justify-between";
         card.id = `cut-card-${c.id}`;
 
         const duration = Math.round(c.end - c.start);
+        const score = parseInt(c.virality_score, 10) || 85;
+
+        let scoreClass = "score-pill-viral";
+        let scoreIcon = "⚡";
+        let scoreLabel = "Potencial Viral";
+
+        if (score >= 90) {
+            scoreClass = "score-pill-viral";
+            scoreIcon = "⚡";
+            scoreLabel = "Potencial Viral";
+        } else if (score >= 80) {
+            scoreClass = "score-pill-high";
+            scoreIcon = "🔥";
+            scoreLabel = "Alto Impacto";
+        } else {
+            scoreClass = "score-pill-mid";
+            scoreIcon = "✨";
+            scoreLabel = "Bom Engajamento";
+        }
 
         card.innerHTML = `
-            <div class="flex justify-between items-start mb-3">
-                <div class="flex items-center gap-2">
-                    <span class="badge-neon">${c.virality_score}% POTENCIAL</span>
-                    <span class="badge-zinc">${c.tag || '🔥 Destaque'}</span>
+            <div>
+                <div class="flex justify-between items-start mb-3 gap-2">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="${scoreClass}">
+                            <span>${scoreIcon}</span>
+                            <span>${scoreLabel}: ${score}/100</span>
+                        </span>
+                        <span class="badge-zinc">${c.tag || '🔥 Destaque'}</span>
+                    </div>
+                    <span class="text-xs text-zinc-400 font-mono bg-white/5 border border-white/10 px-2 py-0.5 rounded whitespace-nowrap">
+                        ⏱️ ${duration}s
+                    </span>
                 </div>
-                <span class="text-xs text-zinc-400 font-medium">⏱️ ${duration}s</span>
-            </div>
-            
-            <h3 class="text-base font-bold text-white mb-2">${c.title}</h3>
-            <p class="text-xs text-zinc-400 italic mb-4">"${c.hook}"</p>
+                
+                <h3 class="text-base font-bold text-white mb-2 leading-snug">${c.title}</h3>
 
-            <div class="flex justify-between items-center pt-3 border-t border-white/5">
-                <span class="text-xs text-zinc-500">${c.start.toFixed(1)}s até ${c.end.toFixed(1)}s</span>
-                <button onclick="selectCut('${c.id}')" class="btn-secondary text-xs py-1.5 px-3">
-                    Criar Este Vídeo
+                <div class="bg-black/40 border border-white/5 rounded-lg p-2.5 mb-3">
+                    <div class="text-[11px] font-semibold text-[#00FF66] mb-1 flex items-center gap-1.5">
+                        <span>🎯 Gancho dos primeiros 3 segundos:</span>
+                    </div>
+                    <p class="text-xs text-zinc-300 italic">"${c.hook}"</p>
+                </div>
+
+                ${c.rationale ? `<p class="text-xs text-zinc-400 mb-3">${c.rationale}</p>` : ''}
+            </div>
+
+            <div class="flex justify-between items-center pt-3 border-t border-white/5 mt-auto">
+                <span class="text-xs text-zinc-500 font-mono">${c.start.toFixed(1)}s até ${c.end.toFixed(1)}s</span>
+                <button onclick="selectCut('${c.id}')" class="btn-neon text-xs py-1.5 px-3">
+                    <span>Criar Este Vídeo →</span>
                 </button>
             </div>
         `;
@@ -303,4 +437,5 @@ function closeVideoModal() {
 
 document.addEventListener("DOMContentLoaded", () => {
     checkHealth();
+    initUrlListener();
 });

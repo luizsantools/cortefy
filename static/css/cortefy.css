@@ -249,3 +249,94 @@ body {
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
+/* Card de Prévia Instantânea do Vídeo */
+.preview-card {
+  background: rgba(10, 10, 10, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  backdrop-filter: blur(12px);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+}
+
+.preview-card:hover {
+  border-color: rgba(0, 255, 102, 0.3);
+  box-shadow: 0 12px 36px rgba(0, 255, 102, 0.08);
+}
+
+/* Selos de Potencial Viral */
+.score-pill-viral {
+  background: rgba(0, 255, 102, 0.15);
+  color: #00FF66;
+  border: 1px solid rgba(0, 255, 102, 0.4);
+  box-shadow: 0 0 16px rgba(0, 255, 102, 0.25);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.score-pill-high {
+  background: rgba(251, 191, 36, 0.15);
+  color: #FBBF24;
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  box-shadow: 0 0 14px rgba(251, 191, 36, 0.2);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.score-pill-mid {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60A5FA;
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Seletor de Estilo de Conteúdo */
+.genre-chip {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #A1A1AA;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  user-select: none;
+}
+
+.genre-chip:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #FFFFFF;
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.genre-chip-active {
+  background: rgba(0, 255, 102, 0.12) !important;
+  color: #00FF66 !important;
+  border-color: #00FF66 !important;
+  box-shadow: 0 0 14px rgba(0, 255, 102, 0.2);
+}
+

@@ -61,15 +61,68 @@
             </div>
 
             <!-- Campo do Vídeo Principal -->
-            <div class="space-y-2">
-                <label class="block text-xs font-semibold text-zinc-400 tracking-wider">LINK DO VÍDEO DO YOUTUBE</label>
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <label class="block text-xs font-semibold text-zinc-400 tracking-wider">LINK DO VÍDEO DO YOUTUBE</label>
+                    <span id="preview-loading-spinner" class="text-xs text-[#00FF66] items-center gap-1.5" style="display: none;">
+                        <span class="radar-dot"></span>
+                        <span>Identificando vídeo...</span>
+                    </span>
+                </div>
                 <input 
                     type="text" 
                     id="input-main-url"
                     class="tech-input w-full"
                     placeholder="Cole o link do YouTube aqui (ex: https://www.youtube.com/watch?v=...)"
-                    value="https://www.youtube.com/watch?v=QSw3D_L8hVc"
+                    value=""
+                    autocomplete="off"
                 >
+
+                <!-- Card de Prévia Instantânea do Vídeo (Estilo Real Oficial) -->
+                <div id="video-preview-card" class="preview-card p-4 flex flex-col sm:flex-row gap-4 items-center" style="display: none;">
+                    <div class="relative w-full sm:w-48 aspect-video rounded-lg overflow-hidden border border-white/10 shrink-0 bg-zinc-950">
+                        <img id="preview-thumb" src="" alt="Capa do Vídeo" class="w-full h-full object-cover">
+                        <span id="preview-duration" class="absolute bottom-1.5 right-1.5 bg-black/85 text-[11px] text-[#00FF66] font-mono px-2 py-0.5 rounded border border-white/10 font-bold">--:--</span>
+                    </div>
+                    <div class="flex-1 text-left space-y-1.5 w-full">
+                        <div class="flex items-center gap-2">
+                            <span class="badge-neon text-[10px]">
+                                <span class="radar-dot"></span>
+                                <span>Vídeo Identificado</span>
+                            </span>
+                            <span id="preview-channel" class="text-xs text-zinc-400 truncate max-w-[200px]"></span>
+                        </div>
+                        <h3 id="preview-title" class="text-sm sm:text-base font-bold text-white line-clamp-2"></h3>
+                        <p class="text-xs text-zinc-400">
+                            Vídeo pronto para fatiar! A inteligência artificial vai encontrar os momentos de maior retenção.
+                        </p>
+                    </div>
+                    <button type="button" onclick="startAnalysis()" class="btn-neon text-xs py-2.5 px-4 whitespace-nowrap shrink-0 w-full sm:w-auto">
+                        <span>✨ Gerar Cortes em 1 Clique</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Estilo do Conteúdo (OpusClip / Real Oficial) -->
+            <div class="space-y-2 pt-1">
+                <label class="block text-xs font-semibold text-zinc-400 tracking-wider">TIPO DE CONTEÚDO (PARA CALIBRAR OS CORTES)</label>
+                <div id="genre-container" class="flex flex-wrap gap-2">
+                    <button type="button" onclick="setGenre('auto')" id="genre-btn-auto" class="genre-chip genre-chip-active">
+                        <span>✨ Automático (Recomendado)</span>
+                    </button>
+                    <button type="button" onclick="setGenre('podcast')" id="genre-btn-podcast" class="genre-chip">
+                        <span>🎙️ Conversa / Podcast</span>
+                    </button>
+                    <button type="button" onclick="setGenre('commentary')" id="genre-btn-commentary" class="genre-chip">
+                        <span>💬 Opinião / React</span>
+                    </button>
+                    <button type="button" onclick="setGenre('academic')" id="genre-btn-academic" class="genre-chip">
+                        <span>📚 Aulas / Dicas</span>
+                    </button>
+                    <button type="button" onclick="setGenre('vlog')" id="genre-btn-vlog" class="genre-chip">
+                        <span>🎬 Histórias / Vlogs</span>
+                    </button>
+                </div>
             </div>
 
             <!-- Opções de Vídeo de Apoio (Tela Dividida) -->
@@ -119,7 +172,7 @@
                 </div>
             </div>
 
-            <!-- Botão de Análise -->
+            <!-- Botão de Análise Principal -->
             <div class="pt-4 flex justify-end">
                 <button id="btn-analyze" onclick="startAnalysis()" class="btn-neon w-full sm:w-auto">
                     <span>✨ Encontrar Melhores Momentos</span>
