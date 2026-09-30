@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criar Conta — Cortefy</title>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/css/cortefy.css?v=3.1.0">
+</head>
+<body class="selection:bg-[#FF5C00] selection:text-white min-h-screen flex flex-col justify-between text-black">
+
+    <!-- Header Simples -->
+    <header class="py-4 px-6 md:px-12 flex justify-between items-center border-b-2 border-black bg-white">
+        <a href="/" class="flex items-center gap-3">
+            <img src="/static/logo.svg" alt="Cortefy" class="h-8">
+        </a>
+        <a href="/login" class="btn-secondary text-xs">
+            <span>Já tem conta? Entrar</span>
+        </a>
+    </header>
+
+    <!-- Card de Cadastro -->
+    <main class="flex-1 flex items-center justify-center p-6">
+        <div class="tech-card p-6 sm:p-8 max-w-lg w-full space-y-6 bg-white shadow-[6px_6px_0px_#000]">
+            
+            <div class="text-center space-y-1">
+                <span class="badge-neon text-[10px] font-black uppercase">COMECE AGORA</span>
+                <h1 class="text-2xl font-black text-black font-display">Crie Sua Conta Grátis</h1>
+                <p class="text-xs text-zinc-600 font-medium">Cadastre-se em segundos para criar seus primeiros cortes virais.</p>
+            </div>
+
+            <form onsubmit="handleRegister(event)" class="space-y-4">
+                <div class="space-y-1">
+                    <label class="block text-xs font-black text-zinc-800 uppercase">SEU NOME OU CANAL</label>
+                    <input type="text" id="reg-name" required class="tech-input w-full text-xs font-semibold" placeholder="Ex: Lucas / Canal de Cortes">
+                </div>
+
+                <div class="space-y-1">
+                    <label class="block text-xs font-black text-zinc-800 uppercase">SEU MELHOR E-MAIL</label>
+                    <input type="email" id="reg-email" required class="tech-input w-full text-xs font-semibold" placeholder="seu@email.com">
+                </div>
+
+                <div class="space-y-1">
+                    <label class="block text-xs font-black text-zinc-800 uppercase">CRIE UMA SENHA</label>
+                    <input type="password" id="reg-password" required minlength="6" class="tech-input w-full text-xs font-semibold" placeholder="Mínimo 6 caracteres">
+                </div>
+
+                <!-- Escolha de Plano Inicial -->
+                <div class="space-y-1 pt-1">
+                    <label class="block text-xs font-black text-zinc-800 uppercase">PLANO ESCOLHIDO</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <label class="tech-card p-2.5 flex flex-col justify-between cursor-pointer border-2 border-black hover:bg-zinc-50 has-[:checked]:bg-[#FFF3EB] has-[:checked]:border-[#FF5C00]">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[11px] font-black text-black">Grátis</span>
+                                <input type="radio" name="reg-plan" value="free" checked class="accent-[#FF5C00]">
+                            </div>
+                            <span class="text-[10px] text-zinc-500 font-bold mt-1">3 cortes</span>
+                        </label>
+                        <label class="tech-card p-2.5 flex flex-col justify-between cursor-pointer border-2 border-black hover:bg-zinc-50 has-[:checked]:bg-[#FFF3EB] has-[:checked]:border-[#FF5C00]">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[11px] font-black text-black">Creator</span>
+                                <input type="radio" name="reg-plan" value="creator" class="accent-[#FF5C00]">
+                            </div>
+                            <span class="text-[10px] text-[#FF5C00] font-black mt-1">R$ 39,90</span>
+                        </label>
+                        <label class="tech-card p-2.5 flex flex-col justify-between cursor-pointer border-2 border-black hover:bg-zinc-50 has-[:checked]:bg-[#FFF3EB] has-[:checked]:border-[#FF5C00]">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[11px] font-black text-black">Pro</span>
+                                <input type="radio" name="reg-plan" value="pro" class="accent-[#FF5C00]">
+                            </div>
+                            <span class="text-[10px] text-[#0052FF] font-black mt-1">Ilimitado</span>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" id="btn-submit-reg" class="btn-neon w-full py-3.5 text-xs font-black shadow-[3px_3px_0px_#000] mt-2">
+                    <span>Criar Conta e Acessar o Estúdio ⚡</span>
+                </button>
+            </form>
+
+            <div class="border-t-2 border-black pt-4 text-center">
+                <span class="text-xs text-zinc-600 font-bold">Já possui cadastro?</span>
+                <a href="/login" class="text-xs font-black text-[#0052FF] hover:underline ml-1">Fazer login →</a>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Rodapé -->
+    <footer class="py-4 text-center text-xs font-bold text-zinc-500 border-t-2 border-black bg-white">
+        Cortefy © 2026 • O Estúdio de Cortes Virais
+    </footer>
+
+    <script>
+        async function handleRegister(e) {
+            e.preventDefault();
+            var name = document.getElementById('reg-name').value;
+            var email = document.getElementById('reg-email').value;
+            var password = document.getElementById('reg-password').value;
+            var planEl = document.querySelector('input[name="reg-plan"]:checked');
+            var plan = planEl ? planEl.value : 'free';
+
+            var btn = document.getElementById('btn-submit-reg');
+            btn.disabled = true;
+            btn.innerText = 'Criando conta...';
+
+            try {
+                var res = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: name, email: email, password: password, plan: plan })
+                });
+                var data = await res.json();
+                if (res.ok) {
+                    window.location.href = '/app';
+                } else {
+                    alert(data.detail || 'Não foi possível criar a conta.');
+                    btn.disabled = false;
+                    btn.innerText = 'Criar Conta e Acessar o Estúdio ⚡';
+                }
+            } catch (err) {
+                alert('Erro de conexão ao criar conta.');
+                btn.disabled = false;
+                btn.innerText = 'Criar Conta e Acessar o Estúdio ⚡';
+            }
+        }
+    </script>
+</body>
+</html>

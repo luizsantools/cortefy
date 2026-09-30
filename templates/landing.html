@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cortefy — Crie Cortes Virais com Player, SEO e Legendas CapCut</title>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <!-- Tailwind CDN para estilização rápida -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/css/cortefy.css?v=3.1.0">
+    <style>
+        .neo-box-orange {
+            background-color: var(--neo-orange);
+            color: #FFFFFF;
+            border: var(--border-neo-thick);
+            box-shadow: var(--shadow-neo-lg);
+        }
+        .neo-box-blue {
+            background-color: var(--neo-blue);
+            color: #FFFFFF;
+            border: var(--border-neo-thick);
+            box-shadow: var(--shadow-neo-lg);
+        }
+    </style>
+</head>
+<body class="selection:bg-[#FF5C00] selection:text-white min-h-screen text-black">
+
+    <!-- Header de Navegação Superior -->
+    <header class="header-glass py-4 px-6 md:px-12 flex justify-between items-center sticky top-0 z-50">
+        <a href="/" class="flex items-center gap-3">
+            <img src="/static/logo.svg" alt="Cortefy" class="h-9">
+            <span class="badge-blue hidden md:inline-flex text-[10px]">
+                <span class="radar-dot" style="background:#FFF;"></span>
+                <span>Oficial</span>
+            </span>
+        </a>
+
+        <!-- Links de Navegação do Menu -->
+        <nav class="hidden lg:flex items-center gap-6 text-sm font-extrabold font-display">
+            <a href="#recursos" class="hover:text-[#FF5C00] transition-colors">Recursos</a>
+            <a href="#como-funciona" class="hover:text-[#FF5C00] transition-colors">Como Funciona</a>
+            <a href="#legendas" class="hover:text-[#FF5C00] transition-colors">Modelos de Legendas</a>
+            <a href="#planos" class="hover:text-[#FF5C00] transition-colors text-[#0052FF]">Planos & Preços</a>
+            <a href="#faq" class="hover:text-[#FF5C00] transition-colors">Dúvidas</a>
+        </nav>
+
+        <!-- Ações do Usuário (Entrar / Cadastrar) -->
+        <div class="flex items-center gap-3">
+            <a href="/login" class="btn-secondary text-xs py-2 px-4">
+                <span>Entrar</span>
+            </a>
+            <a href="/app" class="btn-neon text-xs py-2 px-4 font-black">
+                <span>Ir para o Estúdio ⚡</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Conteúdo da Landing Page -->
+    <main class="space-y-20 pb-20">
+
+        <!-- HERO SECTION -->
+        <section class="max-w-5xl mx-auto px-6 pt-12 md:pt-16 text-center space-y-6">
+            <div class="inline-flex items-center gap-2 badge-neon text-xs py-1 px-3">
+                <span class="radar-dot"></span>
+                <span>🔥 A FERRAMENTA DE CORTES VIRAIS MAIS RÁPIDA DO BRASIL</span>
+            </div>
+
+            <h1 class="text-4xl sm:text-5xl md:text-6xl font-black text-black font-display leading-[1.1] tracking-tight">
+                Transforme Vídeos Longos em <br class="hidden sm:inline">
+                <span class="text-[#FF5C00] underline decoration-[#0052FF] decoration-4 underline-offset-8">5 Cortes Prontos com Player</span> e SEO
+            </h1>
+
+            <p class="text-zinc-700 font-medium text-base md:text-lg max-w-2xl mx-auto">
+                Cole o link de qualquer vídeo do YouTube. Nossa inteligência analisa o contexto real da obra, corrige nomes de personagens, aplica legendas animadas estilo CapCut e entrega os vídeos prontos para você assistir e baixar.
+            </p>
+
+            <!-- Box de Ação Rápida (Cole o Link e Comece) -->
+            <div class="tech-card p-4 md:p-6 max-w-3xl mx-auto space-y-3 bg-white">
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <input 
+                        type="text" 
+                        id="hero-url-input"
+                        class="tech-input flex-1 text-sm font-semibold"
+                        placeholder="Cole o link do YouTube aqui (ex: https://www.youtube.com/watch?v=...)"
+                    >
+                    <button onclick="goToStudioWithUrl()" class="btn-neon py-3 px-6 text-sm font-black whitespace-nowrap">
+                        <span>⚡ Gerar Cortes Agora</span>
+                    </button>
+                </div>
+                <div class="flex items-center justify-between text-xs text-zinc-600 font-bold px-1 flex-wrap gap-2">
+                    <span>✓ Sem cadastro prévio para testar</span>
+                    <span>✓ Player embutido para assistir na hora</span>
+                    <span>✓ Formato 9:16 para TikTok, Reels e Shorts</span>
+                </div>
+            </div>
+
+            <!-- Faixa de Prova Social -->
+            <div class="pt-6 flex flex-wrap justify-center items-center gap-6 text-xs font-bold text-zinc-600">
+                <div class="flex items-center gap-2">
+                    <span class="text-[#FF5C00] text-base">★★★★★</span>
+                    <span>4.9/5 por +12.000 criadores</span>
+                </div>
+                <span>•</span>
+                <div>+500.000 cortes exportados</div>
+                <span>•</span>
+                <div>100% em português brasileiro</div>
+            </div>
+        </section>
+
+        <!-- SEÇÃO: RECURSOS EXCLUSIVOS -->
+        <section id="recursos" class="max-w-6xl mx-auto px-6 space-y-10">
+            <div class="text-center space-y-3">
+                <span class="badge-blue text-xs font-black uppercase">RECURSOS NATIVOS</span>
+                <h2 class="text-3xl md:text-4xl font-black text-black font-display">
+                    Por Que o Cortefy é Diferente de Tudo?
+                </h2>
+                <p class="text-zinc-600 text-sm md:text-base max-w-xl mx-auto font-medium">
+                    Outras ferramentas geram cortes genéricos com legendas sem sentido. O Cortefy estuda o assunto e entrega cortes prontos para bombar.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Card 1: Contexto e Personagens -->
+                <div class="tech-card p-6 space-y-3">
+                    <div class="text-3xl">🧠</div>
+                    <h3 class="text-lg font-black text-black font-display">Curadoria com Contexto Real</h3>
+                    <p class="text-xs text-zinc-600 font-medium leading-relaxed">
+                        Entende a obra do vídeo (livros, filmes, podcasts) e corrige nomes mal transcritos (como Olive e Malcolm em vez de erros fonéticos), criando títulos com ganchos que realmente engajam o público do nicho.
+                    </p>
+                </div>
+
+                <!-- Card 2: Player Embutido na Hora -->
+                <div class="tech-card p-6 space-y-3 border-black">
+                    <div class="text-3xl">📱</div>
+                    <h3 class="text-lg font-black text-black font-display">Player 9:16 Já na Lista de Cortes</h3>
+                    <p class="text-xs text-zinc-600 font-medium leading-relaxed">
+                        Chega de gerar e ficar esperando outra barra de renderização só para ver o resultado. Os 5 cortes já aparecem com player de vídeo na tela para você dar play e baixar diretamente.
+                    </p>
+                </div>
+
+                <!-- Card 3: 10 Modelos CapCut -->
+                <div class="tech-card p-6 space-y-3">
+                    <div class="text-3xl">🎨</div>
+                    <h3 class="text-lg font-black text-black font-display">10 Modelos de Legendas CapCut</h3>
+                    <p class="text-xs text-zinc-600 font-medium leading-relaxed">
+                        De Beast Bold a Hormozi Pop e Neon Cyber. Legendas animadas com contorno nítido em 4 direções, realce dinâmico e sem cortes estranhos de palavras.
+                    </p>
+                </div>
+
+                <!-- Card 4: SEO e Hashtags do Nicho -->
+                <div class="tech-card p-6 space-y-3">
+                    <div class="text-3xl">📈</div>
+                    <h3 class="text-lg font-black text-black font-display">Legendas Prontas com SEO & Hashtags</h3>
+                    <p class="text-xs text-zinc-600 font-medium leading-relaxed">
+                        Nada de hashtags batidas como #foryou em tudo. O Cortefy analisa o assunto e gera hashtags específicas (#hipotesedoamor, #booktok, #filmes, etc.) para o algoritmo entregar para o público certo.
+                    </p>
+                </div>
+
+                <!-- Card 5: Tela Dividida com B-Roll -->
+                <div class="tech-card p-6 space-y-3">
+                    <div class="text-3xl">🎬</div>
+                    <h3 class="text-lg font-black text-black font-display">Tela Dividida e Vídeo de Apoio</h3>
+                    <p class="text-xs text-zinc-600 font-medium leading-relaxed">
+                        Crie o formato viral clássico do TikTok: a fala no centro e uma cena de ação, gameplay ou trailer oficial no topo da tela para disparar a retenção dos primeiros segundos.
+                    </p>
+                </div>
+
+                <!-- Card 6: Efeitos de Retenção -->
+                <div class="tech-card p-6 space-y-3">
+                    <div class="text-3xl">⚡</div>
+                    <h3 class="text-lg font-black text-black font-display">Zoom Dinâmico e Reenquadramento</h3>
+                    <p class="text-xs text-zinc-600 font-medium leading-relaxed">
+                        Aproximação suave a cada 4 segundos, centralização de rostos e sincronização de áudio para manter os olhos da audiência grudados até o fim do vídeo.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SEÇÃO: COMO FUNCIONA (PASSO A PASSO) -->
+        <section id="como-funciona" class="max-w-5xl mx-auto px-6 space-y-10">
+            <div class="text-center space-y-3">
+                <span class="badge-neon text-xs font-black uppercase">FLUXO SIMPLES</span>
+                <h2 class="text-3xl md:text-4xl font-black text-black font-display">
+                    Como Criar Seus Cortes em 3 Passos
+                </h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Passo 1 -->
+                <div class="tech-card p-6 space-y-3">
+                    <div class="w-10 h-10 rounded-lg bg-black text-[#FF5C00] font-black flex items-center justify-center text-lg border-2 border-black shadow-[2px_2px_0px_#FF5C00]">1</div>
+                    <h3 class="text-base font-black text-black">Cole o Link do YouTube</h3>
+                    <p class="text-xs text-zinc-600 font-medium">
+                        Identificamos o vídeo em 2 segundos e mapeamos todas as falas, emoções e mudanças de ritmo.
+                    </p>
+                </div>
+
+                <!-- Passo 2 -->
+                <div class="tech-card p-6 space-y-3">
+                    <div class="w-10 h-10 rounded-lg bg-[#0052FF] text-white font-black flex items-center justify-center text-lg border-2 border-black shadow-[2px_2px_0px_#000]">2</div>
+                    <h3 class="text-base font-black text-black">Escolha o Modelo de Legenda</h3>
+                    <p class="text-xs text-zinc-600 font-medium">
+                        Selecione entre 10 estilos inspirados no CapCut e personalize cores e tamanhos em tempo real.
+                    </p>
+                </div>
+
+                <!-- Passo 3 -->
+                <div class="tech-card p-6 space-y-3">
+                    <div class="w-10 h-10 rounded-lg bg-[#FF5C00] text-white font-black flex items-center justify-center text-lg border-2 border-black shadow-[2px_2px_0px_#000]">3</div>
+                    <h3 class="text-base font-black text-black">Assista no Player e Baixe</h3>
+                    <p class="text-xs text-zinc-600 font-medium">
+                        Veja o corte pronto no player 9:16 da página, copie a legenda com SEO e clique em Baixar MP4.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SEÇÃO: MODELOS DE LEGENDAS -->
+        <section id="legendas" class="max-w-6xl mx-auto px-6 space-y-10">
+            <div class="text-center space-y-3">
+                <span class="badge-blue text-xs font-black uppercase">DESIGN VIRAL</span>
+                <h2 class="text-3xl md:text-4xl font-black text-black font-display">
+                    10 Estilos de Legendas Animadas Prontas
+                </h2>
+                <p class="text-zinc-600 text-sm max-w-xl mx-auto font-medium">
+                    Todas calibradas para alto contraste, leitura rápida e impacto no feed do TikTok e Reels.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                <div class="sub-card"><span class="text-xs font-black text-black">Hormozi Pop</span><div class="sub-preview-box"><span class="sub-style-hormozi">PRESTE <span class="anim-word">ATENÇÃO!</span></span></div></div>
+                <div class="sub-card"><span class="text-xs font-black text-black">Neon Cyber</span><div class="sub-preview-box"><span class="sub-style-neon">CORTE <span class="anim-word">VIRAL!</span></span></div></div>
+                <div class="sub-card"><span class="text-xs font-black text-black">Beast Bold</span><div class="sub-preview-box"><span class="sub-style-beast">OLHA O <span class="anim-word">MOMENTO!</span></span></div></div>
+                <div class="sub-card"><span class="text-xs font-black text-black">Ciano Elétrico</span><div class="sub-preview-box"><span class="sub-style-cyan">MOMENTO <span class="anim-word">ÉPICO!</span></span></div></div>
+                <div class="sub-card"><span class="text-xs font-black text-black">Roxo Viral</span><div class="sub-preview-box"><span class="sub-style-purple">VAI <span class="anim-word">EXPLODIR!</span></span></div></div>
+                <div class="sub-card"><span class="text-xs font-black text-black">Clean Minimal</span><div class="sub-preview-box"><span class="sub-style-minimal">DIRETO AO PONTO</span></div></div>
+                <div class="sub-card"><span class="text-xs font-black text-black">Karaokê Dourado</span><div class="sub-preview-box"><span class="sub-style-gold">DICA DE <span class="anim-word">OURO!</span></span></div></div>
+                <div class="sub-card"><span class="text-xs font-black text-black">Fogo Sunset</span><div class="sub-preview-box"><span class="sub-style-fire">ALTA <span class="anim-word">ENERGIA!</span></span></div></div>
+                <div class="sub-card"><span class="text-xs font-black text-black">Esmeralda VIP</span><div class="sub-preview-box"><span class="sub-style-emerald">VIP <span class="anim-word">PURISTA!</span></span></div></div>
+                <div class="sub-card"><span class="text-xs font-black text-black">Monocromo 3D</span><div class="sub-preview-box"><span class="sub-style-mono3d">CONTRASTE <span class="anim-word">3D</span></span></div></div>
+            </div>
+        </section>
+
+        <!-- SEÇÃO: PLANOS & PREÇOS COM COMPRA INSTANTÂNEA -->
+        <section id="planos" class="max-w-5xl mx-auto px-6 space-y-10">
+            <div class="text-center space-y-3">
+                <span class="badge-neon text-xs font-black uppercase">INVESTIMENTO TRANSPARENTE</span>
+                <h2 class="text-3xl md:text-4xl font-black text-black font-display">
+                    Escolha o Plano Ideal para Sua Produção
+                </h2>
+                <p class="text-zinc-600 text-sm max-w-xl mx-auto font-medium">
+                    Pagamento 100% seguro via Pix com ativação imediata. Cancele quando quiser.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+                <!-- PLANO 1: GRÁTIS -->
+                <div class="tech-card p-6 flex flex-col justify-between space-y-6">
+                    <div class="space-y-4">
+                        <span class="badge-zinc text-xs">EXPERIMENTE</span>
+                        <h3 class="text-xl font-black text-black font-display">Gratuito</h3>
+                        <div class="flex items-baseline gap-1">
+                            <span class="text-3xl font-black text-black">R$ 0</span>
+                            <span class="text-xs font-bold text-zinc-500">/mês</span>
+                        </div>
+                        <p class="text-xs text-zinc-600 font-medium">Ideal para testar o fluxo e conferir a qualidade dos cortes.</p>
+                        <ul class="text-xs space-y-2.5 font-bold text-zinc-700 pt-2 border-t-2 border-black">
+                            <li class="flex items-center gap-2"><span>✓</span> 3 cortes virais por mês</li>
+                            <li class="flex items-center gap-2"><span>✓</span> Player de vídeo embutido</li>
+                            <li class="flex items-center gap-2"><span>✓</span> 5 modelos de legendas</li>
+                            <li class="flex items-center gap-2"><span>✓</span> Legendas com SEO para copiar</li>
+                        </ul>
+                    </div>
+                    <a href="/register?plan=free" class="btn-secondary w-full justify-center py-3 text-xs font-black">
+                        <span>Começar Gratuitamente</span>
+                    </a>
+                </div>
+
+                <!-- PLANO 2: CREATOR (DESTAQUE) -->
+                <div class="tech-card p-6 flex flex-col justify-between space-y-6 border-[3.5px] border-black bg-[#FFF3EB] shadow-[6px_6px_0px_#FF5C00] relative">
+                    <div class="absolute -top-3.5 right-6">
+                        <span class="badge-neon text-[10px] font-black py-1 px-3">MAIS POPULAR</span>
+                    </div>
+
+                    <div class="space-y-4">
+                        <span class="badge-blue text-xs">PARA CRIADORES</span>
+                        <h3 class="text-xl font-black text-black font-display">Creator</h3>
+                        <div class="flex items-baseline gap-1">
+                            <span class="text-4xl font-black text-black font-mono">R$ 39,90</span>
+                            <span class="text-xs font-bold text-zinc-600">/mês</span>
+                        </div>
+                        <p class="text-xs text-zinc-700 font-medium">Para canais, influenciadores e podcasters que postam diariamente.</p>
+                        <ul class="text-xs space-y-2.5 font-bold text-black pt-2 border-t-2 border-black">
+                            <li class="flex items-center gap-2"><span class="text-[#FF5C00] font-black">✓</span> <strong>100 cortes virais por mês</strong></li>
+                            <li class="flex items-center gap-2"><span class="text-[#FF5C00] font-black">✓</span> Todos os 10 modelos de legendas CapCut</li>
+                            <li class="flex items-center gap-2"><span class="text-[#FF5C00] font-black">✓</span> Curadoria profunda de contexto e personagens</li>
+                            <li class="flex items-center gap-2"><span class="text-[#FF5C00] font-black">✓</span> Resolução Full HD 1080p sem marca d'água</li>
+                            <li class="flex items-center gap-2"><span class="text-[#FF5C00] font-black">✓</span> Download com 1 clique no player</li>
+                            <li class="flex items-center gap-2"><span class="text-[#FF5C00] font-black">✓</span> Tela dividida e vídeos de apoio ilimitados</li>
+                        </ul>
+                    </div>
+                    <button onclick="openPixModal('creator', 3990, 'Plano Creator — 100 Cortes')" class="btn-neon w-full justify-center py-3.5 text-xs font-black shadow-[3px_3px_0px_#000]">
+                        <span>🚀 Assinar Creator via Pix</span>
+                    </button>
+                </div>
+
+                <!-- PLANO 3: PRO / AGÊNCIA -->
+                <div class="tech-card p-6 flex flex-col justify-between space-y-6">
+                    <div class="space-y-4">
+                        <span class="badge-zinc text-xs">MÁXIMA ESCALA</span>
+                        <h3 class="text-xl font-black text-black font-display">Pro / Viral</h3>
+                        <div class="flex items-baseline gap-1">
+                            <span class="text-3xl font-black text-black font-mono">R$ 79,90</span>
+                            <span class="text-xs font-bold text-zinc-500">/mês</span>
+                        </div>
+                        <p class="text-xs text-zinc-600 font-medium">Para agências, gestores de tráfego e múltiplos canais de cortes.</p>
+                        <ul class="text-xs space-y-2.5 font-bold text-zinc-700 pt-2 border-t-2 border-black">
+                            <li class="flex items-center gap-2"><span>✓</span> <strong>Cortes Ilimitados</strong></li>
+                            <li class="flex items-center gap-2"><span>✓</span> Prioridade máxima nos servidores</li>
+                            <li class="flex items-center gap-2"><span>✓</span> Customização total de modelos e fontes</li>
+                            <li class="flex items-center gap-2"><span>✓</span> Suporte VIP direto via WhatsApp</li>
+                        </ul>
+                    </div>
+                    <button onclick="openPixModal('pro', 7990, 'Plano Pro — Cortes Ilimitados')" class="btn-blue w-full justify-center py-3 text-xs font-black">
+                        <span>Assinar Pro via Pix</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- SEÇÃO: PERGUNTAS FREQUENTES (FAQ) -->
+        <section id="faq" class="max-w-4xl mx-auto px-6 space-y-8">
+            <div class="text-center space-y-2">
+                <span class="badge-zinc text-xs font-black uppercase">TIRA-DÚVIDAS</span>
+                <h2 class="text-3xl font-black text-black font-display">Perguntas Frequentes</h2>
+            </div>
+
+            <div class="space-y-4">
+                <div class="tech-card p-5">
+                    <h3 class="text-sm font-black text-black mb-1">Como o Cortefy sabe quais são os momentos virais?</h3>
+                    <p class="text-xs text-zinc-600 font-medium leading-relaxed">
+                        Nossa inteligência analisa o ritmo das falas, quebras de expectativa, histórias marcantes, momentos de humor e curiosidade, selecionando trechos autocontidos ideais para prender a atenção no feed.
+                    </p>
+                </div>
+
+                <div class="tech-card p-5">
+                    <h3 class="text-sm font-black text-black mb-1">Os 5 cortes já vêm com vídeo para eu assistir antes de baixar?</h3>
+                    <p class="text-xs text-zinc-600 font-medium leading-relaxed">
+                        Sim! Cada um dos 5 cortes gerados já conta com um player de vídeo 9:16 embutido no cartão. Você pode dar play na hora para ver o corte e clicar no botão "Baixar Vídeo" imediatamente.
+                    </p>
+                </div>
+
+                <div class="tech-card p-5">
+                    <h3 class="text-sm font-black text-black mb-1">Como funciona o pagamento via Pix?</h3>
+                    <p class="text-xs text-zinc-600 font-medium leading-relaxed">
+                        Você clica em assinar, escaneia o QR Code ou copia o código no aplicativo do seu banco. A identificação é instantânea e seus créditos são creditados imediatamente na sua conta.
+                    </p>
+                </div>
+
+                <div class="tech-card p-5">
+                    <h3 class="text-sm font-black text-black mb-1">Posso usar em qualquer canal do YouTube?</h3>
+                    <p class="text-xs text-zinc-600 font-medium leading-relaxed">
+                        Sim! Funciona com podcasts, aulas, vlogs, reviews de livros e filmes, transmissões e qualquer vídeo público do YouTube.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modal de Checkout Pix Instantâneo -->
+    <div id="pix-checkout-modal" class="modal-overlay" style="display: none;">
+        <div class="tech-card p-6 max-w-md w-full mx-4 space-y-5 relative">
+            <button onclick="closePixModal()" class="absolute top-4 right-4 text-black font-black text-lg hover:text-[#FF5C00]">✕</button>
+
+            <div class="flex items-center gap-2">
+                <span class="radar-dot"></span>
+                <span class="text-sm font-black text-black uppercase">Pagamento Instantâneo via Pix</span>
+            </div>
+
+            <div class="border-b-2 border-black pb-3">
+                <h3 id="pix-modal-plan-title" class="text-lg font-black text-black font-display">Plano Creator</h3>
+                <div class="flex items-center gap-2 mt-1">
+                    <span id="pix-modal-amount" class="text-2xl font-black text-[#FF5C00] font-mono">R$ 39,90</span>
+                    <span class="badge-neon text-[9px]">Liberação Automática</span>
+                </div>
+            </div>
+
+            <!-- QR Code do Pix -->
+            <div class="flex flex-col items-center gap-3 py-2">
+                <div class="p-3 bg-white border-2 border-black rounded-xl shadow-[3px_3px_0px_#000]">
+                    <img id="pix-qr-img" src="" alt="QR Code Pix" class="w-48 h-48 object-contain">
+                </div>
+                <span class="text-xs text-zinc-600 font-bold">Escaneie o QR Code com o aplicativo do seu banco</span>
+            </div>
+
+            <!-- Código Copia e Cola -->
+            <div class="space-y-1.5">
+                <label class="block text-[11px] font-black text-zinc-800 uppercase">CÓDIGO PIX COPIA E COLA:</label>
+                <div class="flex gap-2">
+                    <input type="text" id="pix-copy-input" readonly class="tech-input text-xs font-mono w-full" value="">
+                    <button type="button" onclick="copyPixCode()" class="btn-copy-seo shrink-0">Copiar</button>
+                </div>
+            </div>
+
+            <div class="pt-2 flex gap-3">
+                <button onclick="closePixModal()" class="btn-secondary flex-1 justify-center text-xs">Voltar</button>
+                <button onclick="confirmPixPayment()" class="btn-neon flex-1 justify-center text-xs font-black">
+                    <span>✓ Já Paguei no Banco</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notificações Toast -->
+    <div id="toast-container"></div>
+
+    <!-- Rodapé -->
+    <footer class="border-t-2 border-black bg-white py-10 px-6">
+        <div class="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="flex items-center gap-3">
+                <img src="/static/logo.svg" alt="Cortefy" class="h-8">
+                <span class="text-xs text-zinc-600 font-bold">© 2026 Cortefy. Todos os direitos reservados.</span>
+            </div>
+            <div class="flex gap-6 text-xs font-bold text-zinc-700">
+                <a href="#recursos" class="hover:text-black">Recursos</a>
+                <a href="#planos" class="hover:text-black">Planos</a>
+                <a href="/login" class="hover:text-black">Login</a>
+                <a href="/app" class="hover:text-black">Estúdio</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        function goToStudioWithUrl() {
+            var url = document.getElementById('hero-url-input').value.trim();
+            if (url) {
+                window.location.href = '/app?url=' + encodeURIComponent(url);
+            } else {
+                window.location.href = '/app';
+            }
+        }
+
+        var currentSelectedPlan = 'creator';
+        var currentPaymentId = null;
+
+        async function openPixModal(plan, amountCents, title) {
+            currentSelectedPlan = plan;
+            document.getElementById('pix-modal-plan-title').innerText = title;
+            document.getElementById('pix-modal-amount').innerText = 'R$ ' + (amountCents / 100).toFixed(2).replace('.', ',');
+            
+            // Requisita geração de Pix no backend
+            try {
+                var res = await fetch('/api/billing/create-pix', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ plan: plan, amount_cents: amountCents })
+                });
+                var data = await res.json();
+                currentPaymentId = data.payment_id;
+                document.getElementById('pix-copy-input').value = data.pix_code;
+                document.getElementById('pix-qr-img').src = data.qr_code_url;
+                document.getElementById('pix-checkout-modal').style.display = 'flex';
+            } catch (e) {
+                alert('Erro ao gerar cobrança Pix. Redirecionando...');
+            }
+        }
+
+        function closePixModal() {
+            document.getElementById('pix-checkout-modal').style.display = 'none';
+        }
+
+        function copyPixCode() {
+            var input = document.getElementById('pix-copy-input');
+            input.select();
+            document.execCommand('copy');
+            alert('Código Pix copiado! Cole no seu banco para pagar.');
+        }
+
+        async function confirmPixPayment() {
+            if (!currentPaymentId) return;
+            try {
+                var res = await fetch('/api/billing/confirm', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ payment_id: currentPaymentId, plan: currentSelectedPlan })
+                });
+                var data = await res.json();
+                if (data.success) {
+                    alert('🎉 Pagamento aprovado! Seu plano foi ativado com sucesso.');
+                    window.location.href = '/app';
+                }
+            } catch (e) {
+                window.location.href = '/app';
+            }
+        }
+    </script>
+</body>
+</html>

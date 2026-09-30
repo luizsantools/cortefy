@@ -20,3 +20,8 @@ __pycache__/
 node_modules/
 dist/
 .wrangler/
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3

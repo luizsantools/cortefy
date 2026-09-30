@@ -66,7 +66,14 @@ class AudioIngestEngine:
                 start_sec = parse_ts(m.group(1))
                 end_sec = parse_ts(m.group(2))
                 i += 1
-                text_block = []
+
+                # Pula cues instantâneos (< 0.05s) gerados pelo YouTube para flush
+                if end_sec - start_sec < 0.05:
+                    while i < len(lines) and lines[i].strip():
+                        i += 1
+                    continue
+
+                cue_lines = []
                 while i < len(lines) and lines[i].strip() and not time_re.search(lines[i]):
                     raw_line = lines[i]
                     for wm in word_time_re.finditer(raw_line):
@@ -75,20 +82,20 @@ class AudioIngestEngine:
                         if w_text:
                             words.append({"word": w_text, "start": round(w_start, 3), "end": round(w_start + 0.35, 3)})
 
-                    clean_line = tag_re.sub('', raw_line).strip()
-                    if clean_line and clean_line not in text_block:
-                        text_block.append(clean_line)
+                    cue_lines.append(raw_line)
                     i += 1
 
-                if text_block:
-                    full_text = ' '.join(text_block)
-                    if full_text not in seen_texts and len(full_text) > 1:
-                        seen_texts.add(full_text)
-                        segments.append({
-                            "start": round(start_sec, 2),
-                            "end": round(end_sec, 2),
-                            "text": full_text
-                        })
+                # Na legenda WebVTT do YouTube, a última linha do bloco é a fala ativa do timestamp
+                target_line = cue_lines[-1] if cue_lines else ""
+                clean_text = tag_re.sub('', target_line).strip()
+
+                if clean_text and clean_text not in seen_texts and len(clean_text) > 1:
+                    seen_texts.add(clean_text)
+                    segments.append({
+                        "start": round(start_sec, 2),
+                        "end": round(end_sec, 2),
+                        "text": clean_text
+                    })
             else:
                 i += 1
 

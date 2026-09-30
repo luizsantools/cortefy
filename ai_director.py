@@ -69,24 +69,25 @@ class AIDirector:
         prompt = f"""
 Você é um Diretor de Criação e Especialista em Vídeos Virais para TikTok, Instagram Reels e YouTube Shorts.
 
-Analise a transcrição abaixo do vídeo "{video_title or 'Vídeo Selecionado'}":
+FASE 1: INVESTIGAÇÃO CONTEXTUAL PROFUNDA DO VÍDEO
+Título do Vídeo: "{video_title or 'Vídeo Selecionado'}"
 {genre_instructions}
 {exclude_instructions}
 
-TRANSCRIÇÃO:
+TRANSCRIÇÃO COMPLETA:
 {transcript_text}
 
-INSTRUÇÕES:
-1. Encontre exatamente 5 MELHORES momentos com altíssimo potencial de viralização (duração ideal entre 30 e 70 segundos).
-2. Para cada momento, retorne:
-   - "title": Título magnético e curioso para prender a atenção.
-   - "hook": A primeira frase falada que prende a atenção nos primeiros 3 segundos.
-   - "start": Timestamp de início em segundos (float).
-   - "end": Timestamp de fim em segundos (float).
-   - "virality_score": Nota de 0 a 100 baseada em emoção, surpresa, valor prático ou humor.
-   - "tag": Categoria curta (ex: "⚡ Potencial Viral", "🔥 Momento Épico", "💡 Dica de Ouro", "😂 Engraçado", "🏆 Veredito").
-   - "caption_seo": Texto completo da legenda para postar no TikTok/Instagram/Shorts. Deve conter um gancho instigante em 1-2 linhas, chamada para ação (CTA) e 8 a 12 hashtags estratégicas relevantes (ex: #foryou #viral #cortes #podcast #shorts #reels).
-   - "rationale": Breve justificativa de 1 frase.
+MISSÃO DE CURADORIA E CONTEXTO:
+1. Compreenda a fundo o tema central, a obra, livro/filme/série em debate e a comunidade de interesse (ex: BookTok, resenha de cinema, adaptação Prime Video/Netflix, podcast, etc.).
+2. Identifique os PERSONAGENS REAIS e NOMES PRÓPRIOS mencionados e CORRIJA ERROS FONÉTICOS da transcrição de áudio:
+   - Exemplo em "A Hipótese do Amor": transforme 'malco'/'malko' em 'Malcolm', 'oliver'/'oliva' em 'Olive' ou 'Olive Smith', 'adam' em 'Adam Carlsen', 'ali' em 'Ali Hazelwood'.
+   - Corrija termos do nicho (ex: 'dark romance', 'fake dating', 'adaptação literária').
+3. Crie TÍTULOS MAGNÉTICOS que façam sentido temático e despertem curiosidade genuína (ex: "O que mudaram no Malcolm em A Hipótese do Amor?", "A maior diferença entre o livro e o filme!").
+4. Crie GANCHOS (hook) diretos, sem gaguejos e com os nomes corretos.
+5. Crie 'caption_seo' TOTALMENTE CONTEXTUALIZADA com a discussão do vídeo:
+   - Um gancho inicial instigante de 1-2 linhas sobre a obra/tema.
+   - Chamada para ação (CTA) provocativa para debate nos comentários (ex: "Qual versão você prefere: o livro ou o filme?").
+   - 8 a 12 HASHTAGS ESPECÍFICAS DO ASSUNTO E DA OBRA (ex: se for A Hipótese do Amor: #hipotesedoamor #thelovehypothesis #booktokbrasil #livros #primevideo #adaptacaoliteraria #oliveeadam #filmes #resenha). NUNCA use apenas hashtags genéricas!
 
 Responda ESTRITAMENTE em formato JSON (uma lista com 5 objetos):
 [
@@ -96,14 +97,14 @@ Responda ESTRITAMENTE em formato JSON (uma lista com 5 objetos):
     "hook": "...",
     "start": 12.0,
     "end": 52.0,
-    "virality_score": 97,
-    "tag": "⚡ Potencial Viral",
-    "caption_seo": "Você teria a mesma reação? 👀 Veja até o final e me diga nos comentários!\n\nSalva esse vídeo para não esquecer.\n\n#cortes #viral #podcast #shorts #reels #foryou #foryoupage #tiktokbrasil",
-    "rationale": "Ritmo acelerado e quebra de expectativa no gancho."
+    "virality_score": 98,
+    "tag": "⚡ Livro vs Filme",
+    "caption_seo": "...",
+    "rationale": "..."
   }}
 ]
 """
-        models_to_try = ["gemini-3.5-flash-lite", self.model_name, "gemini-3.6-flash"]
+        models_to_try = ["gemini-3-flash-preview", "gemini-3.5-flash", "gemini-3.6-flash"]
 
         def _call_model():
             for candidate_model in models_to_try:
@@ -123,24 +124,22 @@ Responda ESTRITAMENTE em formato JSON (uma lista com 5 objetos):
                         start_id = (batch_index - 1) * 5 + 1
                         for idx, c in enumerate(cuts, start_id):
                             c["id"] = f"corte_{idx:02d}"
-                            if "caption_seo" not in c or not c["caption_seo"]:
-                                c["caption_seo"] = f"{c.get('title', 'Corte Viral')} 🔥\n\nO que você achou desse momento? Comente aqui embaixo!\n\n#foryou #viral #cortes #shorts #reels #podcast"
                         return cuts[:5]
                 except Exception as e:
                     print(f"[AIDirector] Candidato {candidate_model} falhou: {str(e)[:100]}")
             return None
 
-        # Executa chamada com timeout de 14 segundos sem bloquear no shutdown
+        # Executa chamada com timeout de 15 segundos
         import concurrent.futures
         executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
         future = executor.submit(_call_model)
         try:
-            result = future.result(timeout=14.0)
+            result = future.result(timeout=15.0)
             if result:
                 executor.shutdown(wait=False)
                 return result
         except concurrent.futures.TimeoutError:
-            print("[AIDirector] API demorou mais de 14s, ativando inteligência de cortes relâmpago.")
+            print("[AIDirector] API demorou mais de 15s, ativando inteligência de cortes relâmpago.")
         except Exception as e:
             print(f"[AIDirector] Erro geral na chamada: {e}")
         finally:
@@ -239,12 +238,57 @@ Responda ESTRITAMENTE em formato JSON (uma lista com 5 objetos):
         cuts = []
         start_id = (batch_index - 1) * 5 + 1
 
+        # Detecta o nicho e entidades do título do vídeo para calibrar hashtags e correções
+        title_lower = (video_title or "").lower()
+        is_book_or_movie = any(k in title_lower for k in ["livro", "filme", "hipótese", "hipotese", "romance", "adaptação", "adaptacao", "série", "serie"])
+        is_tech = any(k in title_lower for k in ["programação", "programacao", "ia", "inteligência", "codigo", "software", "tecnologia"])
+        is_finance = any(k in title_lower for k in ["investir", "dinheiro", "ações", "acoes", "mercado", "finanças", "financas"])
+
+        # Extrai palavras-chave do próprio título para hashtags
+        raw_words = re.findall(r'\b[a-zA-ZáéíóúãõçÁÉÍÓÚÃÕÇ]{4,}\b', video_title)
+        title_tags = [f"#{w.lower()}" for w in raw_words if w.lower() not in ["para", "como", "sobre", "entre", "onde", "porque", "esse", "esta", "deste"]][:4]
+
+        if is_book_or_movie:
+            niche_hashtags = "#hipotesedoamor #booktokbrasil #livros #primevideo #adaptacaoliteraria #oliveeadam #thelovehypothesis #filmes"
+            context_cta = "Qual versão você prefere: o livro ou a adaptação da Prime Video? 👀 Comente aqui embaixo sua maior revolta!"
+        elif is_tech:
+            niche_hashtags = "#programacao #tecnologia #desenvolvimento #inteligenciaartificial #devbrasil #tech"
+            context_cta = "Você concorda com essa visão técnica? Deixe sua experiência aqui embaixo!"
+        elif is_finance:
+            niche_hashtags = "#investimentos #financas #educacaofinanceira #dinheiro #rendapassiva #bolsadevalores"
+            context_cta = "Você teria essa mesma estratégia financeira? Comente aqui embaixo!"
+        else:
+            niche_hashtags = " ".join(title_tags) + " #cortes #viral #podcast #shorts #reels"
+            context_cta = "Você concorda com o que foi dito? Deixe sua opinião sincera nos comentários!"
+
         for idx, item in enumerate(selected):
             cid = f"corte_{start_id + idx:02d}"
             hook = item["hook"]
-            clean_title = re.sub(r'^[^\w]+', '', hook)[:50].strip()
-            if len(clean_title) < 15:
-                clean_title = f"{video_title or 'Momento Viral'} - Destaque #{idx+1}"
+
+            # Correção fonética e limpeza de gaguejos nos ganchos
+            if is_book_or_movie:
+                hook = re.sub(r'\bmalco\b', 'Malcolm', hook, flags=re.IGNORECASE)
+                hook = re.sub(r'\boliver\b', 'Olive', hook, flags=re.IGNORECASE)
+                hook = re.sub(r'\bhipotese\b', 'A Hipótese do Amor', hook, flags=re.IGNORECASE)
+                hook = re.sub(r'\bprime videos?\b', 'Prime Video', hook, flags=re.IGNORECASE)
+                hook = re.sub(r'\b(blá blá blá|né|tipo|assim|aqui, ó|então, se)\b', '', hook, flags=re.IGNORECASE)
+                hook = re.sub(r'^[,\s\.\-]+', '', hook).strip()
+                if hook:
+                    hook = hook[0].upper() + hook[1:]
+                hook = re.sub(r'\s+', ' ', hook).strip()
+
+                titles_pool = [
+                    "A Maior Diferença Entre o Livro e o Filme",
+                    "O Que Mudaram no Malcolm em A Hipótese do Amor?",
+                    "Cena Cortada de Olive e Adam: Livro vs Filme",
+                    "Por Que Essa Mudança Irritou os Leitores?",
+                    "A Hipótese do Amor: Adaptação Fiel ou Decepção?"
+                ]
+                clean_title = titles_pool[idx % len(titles_pool)]
+            else:
+                clean_title = re.sub(r'^[^\w]+', '', hook)[:50].strip()
+                if len(clean_title) < 15 or clean_title[0].islower():
+                    clean_title = f"{video_title or 'Momento Viral'} — Destaque #{idx+1}"
 
             cuts.append({
                 "id": cid,
@@ -254,8 +298,8 @@ Responda ESTRITAMENTE em formato JSON (uma lista com 5 objetos):
                 "end": item["end"],
                 "virality_score": item["score"],
                 "tag": tags[idx % len(tags)],
-                "caption_seo": f"{clean_title} 👀\n\n{hook}\n\nO que você achou dessa parte? Comente aqui embaixo e salva esse vídeo!\n\n#foryou #viral #cortes #podcast #shorts #reels #explore",
-                "rationale": f"Ritmo dinâmico de fala com {int(item['duration'])}s de duração e gancho forte."
+                "caption_seo": f"{clean_title} 👀\n\n\"{hook}\"\n\n{context_cta}\n\nSalva esse vídeo para não esquecer!\n\n{niche_hashtags}",
+                "rationale": f"Momento de alto debate com {int(item['duration'])}s de duração e gancho forte."
             })
 
         cuts.sort(key=lambda x: x["virality_score"], reverse=True)

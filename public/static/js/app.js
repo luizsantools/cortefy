@@ -441,10 +441,19 @@ function renderCutsList(cuts, append = false) {
 
         const card = document.createElement("div");
         card.id = `card-cut-${cut.id}`;
-        card.className = "tech-card p-5 flex flex-col justify-between gap-4";
+        card.className = "tech-card p-5 flex flex-col md:flex-row gap-5 items-start";
+
+        const videoSrc = cut.video_url || "";
 
         card.innerHTML = `
-            <div class="space-y-3">
+            <!-- Player 9:16 Embutido -->
+            <div class="relative w-full md:w-52 aspect-[9/16] bg-black rounded-xl overflow-hidden border-[3px] border-black shadow-[4px_4px_0px_#000] shrink-0 self-center md:self-start">
+                <video id="player-cut-${cut.id}" src="${videoSrc}" controls playsinline preload="metadata" class="w-full h-full object-cover"></video>
+                <span class="absolute top-2 left-2 bg-black/85 text-[#FF5C00] text-[10px] font-mono px-2 py-0.5 rounded border border-black font-bold">9:16 VERTICAL</span>
+            </div>
+
+            <!-- Informações, Ganchos, SEO e Botões -->
+            <div class="flex-1 flex flex-col justify-between gap-3 w-full">
                 <!-- Cabeçalho do Card: Selo de Viralidade e Minutagem -->
                 <div class="flex items-center justify-between gap-2 flex-wrap">
                     <span class="${scoreBadgeClass}">
@@ -480,14 +489,19 @@ function renderCutsList(cuts, append = false) {
                     </div>
                     <div class="seo-caption-box font-medium">${escapeHtml(captionText)}</div>
                 </div>
-            </div>
 
-            <!-- Botão de Ação: Criar Vídeo (MP4) -->
-            <div class="pt-3 border-t-2 border-black flex items-center justify-between gap-3">
-                <span class="text-xs text-zinc-700 font-bold">9:16 Vertical • Pronto</span>
-                <button type="button" onclick="renderCut('${cut.id}')" class="btn-neon text-xs py-2.5 px-4 font-black">
-                    <span>🚀 Criar Vídeo (MP4)</span>
-                </button>
+                <!-- Botões de Ação: Baixar MP4 Imediato e Opções -->
+                <div class="pt-3 border-t-2 border-black flex flex-wrap items-center justify-between gap-3">
+                    <span class="text-xs text-zinc-700 font-bold">9:16 Vertical • Pronto</span>
+                    <div class="flex items-center gap-2">
+                        <a href="${videoSrc || '#'}" download="${escapeHtml(cut.title || cut.id)}.mp4" class="btn-neon text-xs py-2.5 px-4 font-black flex items-center gap-1.5 shadow-[2px_2px_0px_#000]">
+                            <span>⬇️ Baixar Vídeo (MP4)</span>
+                        </a>
+                        <button type="button" onclick="renderCut('${cut.id}')" class="btn-secondary text-xs py-2 px-3 font-bold" title="Re-renderizar com legenda animada personalizada">
+                            <span>🎨 Legenda Especial</span>
+                        </button>
+                    </div>
+                </div>
             </div>
         `;
 
@@ -644,14 +658,14 @@ async function renderCut(cutId) {
         }
 
         const data = await res.json();
-        pollRenderTask(data.render_task_id);
+        pollRenderTask(data.render_task_id, cutId);
     } catch (e) {
         showToast(e.message, "error");
         if (renderSection) renderSection.style.display = "none";
     }
 }
 
-function pollRenderTask(renderTaskId) {
+function pollRenderTask(renderTaskId, cutId = null) {
     const poll = setInterval(async () => {
         try {
             const res = await fetch(`/api/task/${renderTaskId}`);
@@ -669,6 +683,21 @@ function pollRenderTask(renderTaskId) {
                 showToast("Vídeo pronto com sucesso!", "success");
                 if (renderSection) renderSection.style.display = "none";
                 incrementMonthlyCounter();
+
+                // Atualiza o player embutido do próprio card
+                if (cutId) {
+                    const cardPlayer = document.getElementById(`player-cut-${cutId}`);
+                    if (cardPlayer) {
+                        cardPlayer.src = task.output_url;
+                        cardPlayer.load();
+                    }
+                    const cardEl = document.getElementById(`card-cut-${cutId}`);
+                    if (cardEl) {
+                        const dlBtn = cardEl.querySelector("a[download]");
+                        if (dlBtn) dlBtn.href = task.output_url;
+                    }
+                }
+
                 openVideoModal(task.output_url, task.filename);
             } else if (task.status === "error") {
                 clearInterval(poll);

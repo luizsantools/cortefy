@@ -88,7 +88,13 @@
             </span>
         </div>
 
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-3">
+            <!-- Informações do Usuário Logado -->
+            <div id="user-header-chip" class="hidden md:flex items-center gap-2 bg-[#F4F3EE] border-2 border-black px-3 py-1.5 rounded-lg text-xs font-bold shadow-[2px_2px_0px_#000]">
+                <span id="user-name-display" class="text-black font-black">Criador Cortefy</span>
+                <span id="user-plan-display" class="badge-blue text-[9px] py-0.5 px-1.5 uppercase font-black">Creator</span>
+            </div>
+
             <!-- Contador Mensal de Cortes -->
             <div class="monthly-badge flex items-center gap-2.5 px-3.5 py-1.5 rounded-full text-xs">
                 <span class="text-white font-bold">🔥</span>
@@ -100,9 +106,9 @@
                 </div>
             </div>
 
-            <button onclick="document.getElementById('input-main-url').focus()" class="btn-secondary text-xs hidden sm:inline-flex">
-                <span>Criar Novo Vídeo</span>
-            </button>
+            <a href="/login" class="btn-secondary text-xs hidden sm:inline-flex" title="Alternar conta ou sair">
+                <span>Sair</span>
+            </a>
         </div>
     </header>
 
@@ -595,8 +601,8 @@
                 <span id="project-title-display" class="badge-zinc truncate max-w-sm"></span>
             </div>
 
-            <!-- Grid de Cortes Injetados via JavaScript -->
-            <div id="cuts-container" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <!-- Grid de Cortes com Player Embutido em Cada Card -->
+            <div id="cuts-container" class="grid grid-cols-1 gap-6">
                 <!-- Preenchido via app.js -->
             </div>
 
@@ -651,6 +657,33 @@
     <!-- Notificações Flutuantes -->
     <div id="toast-container"></div>
 
-    <script src="/static/js/app.js?v=3.0.0"></script>
+    <script src="/static/js/app.js?v=3.1.0"></script>
+    <script>
+        // Carrega dados do usuário logado no cabeçalho
+        fetch('/api/auth/me')
+            .then(function(r) { return r.json(); })
+            .then(function(user) {
+                if (user && user.name) {
+                    var nameEl = document.getElementById('user-name-display');
+                    var planEl = document.getElementById('user-plan-display');
+                    if (nameEl) nameEl.innerText = user.name;
+                    if (planEl) planEl.innerText = (user.plan || 'Free').toUpperCase();
+                }
+            })
+            .catch(function() {});
+
+        // Detecta se veio com parâmetro ?url= da landing page
+        var urlParams = new URLSearchParams(window.location.search);
+        var initialUrl = urlParams.get('url');
+        if (initialUrl) {
+            var inputUrl = document.getElementById('input-main-url');
+            if (inputUrl) {
+                inputUrl.value = initialUrl;
+                setTimeout(function() {
+                    if (window.handleUrlChange) window.handleUrlChange(initialUrl);
+                }, 200);
+            }
+        }
+    </script>
 </body>
 </html>
