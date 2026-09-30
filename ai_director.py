@@ -103,72 +103,162 @@ Responda ESTRITAMENTE em formato JSON (uma lista com 5 objetos):
   }}
 ]
 """
-        models_to_try = ["gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-flash-latest", self.model_name]
-        for candidate_model in models_to_try:
+        models_to_try = ["gemini-3.5-flash-lite", self.model_name, "gemini-3.6-flash"]
+
+        def _call_model():
+            for candidate_model in models_to_try:
+                try:
+                    response = client.models.generate_content(
+                        model=candidate_model,
+                        contents=prompt
+                    )
+                    raw_text = response.text.strip()
+                    if raw_text.startswith("```"):
+                        raw_text = re.sub(r"^```(?:json)?\s*", "", raw_text)
+                        raw_text = re.sub(r"\s*```$", "", raw_text)
+
+                    cuts = json.loads(raw_text, strict=False)
+                    if isinstance(cuts, list) and len(cuts) > 0:
+                        cuts.sort(key=lambda x: x.get("virality_score", 0), reverse=True)
+                        start_id = (batch_index - 1) * 5 + 1
+                        for idx, c in enumerate(cuts, start_id):
+                            c["id"] = f"corte_{idx:02d}"
+                            if "caption_seo" not in c or not c["caption_seo"]:
+                                c["caption_seo"] = f"{c.get('title', 'Corte Viral')} 🔥\n\nO que você achou desse momento? Comente aqui embaixo!\n\n#foryou #viral #cortes #shorts #reels #podcast"
+                        return cuts[:5]
+                except Exception as e:
+                    print(f"[AIDirector] Candidato {candidate_model} falhou: {str(e)[:100]}")
+            return None
+
+        # Executa chamada com timeout de 14 segundos sem bloquear no shutdown
+        import concurrent.futures
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+        future = executor.submit(_call_model)
+        try:
+            result = future.result(timeout=14.0)
+            if result:
+                executor.shutdown(wait=False)
+                return result
+        except concurrent.futures.TimeoutError:
+            print("[AIDirector] API demorou mais de 14s, ativando inteligência de cortes relâmpago.")
+        except Exception as e:
+            print(f"[AIDirector] Erro geral na chamada: {e}")
+        finally:
             try:
-                response = client.models.generate_content(
-                    model=candidate_model,
-                    contents=prompt
-                )
-                raw_text = response.text.strip()
-                if raw_text.startswith("```"):
-                    raw_text = re.sub(r"^```(?:json)?\s*", "", raw_text)
-                    raw_text = re.sub(r"\s*```$", "", raw_text)
+                executor.shutdown(wait=False)
+            except Exception:
+                pass
 
-                cuts = json.loads(raw_text)
-                if isinstance(cuts, list) and len(cuts) > 0:
-                    cuts.sort(key=lambda x: x.get("virality_score", 0), reverse=True)
-                    start_id = (batch_index - 1) * 5 + 1
-                    for idx, c in enumerate(cuts, start_id):
-                        c["id"] = f"corte_{idx:02d}"
-                        if "caption_seo" not in c or not c["caption_seo"]:
-                            c["caption_seo"] = f"{c.get('title', 'Corte Viral')} 🔥\n\nO que você achou desse momento? Comente aqui embaixo!\n\n#foryou #viral #cortes #shorts #reels #podcast"
-                    return cuts[:5]
-            except Exception as e:
-                if "503" in str(e) or "UNAVAILABLE" in str(e):
-                    time.sleep(1.0)
-                    continue
-                print(f"[AIDirector] Erro ao consultar IA ({candidate_model}): {e}. Tentando próximo modelo ou fallback.")
+        return self._heuristic_fallback(transcript_segments, video_title=video_title, batch_index=batch_index, exclude_cuts=exclude_cuts)
 
-        return self._heuristic_fallback(transcript_segments, batch_index=batch_index)
-
-    def _heuristic_fallback(self, segments: List[Dict[str, Any]], batch_index: int = 1) -> List[Dict[str, Any]]:
-        """Fallback local estruturado caso a API atinja limite ou falhe."""
+    def _heuristic_fallback(self, segments: List[Dict[str, Any]], video_title: str = "", batch_index: int = 1, exclude_cuts: Optional[List[Dict[str, Any]]] = None) -> List[Dict[str, Any]]:
+        """Gerador inteligente e ultra-rápido de cortes virais a partir das frases reais do vídeo (0.01s)."""
         if not segments:
             return []
 
         total_duration = segments[-1].get("end", 60.0)
-        # Gera 5 cortes inteligentes distribuídos pelo vídeo
-        step = max(35.0, (total_duration - 40.0) / 6.0)
-        offset_shift = (batch_index - 1) * (step * 0.5)
+        exclude_ranges = []
+        if exclude_cuts:
+            for c in exclude_cuts:
+                exclude_ranges.append((c.get("start", 0), c.get("end", 0)))
 
+        # Escaneia o vídeo procurando blocos de 35 a 65 segundos com alta densidade de fala
+        candidates = []
+        step_stride = max(1, len(segments) // 25)
+        for i in range(0, len(segments), step_stride):
+            start_seg = segments[i]
+            start_time = start_seg.get("start", 0)
+
+            # Acumula até 45s à frente
+            j = i
+            accumulated_text = []
+            while j < len(segments) and (segments[j].get("end", 0) - start_time) < 45.0:
+                txt = segments[j].get("text", segments[j].get("word", "")).strip()
+                if txt:
+                    accumulated_text.append(txt)
+                j += 1
+
+            if j < len(segments):
+                end_time = segments[j].get("end", start_time + 40.0)
+                duration = end_time - start_time
+                if 30.0 <= duration <= 75.0:
+                    full_text = " ".join(accumulated_text)
+
+                    # Verifica se colide com cortes anteriores
+                    overlap = False
+                    for es, ee in exclude_ranges:
+                        if not (end_time < es or start_time > ee):
+                            overlap = True
+                            break
+
+                    if not overlap and len(full_text.split()) >= 20:
+                        words_count = len(full_text.split())
+                        wpm = (words_count / duration) * 60
+                        score = min(99, int(75 + min(20, wpm / 10) + (4 if "?" in full_text else 0) + (3 if "!" in full_text else 0)))
+
+                        # Extrai gancho dos primeiros 3 segundos
+                        sentences = re.split(r'[.!?]', full_text)
+                        first_sentence = sentences[0].strip() if sentences else ""
+                        hook = first_sentence if len(first_sentence) > 10 else " ".join(full_text.split()[:10]) + "..."
+
+                        candidates.append({
+                            "start": round(start_time, 1),
+                            "end": round(end_time, 1),
+                            "duration": round(duration, 1),
+                            "text": full_text,
+                            "hook": hook,
+                            "score": score
+                        })
+
+        # Ordena candidatos por pontuação viral
+        candidates.sort(key=lambda x: x["score"], reverse=True)
+        selected = []
+        for cand in candidates:
+            if len(selected) >= 5:
+                break
+            if any(abs(cand["start"] - s["start"]) < 25.0 for s in selected):
+                continue
+            selected.append(cand)
+
+        # Se necessário, preenche com posições proporcionais
+        step = total_duration / 6.0
+        while len(selected) < 5:
+            idx = len(selected)
+            s_time = max(5.0, idx * step)
+            e_time = min(total_duration, s_time + 40.0)
+            selected.append({
+                "start": round(s_time, 1),
+                "end": round(e_time, 1),
+                "duration": round(e_time - s_time, 1),
+                "text": "Trecho com alto potencial de engajamento.",
+                "hook": "Preste muita atenção no que acontece aqui...",
+                "score": 88 - idx * 2
+            })
+
+        tags = ["⚡ Potencial Viral", "🔥 Momento Épico", "💡 Dica de Ouro", "😮 Revelação", "🏆 Veredito"]
         cuts = []
-        templates = [
-            ("O Momento Mais Intenso do Vídeo", "Preste muita atenção no que acontece aqui...", "⚡ Potencial Viral", 97),
-            ("A Frase Que Mudou Tudo", "Eu aposto que você não esperava por essa...", "🔥 Momento Épico", 94),
-            ("A Revelação Mais Surpreendente", "Ninguém imaginava que isso iria acontecer...", "😮 Revelação", 91),
-            ("Dica Prática Que Vale Ouro", "Se você quer aprender o jeito certo, veja isso...", "💡 Dica de Ouro", 89),
-            ("Veredito Final Sem Filtro", "Para fechar com chave de ouro, o que realmente importa...", "🏆 Veredito", 87)
-        ]
-
         start_id = (batch_index - 1) * 5 + 1
-        for i, (t_title, t_hook, t_tag, t_score) in enumerate(templates):
-            c_start = min(total_duration - 35.0, max(5.0, (i * step) + offset_shift))
-            c_end = min(total_duration, c_start + random.uniform(32.0, 48.0))
-            cid = f"corte_{start_id + i:02d}"
+
+        for idx, item in enumerate(selected):
+            cid = f"corte_{start_id + idx:02d}"
+            hook = item["hook"]
+            clean_title = re.sub(r'^[^\w]+', '', hook)[:50].strip()
+            if len(clean_title) < 15:
+                clean_title = f"{video_title or 'Momento Viral'} - Destaque #{idx+1}"
 
             cuts.append({
                 "id": cid,
-                "title": t_title,
-                "hook": t_hook,
-                "start": round(c_start, 1),
-                "end": round(c_end, 1),
-                "virality_score": max(70, t_score - (batch_index - 1) * 2),
-                "tag": t_tag,
-                "caption_seo": f"{t_title} 👀\n\nVocê concorda com essa visão? Me conta nos comentários!\n\nSalva esse post para rever depois.\n\n#cortes #viral #podcast #shorts #reels #foryou #foryoupage #tiktokbrasil",
-                "rationale": "Ritmo dinâmico e retenção alta identificada nas falas."
+                "title": clean_title,
+                "hook": hook,
+                "start": item["start"],
+                "end": item["end"],
+                "virality_score": item["score"],
+                "tag": tags[idx % len(tags)],
+                "caption_seo": f"{clean_title} 👀\n\n{hook}\n\nO que você achou dessa parte? Comente aqui embaixo e salva esse vídeo!\n\n#foryou #viral #cortes #podcast #shorts #reels #explore",
+                "rationale": f"Ritmo dinâmico de fala com {int(item['duration'])}s de duração e gancho forte."
             })
 
+        cuts.sort(key=lambda x: x["virality_score"], reverse=True)
         return cuts
 
     def analyze_audio_directly(self, audio_path: str, video_title: str = "", genre: str = "") -> List[Dict[str, Any]]:

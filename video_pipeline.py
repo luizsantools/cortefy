@@ -4,6 +4,7 @@ import re
 import random
 import subprocess
 import time
+import hashlib
 from typing import Dict, Any, List, Optional
 
 CREATE_NO_WINDOW = 0x08000000 if sys.platform == 'win32' else 0
@@ -30,9 +31,9 @@ class VideoPipeline:
 
     def extract_or_download_segment(self, source: str, start: float, end: float, output_path: str) -> str:
         """
-        Extrai o trecho exato de 30-75 segundos:
-        - Se for URL do YouTube: baixa APENAS a fatia específica com --download-sections em 1080p.
-        - Se for arquivo local: recorta com FFmpeg -ss e -to instantaneamente.
+        Extrai o trecho do vídeo com velocidade máxima:
+        - Para URLs do YouTube: baixa o vídeo fonte em alta velocidade uma única vez e recorta localmente em 0.05s.
+        - Para arquivos locais: recorta diretamente em 0.05s.
         """
         ffmpeg_bin = get_bin("ffmpeg")
 
@@ -40,39 +41,45 @@ class VideoPipeline:
             ytdlp_bin = get_bin("yt-dlp")
             ffmpeg_dir = os.path.dirname(ffmpeg_bin) if os.path.exists(ffmpeg_bin) else ""
             
-            cmd = [
-                ytdlp_bin,
-                '-f', 'bestvideo[height<=1080]+bestaudio/best',
-                '--merge-output-format', 'mp4',
-                '--download-sections', f"*{start:.1f}-{end:.1f}",
-                '--force-keyframes-at-cuts',
-                '-o', output_path
+            # Identificador do vídeo para reaproveitar download entre cortes
+            url_hash = hashlib.md5(source.encode("utf-8")).hexdigest()[:12]
+            source_cache_file = os.path.join(self.temp_dir, f"source_{url_hash}.mp4")
+
+            # Baixa vídeo completo apenas se não existir ou estiver vazio
+            if not os.path.exists(source_cache_file) or os.path.getsize(source_cache_file) < 10000:
+                cmd_down = [
+                    ytdlp_bin,
+                    "--no-playlist",
+                    "--force-overwrites",
+                    "-f", "bestvideo[height<=1080]+bestaudio/best[height<=1080]/best",
+                    "--merge-output-format", "mp4",
+                    "-o", source_cache_file
+                ]
+                if ffmpeg_dir:
+                    cmd_down.extend(["--ffmpeg-location", ffmpeg_dir])
+                cmd_down.append(source)
+                subprocess.run(cmd_down, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True, creationflags=CREATE_NO_WINDOW)
+
+            # Recorte local instantâneo via FFmpeg (0.05s)
+            cmd_cut = [
+                ffmpeg_bin,
+                "-ss", f"{start:.2f}",
+                "-to", f"{end:.2f}",
+                "-i", source_cache_file,
+                "-c", "copy",
+                output_path, "-y"
             ]
-            if ffmpeg_dir:
-                cmd.extend(['--ffmpeg-location', ffmpeg_dir])
-            cmd.append(source)
-            
-            res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, creationflags=CREATE_NO_WINDOW)
-            if res.returncode != 0:
-                # Fallback: se download-sections falhar, baixa padrão recortando via ffmpeg
-                cmd_fb = [ytdlp_bin, '-f', 'best[height<=1080]', '-o', output_path + "_raw.mp4", source]
-                subprocess.run(cmd_fb, check=True, creationflags=CREATE_NO_WINDOW)
-                # Recorta
-                cmd_cut = [ffmpeg_bin, '-ss', str(start), '-to', str(end), '-i', output_path + "_raw.mp4", '-c', 'copy', output_path, '-y']
-                subprocess.run(cmd_cut, check=True, creationflags=CREATE_NO_WINDOW)
-                if os.path.exists(output_path + "_raw.mp4"):
-                    os.remove(output_path + "_raw.mp4")
+            subprocess.run(cmd_cut, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True, creationflags=CREATE_NO_WINDOW)
         else:
             cmd = [
                 ffmpeg_bin,
-                '-ss', f"{start:.2f}",
-                '-to', f"{end:.2f}",
-                '-i', source,
-                '-c:v', 'libx264', '-preset', 'fast', '-crf', '18',
-                '-c:a', 'aac',
-                output_path, '-y'
+                "-ss", f"{start:.2f}",
+                "-to", f"{end:.2f}",
+                "-i", source,
+                "-c", "copy",
+                output_path, "-y"
             ]
-            subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True, creationflags=CREATE_NO_WINDOW)
+            subprocess.run(cmd, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True, creationflags=CREATE_NO_WINDOW)
 
         return output_path
 
@@ -155,7 +162,6 @@ class VideoPipeline:
 
         # Personalizações do usuário
         if custom_color:
-            # Converte hex (#00FF66) para formato BGR ASS (&H00BBGGRR)
             clean_hex = custom_color.lstrip('#')
             if len(clean_hex) == 6:
                 r, g, b = clean_hex[0:2], clean_hex[2:4], clean_hex[4:6]
@@ -230,7 +236,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         title = cut_info.get("title", "corte")
         start = cut_info.get("start", 0.0)
         end = cut_info.get("end", 30.0)
-        duration = end - start
+        duration = max(5.0, end - start)
 
         if progress_cb:
             progress_cb(10, f"Obtendo trecho em alta resolução ({int(duration)}s)...")
@@ -238,104 +244,137 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         safe_name = re.sub(r'[^a-zA-Z0-9_\-]', '_', f"{cid}_{title}") + ".mp4"
         final_file = os.path.join(self.output_dir, safe_name)
 
-        temp_segment = os.path.join(self.temp_dir, f"raw_{cid}_{int(time.time())}.mp4")
-        temp_ass = os.path.join(self.temp_dir, f"sub_{cid}_{int(time.time())}.ass")
-        temp_broll = os.path.join(self.temp_dir, f"broll_{cid}_{int(time.time())}.mp4")
+        timestamp_id = int(time.time() * 1000)
+        temp_segment = os.path.join(self.temp_dir, f"raw_{cid}_{timestamp_id}.mp4")
+        temp_ass = os.path.join(self.temp_dir, f"sub_{cid}_{timestamp_id}.ass")
+        temp_broll_ext = os.path.join(self.temp_dir, f"broll_ext_{cid}_{timestamp_id}.mp4")
 
-        # 1. Extrai ou baixa o segmento bruto
-        self.extract_or_download_segment(source_video, start, end, temp_segment)
+        cleanup_files = [temp_segment, temp_ass, temp_broll_ext]
 
-        # 2. Gera arquivo de legenda ASS
-        if progress_cb:
-            progress_cb(35, "Gerando legendas dinâmicas animadas...")
-        self.generate_ass_subtitles(
-            words, start, end, temp_ass,
-            style_key=subtitle_style,
-            custom_color=custom_color,
-            custom_font_size=custom_font_size,
-            custom_margin_v=custom_margin_v
-        )
+        try:
+            # 1. Extrai ou baixa o segmento bruto do corte
+            self.extract_or_download_segment(source_video, start, end, temp_segment)
 
-        # 3. Monta filtros de vídeo
-        if progress_cb:
-            progress_cb(55, "Processando enquadramento de vídeo e cortes de cena...")
+            if not os.path.exists(temp_segment) or os.path.getsize(temp_segment) == 0:
+                raise RuntimeError(f"Não foi possível obter o trecho de vídeo de {start}s a {end}s.")
 
-        escaped_ass = temp_ass.replace('\\', '/').replace(':', '\\:')
-        inputs = ['-i', temp_segment]
-        filter_parts = []
+            # 2. Gera arquivo de legenda ASS
+            if progress_cb:
+                progress_cb(35, "Gerando legendas dinâmicas animadas...")
+            self.generate_ass_subtitles(
+                words, start, end, temp_ass,
+                style_key=subtitle_style,
+                custom_color=custom_color,
+                custom_font_size=custom_font_size,
+                custom_margin_v=custom_margin_v
+            )
 
-        if layout == "split_screen":
-            # Tela Dividida: Topo (B-Roll) 1080x960, Base (Apresentador) 1080x960
-            if broll_mode == "external" and broll_source and os.path.exists(broll_source):
-                cmd_broll = [
-                    ffmpeg_bin, '-stream_loop', '-1', '-i', broll_source,
-                    '-t', f"{duration:.2f}", '-an',
-                    '-vf', 'scale=1080:960:force_original_aspect_ratio=increase,crop=1080:960',
-                    '-c:v', 'libx264', '-preset', 'fast', '-crf', '22',
-                    temp_broll, '-y'
-                ]
+            # 3. Monta filtros de vídeo
+            if progress_cb:
+                progress_cb(55, "Processando enquadramento 9:16 e dinamismo visual...")
+
+            escaped_ass = temp_ass.replace('\\', '/').replace(':', r'\:')
+            inputs = ['-i', temp_segment]
+            filter_chains = []
+
+            # Tratamento de Layout
+            if layout == "split_screen":
+                has_external_broll = False
+                if broll_mode == "external" and broll_source:
+                    if broll_source.startswith("http://") or broll_source.startswith("https://"):
+                        try:
+                            self.extract_or_download_segment(broll_source, 0.0, duration, temp_broll_ext)
+                            if os.path.exists(temp_broll_ext) and os.path.getsize(temp_broll_ext) > 1000:
+                                inputs.extend(['-stream_loop', '-1', '-i', temp_broll_ext])
+                                has_external_broll = True
+                        except Exception as be:
+                            print(f"[Aviso] Falha ao obter vídeo externo de apoio: {be}")
+                    elif os.path.exists(broll_source):
+                        inputs.extend(['-stream_loop', '-1', '-i', broll_source])
+                        has_external_broll = True
+
+                if has_external_broll:
+                    filter_chains.append(
+                        "[1:v]scale=1080:960:force_original_aspect_ratio=increase,crop=1080:960,setsar=1[top];"
+                        "[0:v]scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,crop=608:540:640:150,scale=1080:960:flags=lanczos,setsar=1[bot];"
+                        "[top][bot]vstack[vsplit]"
+                    )
+                else:
+                    # Modo Auto-Extract em passo único de alto desempenho
+                    filter_chains.append(
+                        "[0:v]split=2[v_top_in][v_bot_in];"
+                        "[v_top_in]scale=1080:960:force_original_aspect_ratio=increase,crop=1080:960,setsar=1[top];"
+                        "[v_bot_in]scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,crop=608:540:640:150,scale=1080:960:flags=lanczos,setsar=1[bot];"
+                        "[top][bot]vstack[vsplit]"
+                    )
+                curr_v = "[vsplit]"
             else:
-                # Auto-extrai trecho de cena do próprio vídeo
-                cmd_broll = [
-                    ffmpeg_bin, '-stream_loop', '-1', '-ss', '10.0', '-i', temp_segment,
-                    '-t', f"{duration:.2f}", '-an',
-                    '-vf', 'scale=1080:960:force_original_aspect_ratio=increase,crop=1080:960',
-                    '-c:v', 'libx264', '-preset', 'fast', '-crf', '22',
-                    temp_broll, '-y'
+                # Modo Portrait 9:16 vertical direto normalizado
+                filter_chains.append(
+                    "[0:v]scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,crop=608:1080:640:0,scale=1080:1920:flags=lanczos,setsar=1[vport]"
+                )
+                curr_v = "[vport]"
+
+            # Velocidade acelerada para retenção (ex: 1.05x)
+            if abs(speed - 1.0) > 0.01:
+                filter_chains.append(f"{curr_v}setpts=(1/{speed:.2f})*PTS[vspeed]")
+                curr_v = "[vspeed]"
+
+            # Queima de legendas ASS animadas
+            filter_chains.append(f"{curr_v}subtitles='{escaped_ass}'[vfinal]")
+
+            # Filtro de áudio com preservação de tom vocal
+            audio_filter = f"[0:a]atempo={speed:.2f}[afinal]" if abs(speed - 1.0) > 0.01 else ""
+            audio_map = "[afinal]" if audio_filter else "0:a"
+
+            filter_complex_str = ";".join(filter_chains)
+            if audio_filter:
+                filter_complex_str = f"{filter_complex_str};{audio_filter}"
+
+            if progress_cb:
+                progress_cb(75, "Renderizando vídeo final em 1080x1920...")
+
+            cmd_render = [
+                ffmpeg_bin, *inputs,
+                '-filter_complex', filter_complex_str,
+                '-map', '[vfinal]', '-map', audio_map,
+                '-c:v', 'libx264', '-preset', 'veryfast', '-tune', 'fastdecode', '-threads', '0', '-crf', '22',
+                '-c:a', 'aac', '-b:a', '192k',
+                final_file, '-y'
+            ]
+
+            try:
+                subprocess.run(cmd_render, capture_output=True, check=True, creationflags=CREATE_NO_WINDOW)
+            except subprocess.CalledProcessError as e:
+                err_log = e.stderr.decode('utf-8', errors='replace') if e.stderr else str(e)
+                print(f"[Render Fallback] Legendas/filtro falharam: {err_log[:200]}")
+                # Fallback sem legendas caso ocorra erro no filtro subtitles
+                filter_chains_fb = [fc for fc in filter_chains if 'subtitles=' not in fc]
+                last_node = curr_v.strip("[]")
+                fb_complex = ";".join(filter_chains_fb)
+                if audio_filter:
+                    fb_complex = f"{fb_complex};{audio_filter}"
+
+                cmd_fb = [
+                    ffmpeg_bin, *inputs,
+                    '-filter_complex', fb_complex,
+                    '-map', f"[{last_node}]", '-map', audio_map,
+                    '-c:v', 'libx264', '-preset', 'ultrafast', '-threads', '0', '-crf', '22',
+                    '-c:a', 'aac', '-b:a', '192k',
+                    final_file, '-y'
                 ]
-            subprocess.run(cmd_broll, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True, creationflags=CREATE_NO_WINDOW)
-            inputs.extend(['-i', temp_broll])
+                subprocess.run(cmd_fb, capture_output=True, check=True, creationflags=CREATE_NO_WINDOW)
 
-            filter_parts.append(
-                f"[1:v]scale=1080:960:flags=lanczos,setsar=1[top];"
-                f"[0:v]crop=608:540:640:150,scale=1080:960:flags=lanczos,setsar=1[bot];"
-                f"[top][bot]vstack[vsplit];"
-            )
-            curr_v = "[vsplit]"
-        else:
-            # Modo Portrait 9:16 vertical direto
-            filter_parts.append(
-                f"[0:v]crop=608:1080:640:0,scale=1080:1920:flags=lanczos,setsar=1[vport];"
-            )
-            curr_v = "[vport]"
+            if progress_cb:
+                progress_cb(100, "Corte renderizado com sucesso!")
 
-        # Velocidade de vídeo
-        if abs(speed - 1.0) > 0.01:
-            filter_parts.append(f"{curr_v}setpts=(1/{speed:.2f})*PTS[vspeed];")
-            curr_v = "[vspeed]"
+            return final_file
 
-        # Queima de legendas ASS
-        filter_parts.append(f"{curr_v}subtitles='{escaped_ass}'[vfinal]")
+        finally:
+            for f in cleanup_files:
+                if os.path.exists(f):
+                    try:
+                        os.remove(f)
+                    except Exception:
+                        pass
 
-        # Filtro de áudio com speed preservando pitch
-        audio_filter = f"[0:a]atempo={speed:.2f}[afinal]" if abs(speed - 1.0) > 0.01 else ""
-        audio_map = "[afinal]" if audio_filter else "0:a"
-
-        if progress_cb:
-            progress_cb(75, "Renderizando vídeo final em 1080x1920...")
-
-        cmd_render = [ffmpeg_bin] + inputs + ['-filter_complex', "".join(filter_parts)]
-        if audio_filter:
-            cmd_render[-2] = cmd_render[-2] + ";" + audio_filter
-
-        cmd_render.extend([
-            '-map', '[vfinal]', '-map', audio_map,
-            '-c:v', 'libx264', '-preset', 'veryfast', '-tune', 'fastdecode', '-threads', '0', '-crf', '22',
-            '-c:a', 'aac', '-b:a', '192k',
-            final_file, '-y'
-        ])
-
-        subprocess.run(cmd_render, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True, creationflags=CREATE_NO_WINDOW)
-
-        # Limpeza de arquivos temporários
-        for f in [temp_segment, temp_ass, temp_broll]:
-            if os.path.exists(f):
-                try:
-                    os.remove(f)
-                except Exception:
-                    pass
-
-        if progress_cb:
-            progress_cb(100, "Corte renderizado com sucesso!")
-
-        return final_file

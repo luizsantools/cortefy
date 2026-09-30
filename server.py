@@ -324,9 +324,11 @@ async def start_render(payload: Dict[str, Any]):
             TASKS[render_task_id]["filename"] = fname
             TASKS[render_task_id]["output_url"] = f"/outputs/{fname}"
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             TASKS[render_task_id]["status"] = "error"
             TASKS[render_task_id]["error"] = str(e)
-            TASKS[render_task_id]["message"] = f"Erro ao renderizar: {str(e)[:150]}"
+            TASKS[render_task_id]["message"] = "Não foi possível concluir a renderização do corte. Tente novamente."
 
     threading.Thread(target=render_worker, daemon=True).start()
     return {"render_task_id": render_task_id}

@@ -610,6 +610,9 @@ async function renderCut(cutId) {
     if (renderFill) renderFill.style.width = "10%";
     if (renderStatus) renderStatus.innerText = "Iniciando renderização de vídeo em alta velocidade...";
 
+    const isAutoBroll = document.getElementById("btn-broll-auto")?.classList.contains("tech-card-active") ?? true;
+    const brollUrl = document.getElementById("input-broll-url")?.value?.trim() || "";
+
     try {
         const res = await fetch("/api/project/render", {
             method: "POST",
@@ -618,6 +621,8 @@ async function renderCut(cutId) {
                 project_id: currentProjectId,
                 cut_id: cutId,
                 layout: "split_screen",
+                broll_mode: isAutoBroll ? "auto_extract" : "external",
+                broll_source: brollUrl,
                 subtitle_style: subStyle,
                 custom_color: customColor,
                 custom_font_size: customSize,
@@ -661,7 +666,7 @@ function pollRenderTask(renderTaskId) {
                 openVideoModal(task.output_url, task.filename);
             } else if (task.status === "error") {
                 clearInterval(poll);
-                showToast("Não foi possível gerar o vídeo. Tente novamente.", "error");
+                showToast(task.message || "Não foi possível gerar o vídeo. Tente novamente.", "error");
                 if (renderSection) renderSection.style.display = "none";
             }
         } catch (e) {
