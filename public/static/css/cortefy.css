@@ -313,30 +313,48 @@ body {
 /* Seletor de Estilo de Conteúdo */
 .genre-chip {
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   color: #A1A1AA;
   padding: 8px 14px;
   border-radius: 8px;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   user-select: none;
 }
 
 .genre-chip:hover {
   background: rgba(255, 255, 255, 0.08);
   color: #FFFFFF;
-  border-color: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
 }
 
 .genre-chip-active {
-  background: rgba(0, 255, 102, 0.12) !important;
+  background: rgba(0, 255, 102, 0.15) !important;
   color: #00FF66 !important;
   border-color: #00FF66 !important;
-  box-shadow: 0 0 14px rgba(0, 255, 102, 0.2);
+  box-shadow: 0 0 16px rgba(0, 255, 102, 0.25) !important;
+}
+
+.genre-radio {
+  font-size: 13px;
+  line-height: 1;
+  font-weight: 800;
+  display: inline-block;
+  transition: color 0.15s ease;
+}
+
+.genre-chip-active .genre-radio {
+  color: #00FF66;
+  text-shadow: 0 0 8px rgba(0, 255, 102, 0.6);
+}
+
+.genre-chip:not(.genre-chip-active) .genre-radio {
+  color: #71717A;
 }
 

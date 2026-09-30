@@ -53,19 +53,21 @@ ACTIVE_PROJECTS: Dict[str, Dict[str, Any]] = {}
 async def serve_index():
     index_path = os.path.join(BASE_DIR, "templates", "index.html")
     with open(index_path, "r", encoding="utf-8") as f:
-        return f.read()
+        content = f.read()
+    response = HTMLResponse(content=content)
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 @app.get("/api/health")
 async def health_check():
-    gemini_key_set = bool(os.getenv("GEMINI_API_KEY"))
+    ai_ready = bool(os.getenv("GEMINI_API_KEY"))
     return {
         "status": "online",
-        "service": "Cortefy AI Core",
-        "gemini_model": os.getenv("GEMINI_MODEL", "gemini-3.6-flash"),
-        "gemini_authenticated": gemini_key_set,
-        "engine_version": "2.4.0",
-        "audio_first_ingestion": True,
-        "dual_broll_mode": True,
+        "service": "Cortefy",
+        "ready": ai_ready,
+        "version": "2.7.0",
         "timestamp": time.time()
     }
 

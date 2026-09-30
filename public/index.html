@@ -7,7 +7,53 @@
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
     <!-- Tailwind CDN for rapid utility classes -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="/static/css/cortefy.css">
+    <link rel="stylesheet" href="/static/css/cortefy.css?v=2.7.0">
+    <script>
+        // Seleção de Tipo de Conteúdo resiliente e imediata (executa antes de qualquer render ou clique)
+        window.selectedGenre = 'auto';
+        window.setGenre = function(genre) {
+            window.selectedGenre = genre;
+            var chips = document.querySelectorAll('.genre-chip');
+            chips.forEach(function(chip) {
+                var isMatch = chip.getAttribute('data-genre') === genre || chip.id === 'genre-btn-' + genre;
+                var radio = chip.querySelector('.genre-radio');
+                if (isMatch) {
+                    chip.classList.add('genre-chip-active');
+                    chip.style.backgroundColor = 'rgba(0, 255, 102, 0.15)';
+                    chip.style.borderColor = '#00FF66';
+                    chip.style.color = '#00FF66';
+                    chip.style.boxShadow = '0 0 16px rgba(0, 255, 102, 0.25)';
+                    if (radio) {
+                        radio.textContent = '●';
+                        radio.style.color = '#00FF66';
+                    }
+                } else {
+                    chip.classList.remove('genre-chip-active');
+                    chip.style.backgroundColor = 'rgba(255, 255, 255, 0.04)';
+                    chip.style.borderColor = 'rgba(255, 255, 255, 0.12)';
+                    chip.style.color = '#A1A1AA';
+                    chip.style.boxShadow = 'none';
+                    if (radio) {
+                        radio.textContent = '○';
+                        radio.style.color = '#71717A';
+                    }
+                }
+            });
+            var hidden = document.getElementById('selected-genre-input');
+            if (hidden) hidden.value = genre;
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var chips = document.querySelectorAll('.genre-chip');
+            chips.forEach(function(chip) {
+                chip.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    var g = chip.getAttribute('data-genre');
+                    if (g) window.setGenre(g);
+                });
+            });
+        });
+    </script>
 </head>
 <body class="selection:bg-[#00FF66] selection:text-black">
 
@@ -103,23 +149,29 @@
                 </div>
             </div>
 
-            <!-- Estilo do Conteúdo -->
+            <!-- Tipo de Conteúdo -->
             <div class="space-y-2 pt-1">
-                <label class="block text-xs font-semibold text-zinc-400 tracking-wider">ESTILO DO VÍDEO</label>
+                <label class="block text-xs font-semibold text-zinc-400 tracking-wider">TIPO DE CONTEÚDO (PARA CALIBRAR OS CORTES)</label>
+                <input type="hidden" id="selected-genre-input" value="auto">
                 <div id="genre-container" class="flex flex-wrap gap-2">
-                    <button type="button" onclick="setGenre('auto')" id="genre-btn-auto" class="genre-chip genre-chip-active">
+                    <button type="button" data-genre="auto" onclick="setGenre('auto')" id="genre-btn-auto" class="genre-chip genre-chip-active" style="background-color: rgba(0, 255, 102, 0.15); border-color: #00FF66; color: #00FF66; box-shadow: 0 0 16px rgba(0, 255, 102, 0.25);">
+                        <span class="genre-radio" style="color: #00FF66;">●</span>
                         <span>✨ Automático (Recomendado)</span>
                     </button>
-                    <button type="button" onclick="setGenre('podcast')" id="genre-btn-podcast" class="genre-chip">
+                    <button type="button" data-genre="podcast" onclick="setGenre('podcast')" id="genre-btn-podcast" class="genre-chip">
+                        <span class="genre-radio" style="color: #71717A;">○</span>
                         <span>🎙️ Conversa / Podcast</span>
                     </button>
-                    <button type="button" onclick="setGenre('commentary')" id="genre-btn-commentary" class="genre-chip">
+                    <button type="button" data-genre="commentary" onclick="setGenre('commentary')" id="genre-btn-commentary" class="genre-chip">
+                        <span class="genre-radio" style="color: #71717A;">○</span>
                         <span>💬 Opinião / React</span>
                     </button>
-                    <button type="button" onclick="setGenre('academic')" id="genre-btn-academic" class="genre-chip">
+                    <button type="button" data-genre="academic" onclick="setGenre('academic')" id="genre-btn-academic" class="genre-chip">
+                        <span class="genre-radio" style="color: #71717A;">○</span>
                         <span>📚 Aulas / Dicas</span>
                     </button>
-                    <button type="button" onclick="setGenre('vlog')" id="genre-btn-vlog" class="genre-chip">
+                    <button type="button" data-genre="vlog" onclick="setGenre('vlog')" id="genre-btn-vlog" class="genre-chip">
+                        <span class="genre-radio" style="color: #71717A;">○</span>
                         <span>🎬 Histórias / Vlogs</span>
                     </button>
                 </div>
@@ -303,6 +355,6 @@
     <!-- Notificações Flutuantes -->
     <div id="toast-container"></div>
 
-    <script src="/static/js/app.js"></script>
+    <script src="/static/js/app.js?v=2.7.0"></script>
 </body>
 </html>

@@ -9,10 +9,10 @@ export async function onRequestGet(context) {
         status: "online",
         service: "Cortefy Cloudflare Pages Full-Stack",
         edge_region: request.cf?.colo || "global",
-        gemini_ready: hasGemini,
-        r2_connected: Boolean(env.CORTEFY_MEDIA),
-        d1_connected: Boolean(env.DB),
-        saas_version: "2.5.0",
+        ready: hasGemini,
+        media_storage: Boolean(env.CORTEFY_MEDIA),
+        database_connected: Boolean(env.DB),
+        version: "2.7.0",
         timestamp: Date.now()
     }), {
         headers: {

@@ -52,12 +52,36 @@ async function checkHealth() {
 // Alternar Tipo de Conteúdo (Gênero)
 function setGenre(genre) {
     selectedGenre = genre;
-    document.querySelectorAll(".genre-chip").forEach(el => el.classList.remove("genre-chip-active"));
-    const activeChip = document.getElementById(`genre-btn-${genre}`);
-    if (activeChip) {
-        activeChip.classList.add("genre-chip-active");
-    }
+    window.selectedGenre = genre;
+    document.querySelectorAll(".genre-chip").forEach(el => {
+        const isMatch = el.getAttribute("data-genre") === genre || el.id === `genre-btn-${genre}`;
+        const radio = el.querySelector(".genre-radio");
+        if (isMatch) {
+            el.classList.add("genre-chip-active");
+            el.style.backgroundColor = "rgba(0, 255, 102, 0.15)";
+            el.style.borderColor = "#00FF66";
+            el.style.color = "#00FF66";
+            el.style.boxShadow = "0 0 16px rgba(0, 255, 102, 0.25)";
+            if (radio) {
+                radio.textContent = "●";
+                radio.style.color = "#00FF66";
+            }
+        } else {
+            el.classList.remove("genre-chip-active");
+            el.style.backgroundColor = "rgba(255, 255, 255, 0.04)";
+            el.style.borderColor = "rgba(255, 255, 255, 0.12)";
+            el.style.color = "#A1A1AA";
+            el.style.boxShadow = "none";
+            if (radio) {
+                radio.textContent = "○";
+                radio.style.color = "#71717A";
+            }
+        }
+    });
+    const hidden = document.getElementById("selected-genre-input");
+    if (hidden) hidden.value = genre;
 }
+window.setGenre = setGenre;
 
 // Alternar Vídeo de Apoio
 function setBRollMode(mode) {
@@ -182,16 +206,17 @@ async function startAnalysis() {
     updateProgress(15, "Lendo o vídeo em alta velocidade...");
 
     try {
-        const res = await fetch("/api/project/analyze", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                source_url: url,
-                broll_mode: isAutoBroll ? "auto_extract" : "external",
-                broll_url: brollUrl,
-                genre: selectedGenre
-            })
-        });
+            const activeGenre = window.selectedGenre || document.getElementById("selected-genre-input")?.value || selectedGenre || "auto";
+            const res = await fetch("/api/project/analyze", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    source_url: url,
+                    broll_mode: isAutoBroll ? "auto_extract" : "external",
+                    broll_url: brollUrl,
+                    genre: activeGenre
+                })
+            });
 
         if (!res.ok) {
             const err = await res.json();
@@ -438,4 +463,11 @@ function closeVideoModal() {
 document.addEventListener("DOMContentLoaded", () => {
     checkHealth();
     initUrlListener();
+    document.querySelectorAll(".genre-chip").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            e.preventDefault();
+            const g = btn.getAttribute("data-genre");
+            if (g) setGenre(g);
+        });
+    });
 });
