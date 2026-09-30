@@ -36,11 +36,11 @@ async function checkHealth() {
         const res = await fetch("/api/health");
         const data = await res.json();
         if (data.status === "online") {
-            const telemetryEl = document.getElementById("telemetry-gemini");
-            if (telemetryEl) {
-                telemetryEl.innerHTML = `
+            const statusEl = document.getElementById("status-system");
+            if (statusEl) {
+                statusEl.innerHTML = `
                     <span class="radar-dot"></span>
-                    <span>Inteligência Artificial Pronta</span>
+                    <span>Pronto para Criar</span>
                 `;
             }
         }
@@ -76,7 +76,7 @@ function setBRollMode(mode) {
     }
 }
 
-// Detecção Automática do Link e Prévia Instantânea (Estilo Real Oficial)
+// Detecção Automática do Link e Prévia Instantânea
 function initUrlListener() {
     const input = document.getElementById("input-main-url");
     if (!input) return;
@@ -252,7 +252,7 @@ function pollTask(taskId) {
     }, 1000);
 }
 
-// Exibir Cards de Momentos com Selos de Potencial Viral (Estilo Real Oficial / OpusClip)
+// Exibir Cards de Momentos com Selos de Potencial
 function renderCuts(cuts, title) {
     const container = document.getElementById("cuts-container");
     container.innerHTML = "";

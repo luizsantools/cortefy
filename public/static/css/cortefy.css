@@ -46,7 +46,7 @@ body {
   z-index: 50;
 }
 
-/* Cards & Panels (Estilo Vercel/Resend) */
+/* Cartões e Painéis */
 .tech-card {
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
