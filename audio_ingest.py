@@ -33,14 +33,10 @@ class AudioIngestEngine:
             self._whisper_model = whisper.load_model("base")
         return self._whisper_model
 
-    def ingest_youtube_audio(self, youtube_url: str, progress_callback=None) -> Dict[str, Any]:
-        """
-        Técnica Audio-First:
-        Baixa APENAS a trilha de áudio compactada (M4A/Opus) em altíssima velocidade (poucos segundos),
-        sem baixar os gigabytes pesados de vídeo.
-        """
+    def download_youtube_audio(self, youtube_url: str, progress_callback=None) -> tuple[str, str]:
+        """Baixa apenas a trilha de áudio em segundos para processamento rápido."""
         if progress_callback:
-            progress_callback(10, "Iniciando download ultra-rápido de áudio leve...")
+            progress_callback(15, "Lendo o vídeo em alta velocidade...")
 
         ytdlp_bin = get_bin("yt-dlp")
         ffmpeg_bin = get_bin("ffmpeg")
@@ -66,9 +62,8 @@ class AudioIngestEngine:
         )
         if res.returncode != 0:
             err = res.stderr.decode('utf-8', errors='replace').strip()
-            raise RuntimeError(f"Erro ao obter áudio do YouTube: {err[:300]}")
+            raise RuntimeError(f"Não foi possível obter o vídeo: {err[:300]}")
 
-        # Pega metadados do vídeo (título, autor)
         title = "Vídeo do YouTube"
         try:
             cmd_meta = [ytdlp_bin, '--get-title', youtube_url]
@@ -79,15 +74,18 @@ class AudioIngestEngine:
             pass
 
         if progress_callback:
-            progress_callback(40, f"Áudio leve obtido com sucesso! Analisando: {title[:40]}...")
+            progress_callback(35, "Vídeo carregado! Ouvindo o que foi falado...")
 
-        # Transcrição com Whisper
+        return audio_output, title
+
+    def ingest_youtube_audio(self, youtube_url: str, progress_callback=None) -> Dict[str, Any]:
+        audio_output, title = self.download_youtube_audio(youtube_url, progress_callback=progress_callback)
         return self.transcribe_audio_file(audio_output, video_title=title, progress_callback=progress_callback)
 
     def extract_audio_from_local_file(self, video_path: str, progress_callback=None) -> Dict[str, Any]:
-        """Extrai áudio WAV 16kHz do arquivo de vídeo local."""
+        """Extrai áudio WAV do arquivo local."""
         if progress_callback:
-            progress_callback(15, "Extraindo áudio do arquivo local...")
+            progress_callback(15, "Carregando arquivo de vídeo...")
 
         ffmpeg_bin = get_bin("ffmpeg")
         audio_output = os.path.join(self.temp_dir, f"local_audio_{int(time.time())}.wav")
@@ -103,31 +101,37 @@ class AudioIngestEngine:
         return self.transcribe_audio_file(audio_output, video_title=title, progress_callback=progress_callback)
 
     def transcribe_audio_file(self, audio_file: str, video_title: str = "", progress_callback=None) -> Dict[str, Any]:
-        """Transcreve o arquivo de áudio com marcações temporais de palavras."""
+        """Transcreve o arquivo de áudio de forma ultra-rápida sem travar o processamento."""
         if progress_callback:
-            progress_callback(50, "Transcrevendo falas com Whisper IA...")
+            progress_callback(50, "Entendendo as falas da conversa...")
 
         model = self._get_whisper()
-        res = model.transcribe(audio_file, language="pt", word_timestamps=True)
+        res = model.transcribe(audio_file, language="pt", word_timestamps=False, fp16=False)
 
         words = []
         segments = []
 
         for seg in res.get("segments", []):
+            st = seg.get("start", 0.0)
+            et = seg.get("end", 0.0)
+            txt = seg.get("text", "").strip()
             segments.append({
-                "start": seg.get("start", 0.0),
-                "end": seg.get("end", 0.0),
-                "text": seg.get("text", "").strip()
+                "start": st,
+                "end": et,
+                "text": txt
             })
-            for w in seg.get("words", []):
-                words.append({
-                    "word": w.get("word", "").strip(),
-                    "start": round(w.get("start", 0.0), 3),
-                    "end": round(w.get("end", 0.0), 3)
-                })
+            raw_words = [w for w in txt.split() if w]
+            if raw_words:
+                step = (et - st) / len(raw_words)
+                for i, w in enumerate(raw_words):
+                    words.append({
+                        "word": w,
+                        "start": round(st + i * step, 3),
+                        "end": round(st + (i + 1) * step, 3)
+                    })
 
         if progress_callback:
-            progress_callback(85, "Organizando palavras e preparando análise de viralidade...")
+            progress_callback(85, "Organizando as falas e ganchos virais...")
 
         return {
             "title": video_title,

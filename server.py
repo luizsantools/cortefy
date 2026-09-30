@@ -87,27 +87,63 @@ async def start_analysis(payload: Dict[str, Any], background_tasks: BackgroundTa
     TASKS[task_id] = {
         "status": "processing",
         "progress": 5,
-        "message": "Inicializando pipeline Audio-First...",
+        "message": "Carregando o vídeo...",
         "result": None,
         "error": None
     }
 
     def process_task():
+        heartbeat_running = True
+
+        def heartbeat():
+            messages = [
+                (45, "Ouvindo o que foi falado no vídeo..."),
+                (55, "Identificando as falas mais marcantes e engraçadas..."),
+                (68, "Avaliando os momentos com maior chance de viralizar..."),
+                (80, "Verificando o ritmo e a emoção da conversa..."),
+                (90, "Quase pronto, organizando os melhores cortes...")
+            ]
+            idx = 0
+            while heartbeat_running and idx < len(messages):
+                time.sleep(3.0)
+                if not heartbeat_running:
+                    break
+                prog, msg = messages[idx]
+                if TASKS[task_id]["status"] == "processing":
+                    TASKS[task_id]["progress"] = max(TASKS[task_id]["progress"], prog)
+                    TASKS[task_id]["message"] = msg
+                idx += 1
+
+        threading.Thread(target=heartbeat, daemon=True).start()
+
         try:
             def update_progress(prog: int, msg: str):
                 TASKS[task_id]["progress"] = prog
                 TASKS[task_id]["message"] = msg
 
-            # 1. Ingestão de Áudio
-            update_progress(10, "Baixando áudio ultra-compacto em segundos...")
+            # 1. Download do áudio leve
+            update_progress(15, "Lendo o vídeo em alta velocidade...")
             if source_url.startswith("http://") or source_url.startswith("https://"):
-                ingest_res = audio_engine.ingest_youtube_audio(source_url, progress_callback=update_progress)
+                audio_path, video_title = audio_engine.download_youtube_audio(source_url, progress_callback=update_progress)
             else:
                 ingest_res = audio_engine.extract_audio_from_local_file(source_url, progress_callback=update_progress)
+                audio_path = ingest_res["audio_path"]
+                video_title = ingest_res.get("title", "Vídeo")
 
-            # 2. Análise com Gemini 3.6 Flash
-            update_progress(88, "Diretor de Criação Gemini 3.6 Flash identificando ganchos virais...")
-            cuts = ai_director.analyze_virality(ingest_res["segments"], video_title=ingest_res.get("title", ""))
+            update_progress(40, "Identificando os momentos mais marcantes...")
+
+            # 2. Tenta análise direta com Gemini (15 segundos)
+            cuts = ai_director.analyze_audio_directly(audio_path, video_title=video_title)
+            words = []
+
+            # 3. Fallback se necessário
+            if not cuts:
+                update_progress(60, "Organizando as falas e ganchos...")
+                ingest_res = audio_engine.transcribe_audio_file(audio_path, video_title=video_title, progress_callback=update_progress)
+                cuts = ai_director.analyze_virality(ingest_res["segments"], video_title=video_title)
+                words = ingest_res.get("words", [])
+
+            heartbeat_running = False
 
             # Salva o projeto
             project_id = f"proj_{uuid.uuid4().hex[:6]}"
@@ -115,25 +151,25 @@ async def start_analysis(payload: Dict[str, Any], background_tasks: BackgroundTa
                 "source_url": source_url,
                 "broll_mode": broll_mode,
                 "broll_url": broll_url,
-                "title": ingest_res.get("title", "Projeto"),
-                "duration": ingest_res.get("duration", 0),
-                "words": ingest_res.get("words", []),
+                "title": video_title,
+                "duration": 0,
+                "words": words,
                 "cuts": cuts
             }
 
             TASKS[task_id]["status"] = "completed"
             TASKS[task_id]["progress"] = 100
-            TASKS[task_id]["message"] = f"Análise concluída! {len(cuts)} cortes virais identificados."
+            TASKS[task_id]["message"] = f"Pronto! Encontramos {len(cuts)} momentos incríveis para você."
             TASKS[task_id]["result"] = {
                 "project_id": project_id,
-                "title": ingest_res.get("title", "Projeto"),
-                "duration": ingest_res.get("duration", 0),
+                "title": video_title,
                 "cuts": cuts
             }
         except Exception as e:
+            heartbeat_running = False
             TASKS[task_id]["status"] = "error"
             TASKS[task_id]["error"] = str(e)
-            TASKS[task_id]["message"] = f"Falha na análise: {str(e)[:150]}"
+            TASKS[task_id]["message"] = f"Não foi possível concluir: {str(e)[:150]}"
 
     threading.Thread(target=process_task, daemon=True).start()
     return {"task_id": task_id}

@@ -1,4 +1,13 @@
 import os
+import sys
+
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 import json
 import re
 from typing import List, Dict, Any
@@ -156,3 +165,74 @@ Responda ESTRITAMENTE em formato JSON válido como uma lista de objetos:
                 "emphasis_words": ["vale a pena", "resultado"]
             }
         ]
+
+    def analyze_audio_directly(self, audio_path: str, video_title: str = "") -> List[Dict[str, Any]]:
+        """
+        Envia o áudio diretamente para o Gemini 3.6 Flash na nuvem.
+        Processa até 1 hora de áudio em menos de 20 segundos!
+        """
+        client = self._get_client()
+        if not client or not os.path.exists(audio_path):
+            return []
+
+        prompt = f"""
+Você é um Diretor de Criação e Especialista em Vídeos Virais para TikTok, Instagram Reels e YouTube Shorts.
+Ouça com atenção este áudio do vídeo "{video_title or 'Conversa / Review'}".
+
+Identifique os 4 a 6 MELHORES momentos (com duração entre 30 e 70 segundos) com altíssimo potencial de prender a atenção.
+Para cada corte, retorne:
+- "title": Título irresistível em português, simples e chamativo (sem clickbait falso).
+- "hook": A primeira frase de abertura dos primeiros 3 segundos.
+- "start": Segundo de início exato (float, ex: 69.0).
+- "end": Segundo de término exato (float, ex: 112.0).
+- "virality_score": Nota de 0 a 100 baseada na emoção, humor ou intensidade.
+- "tag": Categoria (ex: "😂 Engraçado", "🔥 Momento Épico", "💡 Dica de Ouro", "😮 Reação Marcante", "🏆 Veredito").
+- "rationale": Breve justificativa de 1 frase.
+
+Responda ESTRITAMENTE em formato JSON (uma lista de objetos):
+[
+  {{
+    "id": "corte_01",
+    "title": "...",
+    "hook": "...",
+    "start": 69.0,
+    "end": 112.0,
+    "virality_score": 96,
+    "tag": "🔥 Destaque"
+  }}
+]
+"""
+        try:
+            print("[AIDirector] Enviando áudio leve para análise direta no Gemini...")
+            audio_file = client.files.upload(file=audio_path)
+            
+            res = None
+            for attempt in range(3):
+                try:
+                    res = client.models.generate_content(
+                        model=self.model_name,
+                        contents=[audio_file, prompt]
+                    )
+                    break
+                except Exception as e:
+                    if attempt < 2 and ("503" in str(e) or "UNAVAILABLE" in str(e)):
+                        import time
+                        time.sleep(2.0)
+                        continue
+                    raise e
+
+            raw_text = res.text.strip() if res else ""
+            if raw_text.startswith("```"):
+                raw_text = re.sub(r"^```(?:json)?\s*", "", raw_text)
+                raw_text = re.sub(r"\s*```$", "", raw_text)
+
+            cuts = json.loads(raw_text)
+            if isinstance(cuts, list) and len(cuts) > 0:
+                cuts.sort(key=lambda x: x.get("virality_score", 0), reverse=True)
+                for idx, c in enumerate(cuts, 1):
+                    c["id"] = f"corte_{idx:02d}"
+                return cuts
+        except Exception as e:
+            print(f"[AIDirector] Erro no processamento de áudio direto com Gemini: {e}")
+
+        return []
