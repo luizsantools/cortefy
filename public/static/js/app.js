@@ -19,7 +19,7 @@ function showToast(message, type = "info") {
     if (type === "error") icon = "✕";
 
     toast.innerHTML = `
-        <span style="color: ${type === 'success' ? '#00FF66' : type === 'error' ? '#EF4444' : '#3B82F6'}; font-weight: bold;">${icon}</span>
+        <span style="color: ${type === 'success' ? '#FF5C00' : type === 'error' ? '#EF4444' : '#0052FF'}; font-weight: 900; font-size: 16px;">${icon}</span>
         <span>${message}</span>
     `;
 
@@ -82,26 +82,32 @@ function setGenre(genre) {
     document.querySelectorAll(".genre-chip").forEach(el => {
         const isMatch = el.getAttribute("data-genre") === genre || el.id === `genre-btn-${genre}`;
         const radio = el.querySelector(".genre-radio");
+        const title = el.querySelector(".text-sm");
+        const desc = el.querySelector("p");
         if (isMatch) {
             el.classList.add("genre-chip-active");
-            el.style.backgroundColor = "rgba(0, 255, 102, 0.15)";
-            el.style.borderColor = "#00FF66";
-            el.style.color = "#00FF66";
-            el.style.boxShadow = "0 0 16px rgba(0, 255, 102, 0.25)";
+            el.style.backgroundColor = "#FF5C00";
+            el.style.borderColor = "#000000";
+            el.style.color = "#FFFFFF";
+            el.style.boxShadow = "4px 4px 0px #000000";
             if (radio) {
                 radio.textContent = "●";
-                radio.style.color = "#00FF66";
+                radio.style.color = "#FFFFFF";
             }
+            if (title) title.style.color = "#FFFFFF";
+            if (desc) desc.style.color = "#FFF3EB";
         } else {
             el.classList.remove("genre-chip-active");
-            el.style.backgroundColor = "rgba(255, 255, 255, 0.04)";
-            el.style.borderColor = "rgba(255, 255, 255, 0.12)";
-            el.style.color = "#A1A1AA";
-            el.style.boxShadow = "none";
+            el.style.backgroundColor = "#FFFFFF";
+            el.style.borderColor = "#000000";
+            el.style.color = "#000000";
+            el.style.boxShadow = "3px 3px 0px #000000";
             if (radio) {
                 radio.textContent = "○";
-                radio.style.color = "#71717A";
+                radio.style.color = "#000000";
             }
+            if (title) title.style.color = "#000000";
+            if (desc) desc.style.color = "#4B5563";
         }
     });
     const hidden = document.getElementById("selected-genre-input");
@@ -137,13 +143,13 @@ function setSubStyle(styleKey) {
             el.classList.add("sub-card-active");
             if (radio) {
                 radio.textContent = "●";
-                radio.style.color = "#00FF66";
+                radio.style.color = "#FF5C00";
             }
         } else {
             el.classList.remove("sub-card-active");
             if (radio) {
                 radio.textContent = "○";
-                radio.style.color = "#71717A";
+                radio.style.color = "#000000";
             }
         }
     });
@@ -164,7 +170,7 @@ function toggleCustomizeDrawer() {
 }
 
 function saveSubtitleTemplate() {
-    const customColor = document.getElementById("custom-sub-color")?.value || "#00FF66";
+    const customColor = document.getElementById("custom-sub-color")?.value || "#FF5C00";
     const customSize = document.getElementById("custom-sub-size")?.value || "76";
     const customPos = document.getElementById("custom-sub-position")?.value || "520";
     const currentStyle = window.selectedSubStyle || selectedSubStyle || "hormozi_pop";
@@ -435,7 +441,7 @@ function renderCutsList(cuts, append = false) {
 
         const card = document.createElement("div");
         card.id = `card-cut-${cut.id}`;
-        card.className = "tech-card p-5 flex flex-col justify-between gap-4 border border-white/10 hover:border-white/20 transition-all";
+        card.className = "tech-card p-5 flex flex-col justify-between gap-4";
 
         card.innerHTML = `
             <div class="space-y-3">
@@ -445,41 +451,41 @@ function renderCutsList(cuts, append = false) {
                         <span>${score}/100</span>
                         <span>${tagText}</span>
                     </span>
-                    <span class="text-xs font-mono text-zinc-400 bg-white/5 px-2.5 py-1 rounded-md border border-white/5">
+                    <span class="text-xs font-mono text-black font-extrabold bg-[#F4F3EE] px-2.5 py-1 rounded-md border-2 border-black shadow-[2px_2px_0px_#000]">
                         ⏱️ ${startFmt} - ${endFmt} (${durationSec}s)
                     </span>
                 </div>
 
                 <!-- Título Chamativo -->
-                <h3 class="text-base font-bold text-white leading-snug">
+                <h3 class="text-base font-black text-black leading-snug font-display">
                     ${escapeHtml(cut.title)}
                 </h3>
 
                 <!-- Gancho Inicial -->
-                <div class="p-2.5 rounded-lg bg-white/5 border border-white/5 text-xs text-zinc-300 flex items-start gap-2">
-                    <span class="text-[#00FF66] font-bold shrink-0">🎯</span>
+                <div class="p-2.5 rounded-lg bg-[#FFF3EB] border-2 border-black shadow-[2px_2px_0px_#000] text-xs text-black flex items-start gap-2">
+                    <span class="text-[#FF5C00] font-black shrink-0 text-sm">🎯</span>
                     <div>
-                        <strong class="text-white">Gancho inicial (3s):</strong>
-                        <span>"${escapeHtml(cut.hook || 'Preste atenção nisso...')}"</span>
+                        <strong class="text-black font-extrabold">Gancho inicial (3s):</strong>
+                        <span class="font-medium">"${escapeHtml(cut.hook || 'Preste atenção nisso...')}"</span>
                     </div>
                 </div>
 
                 <!-- Legenda com SEO para Redes Sociais -->
                 <div class="space-y-1.5 pt-1">
                     <div class="flex items-center justify-between">
-                        <span class="text-[11px] font-semibold text-zinc-400">LEGENDA COM SEO PRONTA PARA POSTAR:</span>
+                        <span class="text-[11px] font-black text-zinc-800 uppercase tracking-wider">LEGENDA COM SEO PRONTA PARA POSTAR:</span>
                         <button type="button" onclick="copyCaption(this, decodeURIComponent('${encodeURIComponent(captionText)}'))" class="btn-copy-seo">
                             <span>📋 Copiar Legenda</span>
                         </button>
                     </div>
-                    <div class="seo-caption-box">${escapeHtml(captionText)}</div>
+                    <div class="seo-caption-box font-medium">${escapeHtml(captionText)}</div>
                 </div>
             </div>
 
             <!-- Botão de Ação: Criar Vídeo (MP4) -->
-            <div class="pt-3 border-t border-white/5 flex items-center justify-between gap-3">
-                <span class="text-xs text-zinc-400">9:16 Vertical • Pronto</span>
-                <button type="button" onclick="renderCut('${cut.id}')" class="btn-neon text-xs py-2.5 px-4 font-bold">
+            <div class="pt-3 border-t-2 border-black flex items-center justify-between gap-3">
+                <span class="text-xs text-zinc-700 font-bold">9:16 Vertical • Pronto</span>
+                <button type="button" onclick="renderCut('${cut.id}')" class="btn-neon text-xs py-2.5 px-4 font-black">
                     <span>🚀 Criar Vídeo (MP4)</span>
                 </button>
             </div>
@@ -591,7 +597,7 @@ async function generateMoreCuts() {
 async function renderCut(cutId) {
     if (!currentProjectId) return;
 
-    const customColor = document.getElementById("custom-sub-color")?.value || "#00FF66";
+    const customColor = document.getElementById("custom-sub-color")?.value || "#FF5C00";
     const customSize = parseInt(document.getElementById("custom-sub-size")?.value || "76");
     const customPos = parseInt(document.getElementById("custom-sub-position")?.value || "520");
     const subStyle = window.selectedSubStyle || selectedSubStyle || "hormozi_pop";

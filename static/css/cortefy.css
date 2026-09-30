@@ -1,19 +1,41 @@
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Geist+Mono:wght@400;500;600&display=swap');
+/* ==========================================================================
+   CORTEFY — Neo-Brutalist Design System
+   Key Visual: Laranja (#FF5C00) + Branco (#FFFFFF) + Azul (#0052FF) + Preto (#000000)
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap');
 
 :root {
-  --neon-green: #00FF66;
-  --neon-green-glow: rgba(0, 255, 102, 0.25);
-  --neon-green-subtle: rgba(0, 255, 102, 0.1);
-  --bg-black: #000000;
-  --bg-card: #0A0A0A;
-  --bg-card-hover: #111111;
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-focus: rgba(0, 255, 102, 0.5);
-  --text-primary: #FFFFFF;
-  --text-secondary: #A1A1AA;
-  --text-muted: #52525B;
-  --font-sans: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: 'Geist Mono', monospace;
+  --neo-orange: #FF5C00;
+  --neo-orange-hover: #E04F00;
+  --neo-orange-subtle: #FFF3EB;
+  --neo-blue: #0052FF;
+  --neo-blue-hover: #003ECC;
+  --neo-blue-subtle: #EBF2FF;
+  --neo-white: #FFFFFF;
+  --neo-canvas: #F8F7F3;
+  --neo-canvas-card: #FFFFFF;
+  --neo-black: #000000;
+  --neo-dark: #121214;
+  --neo-gray-100: #F4F3EE;
+  --neo-gray-200: #E5E4DE;
+  --neo-gray-400: #71717A;
+  --neo-gray-700: #27272A;
+  
+  --border-neo: 3px solid #000000;
+  --border-neo-sm: 2px solid #000000;
+  --border-neo-thick: 3.5px solid #000000;
+
+  --shadow-neo-xs: 2px 2px 0px #000000;
+  --shadow-neo-sm: 3px 3px 0px #000000;
+  --shadow-neo: 4px 4px 0px #000000;
+  --shadow-neo-md: 5px 5px 0px #000000;
+  --shadow-neo-lg: 6px 6px 0px #000000;
+  --shadow-neo-xl: 8px 8px 0px #000000;
+
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
 }
 
 * {
@@ -22,305 +44,272 @@
   box-sizing: border-box;
 }
 
+::selection {
+  background-color: var(--neo-orange);
+  color: #FFFFFF;
+}
+
 body {
-  background-color: var(--bg-black);
-  color: var(--text-primary);
+  background-color: var(--neo-canvas);
+  color: var(--neo-black);
   font-family: var(--font-sans);
   min-height: 100vh;
   overflow-x: hidden;
   position: relative;
-  background-image: 
-    radial-gradient(circle at 50% 0%, rgba(0, 255, 102, 0.07) 0%, transparent 60%),
-    radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px);
-  background-size: 100% 100%, 24px 24px;
+  /* Neo-Brutalist dot grid pattern */
+  background-image: radial-gradient(#000000 1.2px, transparent 1.2px);
+  background-size: 22px 22px;
 }
 
-/* Glass Header */
+/* ==========================================================================
+   Header Neo-Brutalista
+   ========================================================================== */
 .header-glass {
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  background: rgba(0, 0, 0, 0.7);
-  border-bottom: 1px solid var(--border-subtle);
+  background: var(--neo-white);
+  border-bottom: var(--border-neo-thick);
+  box-shadow: 0 4px 0px rgba(0, 0, 0, 0.1);
   position: sticky;
   top: 0;
   z-index: 50;
 }
 
-/* Cartões e Painéis */
+/* ==========================================================================
+   Cartões Neo-Brutalistas
+   ========================================================================== */
 .tech-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: 12px;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  background: var(--neo-white);
+  border: var(--border-neo-thick);
+  border-radius: 14px;
+  box-shadow: var(--shadow-neo-lg);
+  transition: all 0.15s cubic-bezier(0.2, 0, 0, 1);
   position: relative;
 }
 
 .tech-card:hover {
-  border-color: rgba(255, 255, 255, 0.16);
-  background: var(--bg-card-hover);
+  transform: translate(-1px, -1px);
+  box-shadow: 8px 8px 0px #000000;
 }
 
 .tech-card-active {
-  border-color: var(--neon-green) !important;
-  box-shadow: 0 0 24px var(--neon-green-glow);
+  border-color: #000000 !important;
+  background: var(--neo-orange-subtle) !important;
+  box-shadow: 6px 6px 0px var(--neo-orange) !important;
 }
 
-/* Tech Buttons */
-.btn-neon {
-  background: var(--neon-green);
-  color: #000000;
-  font-weight: 700;
+/* ==========================================================================
+   Botões Neo-Brutalistas
+   ========================================================================== */
+.btn-neon, .btn-primary {
+  background: var(--neo-orange);
+  color: #FFFFFF;
+  font-family: var(--font-display);
+  font-weight: 800;
   font-size: 14px;
-  border-radius: 8px;
-  padding: 10px 20px;
-  border: none;
+  border-radius: 10px;
+  padding: 12px 22px;
+  border: var(--border-neo);
+  box-shadow: var(--shadow-neo);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: all 0.2s ease;
-  box-shadow: 0 0 16px var(--neon-green-glow);
+  transition: all 0.12s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  user-select: none;
 }
 
-.btn-neon:hover {
-  background: #00DF82;
-  transform: translateY(-1px);
-  box-shadow: 0 0 24px rgba(0, 255, 102, 0.4);
+.btn-neon:hover, .btn-primary:hover {
+  background: var(--neo-orange-hover);
+  transform: translate(-2px, -2px);
+  box-shadow: var(--shadow-neo-lg);
+}
+
+.btn-neon:active, .btn-primary:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px #000000;
 }
 
 .btn-secondary {
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text-primary);
-  border: 1px solid var(--border-subtle);
+  background: var(--neo-white);
+  color: var(--neo-black);
+  font-family: var(--font-display);
+  border: var(--border-neo-sm);
   border-radius: 8px;
-  padding: 10px 18px;
-  font-size: 14px;
-  font-weight: 600;
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: var(--shadow-neo-sm);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.12s ease;
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  user-select: none;
 }
 
 .btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: var(--neo-blue-subtle);
+  color: var(--neo-blue);
+  transform: translate(-1px, -1px);
+  box-shadow: var(--shadow-neo);
 }
 
-/* Inputs */
+.btn-secondary:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0px 0px 0px #000000;
+}
+
+.btn-blue {
+  background: var(--neo-blue);
+  color: #FFFFFF;
+  font-family: var(--font-display);
+  font-weight: 800;
+  border: var(--border-neo-sm);
+  border-radius: 8px;
+  padding: 10px 18px;
+  box-shadow: var(--shadow-neo-sm);
+  cursor: pointer;
+  transition: all 0.12s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-blue:hover {
+  background: var(--neo-blue-hover);
+  transform: translate(-2px, -2px);
+  box-shadow: var(--shadow-neo-md);
+}
+
+.btn-blue:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px #000000;
+}
+
+/* ==========================================================================
+   Inputs e Campos de Texto
+   ========================================================================== */
 .tech-input {
-  background: #050505;
-  border: 1px solid var(--border-subtle);
-  color: var(--text-primary);
+  background: var(--neo-white);
+  border: var(--border-neo-sm);
+  color: var(--neo-black);
   border-radius: 8px;
   padding: 12px 16px;
   font-size: 14px;
+  font-weight: 600;
   outline: none;
-  transition: all 0.2s ease;
+  box-shadow: var(--shadow-neo-sm);
+  transition: all 0.15s ease;
   font-family: var(--font-sans);
 }
 
-.tech-input:focus {
-  border-color: var(--neon-green);
-  box-shadow: 0 0 12px var(--neon-green-glow);
+.tech-input::placeholder {
+  color: var(--neo-gray-400);
+  font-weight: 500;
 }
 
-/* Badges e Tags */
+.tech-input:focus {
+  border-color: var(--neo-black);
+  box-shadow: 4px 4px 0px var(--neo-orange);
+}
+
+/* ==========================================================================
+   Badges e Adesivos (Stickers Neo-Brutalistas)
+   ========================================================================== */
 .badge-neon {
-  background: var(--neon-green-subtle);
-  color: var(--neon-green);
-  border: 1px solid rgba(0, 255, 102, 0.3);
-  font-family: var(--font-mono);
+  background: var(--neo-orange);
+  color: #FFFFFF;
+  border: var(--border-neo-sm);
+  box-shadow: var(--shadow-neo-xs);
+  font-family: var(--font-display);
   font-size: 11px;
-  font-weight: 600;
-  padding: 4px 8px;
+  font-weight: 800;
+  padding: 4px 10px;
   border-radius: 6px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.badge-blue {
+  background: var(--neo-blue);
+  color: #FFFFFF;
+  border: var(--border-neo-sm);
+  box-shadow: var(--shadow-neo-xs);
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .badge-zinc {
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text-secondary);
-  border: 1px solid var(--border-subtle);
+  background: var(--neo-white);
+  color: var(--neo-black);
+  border: var(--border-neo-sm);
+  box-shadow: var(--shadow-neo-xs);
   font-family: var(--font-mono);
   font-size: 11px;
+  font-weight: 700;
   padding: 4px 8px;
   border-radius: 6px;
+  text-transform: uppercase;
 }
 
-/* Pulsing Radar Dot */
+/* Radar Pulsante Neo */
 .radar-dot {
   width: 8px;
   height: 8px;
-  background-color: var(--neon-green);
+  background-color: var(--neo-orange);
   border-radius: 50%;
   position: relative;
   display: inline-block;
+  border: 1px solid #000000;
 }
 
 .radar-dot::after {
   content: '';
   position: absolute;
-  top: -2px;
-  left: -2px;
+  top: -3px;
+  left: -3px;
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: var(--neon-green);
+  background: var(--neo-orange);
   opacity: 0.75;
-  animation: pulseRadar 1.8s infinite cubic-bezier(0, 0, 0.2, 1);
+  animation: pulseRadar 1.6s infinite ease-out;
 }
 
 @keyframes pulseRadar {
-  0% { transform: scale(1); opacity: 0.8; }
-  100% { transform: scale(2.6); opacity: 0; }
+  0% { transform: scale(1); opacity: 0.9; }
+  100% { transform: scale(2.5); opacity: 0; }
 }
 
-/* Toasts Flutuantes */
-#toast-container {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  z-index: 100;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.toast {
-  background: #0A0A0A;
-  border: 1px solid var(--border-subtle);
-  color: #FFFFFF;
-  padding: 14px 20px;
+/* ==========================================================================
+   Chips de Gênero / Tipo de Conteúdo (Passo 2)
+   ========================================================================== */
+.genre-chip {
+  background: var(--neo-white);
+  border: var(--border-neo-sm);
+  color: var(--neo-black);
+  padding: 10px 16px;
   border-radius: 10px;
   font-size: 13px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
-  animation: slideToast 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  backdrop-filter: blur(12px);
-  min-width: 280px;
-}
-
-.toast-success { border-left: 3px solid var(--neon-green); }
-.toast-error { border-left: 3px solid #EF4444; }
-.toast-info { border-left: 3px solid #3B82F6; }
-
-@keyframes slideToast {
-  from { opacity: 0; transform: translateY(16px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* Barra de Progresso Neon */
-.progress-neon-bar {
-  height: 4px;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 2px;
-  overflow: hidden;
-  position: relative;
-}
-
-.progress-neon-fill {
-  height: 100%;
-  background: var(--neon-green);
-  box-shadow: 0 0 12px var(--neon-green);
-  transition: width 0.3s ease;
-}
-
-/* Modal */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(8px);
-  z-index: 99;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  animation: fadeIn 0.2s ease;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-/* Card de Prévia Instantânea do Vídeo */
-.preview-card {
-  background: rgba(10, 10, 10, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 14px;
-  backdrop-filter: blur(12px);
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
-}
-
-.preview-card:hover {
-  border-color: rgba(0, 255, 102, 0.3);
-  box-shadow: 0 12px 36px rgba(0, 255, 102, 0.08);
-}
-
-/* Selos de Potencial Viral */
-.score-pill-viral {
-  background: rgba(0, 255, 102, 0.15);
-  color: #00FF66;
-  border: 1px solid rgba(0, 255, 102, 0.4);
-  box-shadow: 0 0 16px rgba(0, 255, 102, 0.25);
-  font-family: var(--font-mono);
+  font-family: var(--font-display);
   font-weight: 700;
-  font-size: 11px;
-  padding: 4px 10px;
-  border-radius: 9999px;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.score-pill-high {
-  background: rgba(251, 191, 36, 0.15);
-  color: #FBBF24;
-  border: 1px solid rgba(251, 191, 36, 0.4);
-  box-shadow: 0 0 14px rgba(251, 191, 36, 0.2);
-  font-family: var(--font-mono);
-  font-weight: 700;
-  font-size: 11px;
-  padding: 4px 10px;
-  border-radius: 9999px;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.score-pill-mid {
-  background: rgba(59, 130, 246, 0.15);
-  color: #60A5FA;
-  border: 1px solid rgba(59, 130, 246, 0.4);
-  font-family: var(--font-mono);
-  font-weight: 700;
-  font-size: 11px;
-  padding: 4px 10px;
-  border-radius: 9999px;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
-
-/* Seletor de Estilo de Conteúdo */
-.genre-chip {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #A1A1AA;
-  padding: 8px 14px;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: var(--shadow-neo-sm);
+  transition: all 0.12s ease;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -328,193 +317,274 @@ body {
 }
 
 .genre-chip:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #FFFFFF;
-  border-color: rgba(255, 255, 255, 0.25);
-  transform: translateY(-1px);
+  transform: translate(-1px, -1px);
+  box-shadow: var(--shadow-neo);
+  background: var(--neo-orange-subtle);
+}
+
+.genre-chip:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px #000;
 }
 
 .genre-chip-active {
-  background: rgba(0, 255, 102, 0.15) !important;
-  color: #00FF66 !important;
-  border-color: #00FF66 !important;
-  box-shadow: 0 0 16px rgba(0, 255, 102, 0.25) !important;
+  background: var(--neo-orange) !important;
+  color: #FFFFFF !important;
+  border-color: #000000 !important;
+  box-shadow: 4px 4px 0px #000000 !important;
+  transform: translate(-1px, -1px);
 }
 
 .genre-radio {
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1;
-  font-weight: 800;
+  font-weight: 900;
   display: inline-block;
-  transition: color 0.15s ease;
+  color: #000000;
 }
 
 .genre-chip-active .genre-radio {
-  color: #00FF66;
-  text-shadow: 0 0 8px rgba(0, 255, 102, 0.6);
+  color: #FFFFFF !important;
 }
 
-.genre-chip:not(.genre-chip-active) .genre-radio {
-  color: #71717A;
-}
-
-/* Contador Mensal no Topo */
+/* ==========================================================================
+   Contador Mensal de Cortes (Header)
+   ========================================================================== */
 .monthly-badge {
-  background: rgba(18, 18, 18, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(8px);
+  background: var(--neo-blue);
+  color: #FFFFFF;
+  border: var(--border-neo-sm);
+  box-shadow: var(--shadow-neo-sm);
+  border-radius: 9999px;
+  padding: 6px 14px;
 }
 
-/* 10 Modelos de Legendas com Animação Estilo CapCut */
+/* ==========================================================================
+   Passo 4: 10 Modelos de Legendas (100% Corrigidas e Sem Bugs)
+   ========================================================================== */
 .sub-card {
-  background: rgba(15, 15, 15, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  padding: 14px;
+  background: var(--neo-white);
+  border: var(--border-neo-sm);
+  border-radius: 10px;
+  padding: 12px;
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.12s ease;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 10px;
+  gap: 8px;
   position: relative;
-  overflow: hidden;
+  box-shadow: var(--shadow-neo-sm);
+  user-select: none;
 }
 
 .sub-card:hover {
-  background: rgba(25, 25, 25, 0.95);
-  border-color: rgba(255, 255, 255, 0.22);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  transform: translate(-2px, -2px);
+  box-shadow: var(--shadow-neo-md);
+}
+
+.sub-card:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px #000000;
 }
 
 .sub-card-active {
-  border-color: #00FF66 !important;
-  background: rgba(0, 255, 102, 0.06) !important;
-  box-shadow: 0 0 20px rgba(0, 255, 102, 0.2) !important;
+  border-color: #000000 !important;
+  background: var(--neo-orange-subtle) !important;
+  box-shadow: 4px 4px 0px var(--neo-orange) !important;
+  transform: translate(-1px, -1px);
 }
 
 .sub-preview-box {
-  background: #000000;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 8px;
-  padding: 16px 8px;
-  min-height: 64px;
+  background: #0A0A0A;
+  border: 2px solid #000000;
+  border-radius: 6px;
+  padding: 12px 6px;
+  min-height: 56px;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
+  overflow: hidden;
+  position: relative;
 }
 
-/* Animações de Palavra por Palavra (CapCut Style) */
+/* Animação Suave Sem Reflow ou Pulos */
 @keyframes wordPop {
-  0%, 100% { transform: scale(1); filter: brightness(1); }
-  50% { transform: scale(1.12); filter: brightness(1.3); }
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
+  }
 }
 
 .anim-word {
   display: inline-block;
-  animation: wordPop 1.6s infinite ease-in-out;
+  transform-origin: center;
+  will-change: transform;
+  animation: wordPop 1.4s infinite ease-in-out;
 }
 
-/* Estilos de Legenda Específicos */
+/* Estilos de Legendas 100% Nítidos com Borda 4-Direções */
 .sub-style-hormozi {
   font-family: 'Arial Black', Impact, sans-serif;
-  color: #FFF200;
+  color: #FFFFFF;
   text-shadow: 2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 0 3px 6px rgba(0,0,0,0.9);
   text-transform: uppercase;
   font-size: 13px;
   font-weight: 900;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+.sub-style-hormozi .anim-word {
+  color: #FFE600 !important;
 }
 
 .sub-style-neon {
   font-family: 'Arial Black', sans-serif;
-  color: #00FF66;
-  text-shadow: 0 0 10px rgba(0, 255, 102, 0.8), 0 0 20px rgba(0, 255, 102, 0.4), 2px 2px 0 #000;
+  color: #FFFFFF;
+  text-shadow: 2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000;
   text-transform: uppercase;
   font-size: 13px;
   font-weight: 900;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+.sub-style-neon .anim-word {
+  color: #00FF66 !important;
+  text-shadow: 0 0 10px rgba(0, 255, 102, 0.9), 2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000;
 }
 
+/* Beast Bold: CORRIGIDO! Texto amarelo com contorno preto nítido e destaque vermelho contrastante */
 .sub-style-beast {
   font-family: Impact, sans-serif;
-  color: #FFE600;
-  text-shadow: 2px 2px 0 #EF4444, -2px -2px 0 #EF4444, 2px -2px 0 #EF4444, -2px 2px 0 #EF4444, 0 4px 8px #000;
+  color: #FFFFFF;
+  text-shadow: 2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 0 3px 0 #EF4444;
   text-transform: uppercase;
   font-size: 14px;
   letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+.sub-style-beast .anim-word {
+  color: #FFE600 !important;
+  text-shadow: 2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 0 3px 0 #EF4444;
 }
 
 .sub-style-cyan {
   font-family: 'Arial Black', sans-serif;
-  color: #00F0FF;
-  text-shadow: 2px 2px 0 #000, -2px -2px 0 #000, 0 0 12px rgba(0, 240, 255, 0.6);
+  color: #FFFFFF;
+  text-shadow: 2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000;
   text-transform: uppercase;
   font-size: 13px;
   font-weight: 900;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+.sub-style-cyan .anim-word {
+  color: #00F0FF !important;
+  text-shadow: 0 0 10px rgba(0, 240, 255, 0.9), 2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000;
 }
 
 .sub-style-purple {
   font-family: 'Arial Black', sans-serif;
-  color: #C084FC;
-  text-shadow: 2px 2px 0 #000, -2px -2px 0 #000, 0 0 10px rgba(192, 132, 252, 0.6);
+  color: #FFFFFF;
+  text-shadow: 2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000;
   text-transform: uppercase;
   font-size: 13px;
   font-weight: 900;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+.sub-style-purple .anim-word {
+  color: #C084FC !important;
+  text-shadow: 0 0 10px rgba(192, 132, 252, 0.9), 2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000;
 }
 
 .sub-style-minimal {
-  font-family: var(--font-sans);
+  font-family: var(--font-display);
   color: #FFFFFF;
-  background: rgba(0, 0, 0, 0.7);
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 600;
+  background: #18181B;
+  border: 1.5px solid #3F3F46;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+.sub-style-minimal .anim-word {
+  color: var(--neo-orange) !important;
 }
 
 .sub-style-gold {
   font-family: 'Arial Black', sans-serif;
-  color: #FFD700;
-  text-shadow: 2px 2px 0 #78350F, -2px -2px 0 #78350F, 0 0 8px rgba(255, 215, 0, 0.5);
+  color: #FFFFFF;
+  text-shadow: 2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000;
   text-transform: uppercase;
   font-size: 13px;
   font-weight: 900;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+.sub-style-gold .anim-word {
+  color: #FFD700 !important;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.9), 2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000;
 }
 
 .sub-style-fire {
   font-family: Impact, sans-serif;
-  color: #FF5500;
-  text-shadow: 2px 2px 0 #000, -2px -2px 0 #000, 0 0 10px rgba(255, 85, 0, 0.7);
+  color: #FFE600;
+  text-shadow: 2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000;
   text-transform: uppercase;
   font-size: 14px;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+.sub-style-fire .anim-word {
+  color: var(--neo-orange) !important;
+  text-shadow: 0 0 12px rgba(255, 92, 0, 0.9), 2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000;
 }
 
 .sub-style-emerald {
   font-family: 'Arial Black', sans-serif;
-  color: #10B981;
-  text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 0 0 10px rgba(16, 185, 129, 0.5);
+  color: #FFFFFF;
+  text-shadow: 2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000;
   text-transform: uppercase;
   font-size: 13px;
   font-weight: 800;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+.sub-style-emerald .anim-word {
+  color: #10B981 !important;
+  text-shadow: 0 0 10px rgba(16, 185, 129, 0.9), 2px 2px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000;
 }
 
 .sub-style-mono3d {
   font-family: Impact, sans-serif;
-  color: #FFFFFF;
-  text-shadow: 3px 3px 0 #27272A, 4px 4px 0 #09090B, 0 0 8px rgba(0,0,0,0.8);
+  color: #E4E4E7;
+  text-shadow: 3px 3px 0 #000, 4px 4px 0 #27272A;
   text-transform: uppercase;
   font-size: 14px;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+.sub-style-mono3d .anim-word {
+  color: #FFFFFF !important;
+  text-shadow: 3px 3px 0 #000, 5px 5px 0 #52525B;
 }
 
-/* Switches / Toggles Estilo Obsidian */
+/* ==========================================================================
+   Passo 5: Toggles de Efeitos (Neo-Brutalista)
+   ========================================================================== */
 .toggle-switch {
   position: relative;
   display: inline-block;
-  width: 44px;
-  height: 24px;
-  shrink: 0;
+  width: 46px;
+  height: 26px;
+  flex-shrink: 0;
 }
 
 .toggle-switch input {
@@ -530,10 +600,11 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #27272A;
-  transition: 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  border-radius: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: #E5E4DE;
+  transition: 0.2s cubic-bezier(0.2, 0, 0, 1);
+  border-radius: 9999px;
+  border: var(--border-neo-sm);
+  box-shadow: 2px 2px 0px #000000;
 }
 
 .toggle-slider:before {
@@ -543,64 +614,219 @@ body {
   width: 16px;
   left: 3px;
   bottom: 3px;
-  background-color: #A1A1AA;
-  transition: 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  background-color: #FFFFFF;
+  transition: 0.2s cubic-bezier(0.2, 0, 0, 1);
   border-radius: 50%;
+  border: 1.5px solid #000000;
 }
 
 .toggle-switch input:checked + .toggle-slider {
-  background-color: rgba(0, 255, 102, 0.25);
-  border-color: #00FF66;
-  box-shadow: 0 0 12px rgba(0, 255, 102, 0.3);
+  background-color: var(--neo-orange);
 }
 
 .toggle-switch input:checked + .toggle-slider:before {
-  transform: translateX(20px);
-  background-color: #00FF66;
-  box-shadow: 0 0 8px #00FF66;
+  transform: translateX(18px);
+  background-color: #FFFFFF;
+}
+
+/* ==========================================================================
+   Barra de Progresso (Passo 6 e Render)
+   ========================================================================== */
+.progress-neon-bar {
+  height: 16px;
+  background: var(--neo-white);
+  border: var(--border-neo-sm);
+  border-radius: 9999px;
+  overflow: hidden;
+  box-shadow: var(--shadow-neo-sm);
+  position: relative;
+}
+
+.progress-neon-fill {
+  height: 100%;
+  background: var(--neo-orange);
+  background-image: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.25) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.25) 50%,
+    rgba(255, 255, 255, 0.25) 75%,
+    transparent 75%,
+    transparent
+  );
+  background-size: 20px 20px;
+  transition: width 0.3s ease;
+  animation: moveStripes 1s linear infinite;
+}
+
+@keyframes moveStripes {
+  0% { background-position: 0 0; }
+  100% { background-position: 20px 0; }
+}
+
+/* ==========================================================================
+   Selos de Potencial Viral (Cards de Cortes)
+   ========================================================================== */
+.score-pill-viral {
+  background: var(--neo-orange);
+  color: #FFFFFF;
+  border: var(--border-neo-sm);
+  box-shadow: var(--shadow-neo-xs);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  text-transform: uppercase;
+}
+
+.score-pill-high {
+  background: var(--neo-blue);
+  color: #FFFFFF;
+  border: var(--border-neo-sm);
+  box-shadow: var(--shadow-neo-xs);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  text-transform: uppercase;
+}
+
+.score-pill-mid {
+  background: var(--neo-white);
+  color: var(--neo-black);
+  border: var(--border-neo-sm);
+  box-shadow: var(--shadow-neo-xs);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  text-transform: uppercase;
 }
 
 /* Caixa de Legenda SEO */
 .seo-caption-box {
-  background: rgba(5, 5, 5, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
+  background: var(--neo-blue-subtle);
+  border: var(--border-neo-sm);
+  border-radius: 8px;
   padding: 12px 14px;
   font-size: 12px;
   line-height: 1.5;
-  color: #D4D4D8;
+  color: var(--neo-black);
   white-space: pre-wrap;
   word-break: break-word;
   max-height: 110px;
   overflow-y: auto;
   position: relative;
+  font-family: var(--font-sans);
 }
 
 .btn-copy-seo {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--neo-orange);
+  border: var(--border-neo-sm);
   color: #FFFFFF;
   padding: 6px 12px;
   border-radius: 6px;
   font-size: 11px;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-weight: 800;
   cursor: pointer;
-  transition: all 0.2s ease;
+  box-shadow: var(--shadow-neo-xs);
+  transition: all 0.1s ease;
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  text-transform: uppercase;
 }
 
 .btn-copy-seo:hover {
-  background: rgba(0, 255, 102, 0.15);
-  border-color: #00FF66;
-  color: #00FF66;
+  background: var(--neo-orange-hover);
+  transform: translate(-1px, -1px);
+  box-shadow: var(--shadow-neo-sm);
+}
+
+.btn-copy-seo:active {
+  transform: translate(1px, 1px);
+  box-shadow: none;
 }
 
 .btn-copy-seo.copied {
-  background: #00FF66 !important;
-  color: #000000 !important;
-  border-color: #00FF66 !important;
-  font-weight: bold;
+  background: var(--neo-blue) !important;
+  color: #FFFFFF !important;
 }
 
+/* Card de Prévia do Vídeo */
+.preview-card {
+  background: var(--neo-white);
+  border: var(--border-neo);
+  border-radius: 12px;
+  box-shadow: var(--shadow-neo-md);
+  transition: all 0.15s ease;
+}
+
+/* ==========================================================================
+   Toasts e Modal
+   ========================================================================== */
+#toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.toast {
+  background: var(--neo-white);
+  border: var(--border-neo);
+  color: var(--neo-black);
+  padding: 14px 20px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: var(--shadow-neo-lg);
+  animation: slideToast 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  min-width: 280px;
+}
+
+.toast-success { border-left: 8px solid var(--neo-orange); }
+.toast-error { border-left: 8px solid #EF4444; }
+.toast-info { border-left: 8px solid var(--neo-blue); }
+
+@keyframes slideToast {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 99;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
