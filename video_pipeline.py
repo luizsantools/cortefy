@@ -76,26 +76,94 @@ class VideoPipeline:
 
         return output_path
 
-    def generate_ass_subtitles(self, words: List[Dict[str, Any]], cut_start: float, cut_end: float, output_path: str, style_key: str = "yellow_viral") -> str:
-        """Gera legendas animadas em formato Advanced SubStation Alpha (.ass) com BOM UTF-8."""
+    def generate_ass_subtitles(
+        self,
+        words: List[Dict[str, Any]],
+        cut_start: float,
+        cut_end: float,
+        output_path: str,
+        style_key: str = "hormozi_pop",
+        custom_color: Optional[str] = None,
+        custom_font_size: Optional[int] = None,
+        custom_margin_v: Optional[int] = None
+    ) -> str:
+        """Gera legendas animadas em formato Advanced SubStation Alpha (.ass) com 10 estilos estilo CapCut."""
+        # 10 Modelos de Legendas Inspirados em Ferramentas Populares (CapCut/Hormozi/MrBeast)
         styles = {
-            "yellow_viral": {
-                "font": "Arial Black", "size": 74,
-                "primary": "&H0000FFFF",  # Amarelo vibrante
-                "outline_color": "&H00000000", "outline_w": 6, "shadow": 2, "margin_v": 420
-            },
-            "cyan_neon": {
-                "font": "Arial Black", "size": 72,
-                "primary": "&H00FFFF00",  # Ciano Neon
-                "outline_color": "&H00101010", "outline_w": 6, "shadow": 3, "margin_v": 420
-            },
-            "white_black": {
-                "font": "Impact", "size": 78,
-                "primary": "&H00FFFFFF",  # Branco clássico
+            "hormozi_pop": {
+                "name": "Hormozi Pop",
+                "font": "Arial Black", "size": 76,
+                "primary": "&H0000FFFF",  # Amarelo Vibrante
                 "outline_color": "&H00000000", "outline_w": 7, "shadow": 3, "margin_v": 420
+            },
+            "neon_cyber": {
+                "name": "Neon Cyber",
+                "font": "Arial Black", "size": 74,
+                "primary": "&H0066FF00",  # Verde Neon
+                "outline_color": "&H00111111", "outline_w": 6, "shadow": 4, "margin_v": 420
+            },
+            "beast_bold": {
+                "name": "Beast Bold",
+                "font": "Impact", "size": 82,
+                "primary": "&H0000FFFF",  # Amarelo com contorno vermelho
+                "outline_color": "&H000000D0", "outline_w": 8, "shadow": 4, "margin_v": 420
+            },
+            "cyan_electric": {
+                "name": "Ciano Elétrico",
+                "font": "Arial Black", "size": 74,
+                "primary": "&H00FFFF00",  # Ciano Elétrico
+                "outline_color": "&H000A0A0A", "outline_w": 6, "shadow": 4, "margin_v": 420
+            },
+            "purple_viral": {
+                "name": "Roxo Viral",
+                "font": "Arial Black", "size": 74,
+                "primary": "&H00F755A8",  # Púrpura TikTok
+                "outline_color": "&H00000000", "outline_w": 6, "shadow": 3, "margin_v": 420
+            },
+            "clean_minimal": {
+                "name": "Clean Minimal",
+                "font": "Arial", "size": 66,
+                "primary": "&H00FFFFFF",  # Branco puro
+                "outline_color": "&H001F1F1F", "outline_w": 4, "shadow": 2, "margin_v": 400
+            },
+            "gold_karaoke": {
+                "name": "Karaokê Dourado",
+                "font": "Arial Black", "size": 76,
+                "primary": "&H0020D0FF",  # Dourado Metálico
+                "outline_color": "&H00000000", "outline_w": 7, "shadow": 3, "margin_v": 420
+            },
+            "fire_sunset": {
+                "name": "Fogo Sunset",
+                "font": "Impact", "size": 80,
+                "primary": "&H000066FF",  # Laranja / Fogo
+                "outline_color": "&H00000000", "outline_w": 7, "shadow": 3, "margin_v": 420
+            },
+            "emerald_vip": {
+                "name": "Esmeralda VIP",
+                "font": "Arial Black", "size": 74,
+                "primary": "&H0078C850",  # Verde Esmeralda
+                "outline_color": "&H00050505", "outline_w": 6, "shadow": 3, "margin_v": 420
+            },
+            "monochrome_3d": {
+                "name": "Monocromo 3D",
+                "font": "Impact", "size": 80,
+                "primary": "&H00FFFFFF",  # Branco com sombra profunda
+                "outline_color": "&H00000000", "outline_w": 8, "shadow": 5, "margin_v": 420
             }
         }
-        cfg = styles.get(style_key, styles["yellow_viral"])
+        cfg = dict(styles.get(style_key, styles["hormozi_pop"]))
+
+        # Personalizações do usuário
+        if custom_color:
+            # Converte hex (#00FF66) para formato BGR ASS (&H00BBGGRR)
+            clean_hex = custom_color.lstrip('#')
+            if len(clean_hex) == 6:
+                r, g, b = clean_hex[0:2], clean_hex[2:4], clean_hex[4:6]
+                cfg["primary"] = f"&H00{b}{g}{r}".upper()
+        if custom_font_size and custom_font_size > 30:
+            cfg["size"] = custom_font_size
+        if custom_margin_v and custom_margin_v > 50:
+            cfg["margin_v"] = custom_margin_v
 
         header = f"""[Script Info]
 ScriptType: v4.00+
@@ -120,16 +188,15 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         # Filtra palavras do corte
         cut_words = [w for w in words if w.get("start", 0) >= cut_start and w.get("end", 0) <= cut_end]
         if not cut_words:
-            # Fallback se não houver palavras mapeadas
-            cut_words = [{"word": "Cortefy AI", "start": cut_start, "end": cut_end}]
+            cut_words = [{"word": "Cortefy", "start": cut_start, "end": cut_end}]
 
-        # Agrupa em blocos de 3 palavras para ritmo viral
+        # Agrupa em blocos de 2 a 3 palavras para ritmo viral estilo CapCut
         dialogue_lines = []
-        chunk_size = 3
+        chunk_size = 2 if len(cut_words) > 40 else 3
         for i in range(0, len(cut_words), chunk_size):
             chunk = cut_words[i:i + chunk_size]
             s_time = max(0.0, chunk[0]["start"] - cut_start)
-            e_time = max(s_time + 0.4, chunk[-1]["end"] - cut_start)
+            e_time = max(s_time + 0.35, chunk[-1]["end"] - cut_start)
             text_str = " ".join([c["word"].upper() for c in chunk])
             dialogue_lines.append(f"Dialogue: 0,{fmt_time(s_time)},{fmt_time(e_time)},Default,,0,0,0,,{text_str}")
 
@@ -147,7 +214,10 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         layout: str = "split_screen", # "split_screen" ou "portrait"
         broll_mode: str = "auto_extract", # "external" ou "auto_extract"
         broll_source: Optional[str] = None, # Link ou arquivo do trailer
-        subtitle_style: str = "yellow_viral",
+        subtitle_style: str = "hormozi_pop",
+        custom_color: Optional[str] = None,
+        custom_font_size: Optional[int] = None,
+        custom_margin_v: Optional[int] = None,
         speed: float = 1.05,
         enable_zoom: bool = True,
         enable_drift: bool = True,
@@ -178,7 +248,13 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         # 2. Gera arquivo de legenda ASS
         if progress_cb:
             progress_cb(35, "Gerando legendas dinâmicas animadas...")
-        self.generate_ass_subtitles(words, start, end, temp_ass, style_key=subtitle_style)
+        self.generate_ass_subtitles(
+            words, start, end, temp_ass,
+            style_key=subtitle_style,
+            custom_color=custom_color,
+            custom_font_size=custom_font_size,
+            custom_margin_v=custom_margin_v
+        )
 
         # 3. Monta filtros de vídeo
         if progress_cb:
@@ -244,7 +320,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 
         cmd_render.extend([
             '-map', '[vfinal]', '-map', audio_map,
-            '-c:v', 'libx264', '-preset', 'fast', '-crf', '20',
+            '-c:v', 'libx264', '-preset', 'veryfast', '-tune', 'fastdecode', '-threads', '0', '-crf', '22',
             '-c:a', 'aac', '-b:a', '192k',
             final_file, '-y'
         ])

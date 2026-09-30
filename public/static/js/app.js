@@ -4,11 +4,13 @@ let currentCuts = [];
 let selectedCut = null;
 let pollingInterval = null;
 let selectedGenre = "auto";
+let selectedSubStyle = "hormozi_pop";
 let previewDebounceTimer = null;
 
 // Mensagens Flutuantes Amigáveis
 function showToast(message, type = "info") {
     const container = document.getElementById("toast-container");
+    if (!container) return;
     const toast = document.createElement("div");
     toast.className = `toast toast-${type}`;
     
@@ -30,23 +32,47 @@ function showToast(message, type = "info") {
     }, 4000);
 }
 
-// Status do Sistema
-async function checkHealth() {
+// Contador Mensal de Cortes
+async function initMonthlyStats() {
     try {
-        const res = await fetch("/api/health");
-        const data = await res.json();
-        if (data.status === "online") {
-            const statusEl = document.getElementById("status-system");
-            if (statusEl) {
-                statusEl.innerHTML = `
-                    <span class="radar-dot"></span>
-                    <span>Pronto para Criar</span>
-                `;
-            }
+        const res = await fetch("/api/monthly-stats");
+        if (res.ok) {
+            const data = await res.json();
+            updateMonthlyUI(data.used, data.limit);
+            localStorage.setItem("cortefy_monthly_used", data.used);
+            localStorage.setItem("cortefy_monthly_limit", data.limit);
+            return;
         }
     } catch (e) {
-        console.warn("Status offline");
+        // Fallback local
     }
+    const used = parseInt(localStorage.getItem("cortefy_monthly_used") || "18");
+    const limit = parseInt(localStorage.getItem("cortefy_monthly_limit") || "100");
+    updateMonthlyUI(used, limit);
+}
+
+function updateMonthlyUI(used, limit) {
+    const elUsed = document.getElementById("header-cuts-used");
+    const elLimit = document.getElementById("header-cuts-limit");
+    const elBar = document.getElementById("header-cuts-bar");
+    if (elUsed) elUsed.innerText = used;
+    if (elLimit) elLimit.innerText = limit;
+    if (elBar) {
+        const pct = Math.min(100, Math.round((used / limit) * 100));
+        elBar.style.width = `${pct}%`;
+    }
+}
+
+function incrementMonthlyCounter() {
+    const elUsed = document.getElementById("header-cuts-used");
+    const elLimit = document.getElementById("header-cuts-limit");
+    const current = elUsed ? parseInt(elUsed.innerText) || 18 : 18;
+    const limit = elLimit ? parseInt(elLimit.innerText) || 100 : 100;
+    const next = Math.min(limit, current + 1);
+    updateMonthlyUI(next, limit);
+    localStorage.setItem("cortefy_monthly_used", next);
+
+    fetch("/api/monthly-stats/increment", { method: "POST" }).catch(() => {});
 }
 
 // Alternar Tipo de Conteúdo (Gênero)
@@ -83,20 +109,104 @@ function setGenre(genre) {
 }
 window.setGenre = setGenre;
 
-// Alternar Vídeo de Apoio
+// Alternar Vídeo de Apoio (Tela Dividida)
 function setBRollMode(mode) {
     const btnAuto = document.getElementById("btn-broll-auto");
     const btnExt = document.getElementById("btn-broll-ext");
     const extInput = document.getElementById("broll-external-input");
 
     if (mode === "auto_extract") {
-        btnAuto.classList.add("tech-card-active");
-        btnExt.classList.remove("tech-card-active");
-        extInput.style.display = "none";
+        if (btnAuto) btnAuto.classList.add("tech-card-active");
+        if (btnExt) btnExt.classList.remove("tech-card-active");
+        if (extInput) extInput.style.display = "none";
     } else {
-        btnExt.classList.add("tech-card-active");
-        btnAuto.classList.remove("tech-card-active");
-        extInput.style.display = "block";
+        if (btnExt) btnExt.classList.add("tech-card-active");
+        if (btnAuto) btnAuto.classList.remove("tech-card-active");
+        if (extInput) extInput.style.display = "block";
+    }
+}
+
+// Alternar Modelo de Legendas (10 Opções)
+function setSubStyle(styleKey) {
+    selectedSubStyle = styleKey;
+    window.selectedSubStyle = styleKey;
+    document.querySelectorAll(".sub-card").forEach(el => {
+        const isMatch = el.getAttribute("data-sub-style") === styleKey;
+        const radio = el.querySelector(".sub-radio");
+        if (isMatch) {
+            el.classList.add("sub-card-active");
+            if (radio) {
+                radio.textContent = "●";
+                radio.style.color = "#00FF66";
+            }
+        } else {
+            el.classList.remove("sub-card-active");
+            if (radio) {
+                radio.textContent = "○";
+                radio.style.color = "#71717A";
+            }
+        }
+    });
+    const hidden = document.getElementById("selected-sub-style-input");
+    if (hidden) hidden.value = styleKey;
+}
+window.setSubStyle = setSubStyle;
+
+// Gaveta de Personalização de Legenda
+function toggleCustomizeDrawer() {
+    const drawer = document.getElementById("sub-customizer-drawer");
+    if (!drawer) return;
+    const isHidden = drawer.style.display === "none" || !drawer.style.display;
+    drawer.style.display = isHidden ? "block" : "none";
+    if (isHidden) {
+        drawer.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+}
+
+function saveSubtitleTemplate() {
+    const customColor = document.getElementById("custom-sub-color")?.value || "#00FF66";
+    const customSize = document.getElementById("custom-sub-size")?.value || "76";
+    const customPos = document.getElementById("custom-sub-position")?.value || "520";
+    const currentStyle = window.selectedSubStyle || selectedSubStyle || "hormozi_pop";
+
+    const templateData = {
+        styleKey: currentStyle,
+        color: customColor,
+        size: customSize,
+        position: customPos,
+        timestamp: Date.now()
+    };
+
+    localStorage.setItem("cortefy_sub_template", JSON.stringify(templateData));
+    
+    const badge = document.getElementById("saved-template-badge");
+    if (badge) badge.style.display = "inline-flex";
+
+    showToast("Template salvo! Será aplicado automaticamente nos seus vídeos.", "success");
+}
+
+function loadSavedTemplate() {
+    try {
+        const raw = localStorage.getItem("cortefy_sub_template");
+        if (raw) {
+            const tpl = JSON.parse(raw);
+            if (tpl.styleKey) setSubStyle(tpl.styleKey);
+            const inputColor = document.getElementById("custom-sub-color");
+            const labelColor = document.getElementById("custom-sub-color-label");
+            const selectSize = document.getElementById("custom-sub-size");
+            const selectPos = document.getElementById("custom-sub-position");
+            const badge = document.getElementById("saved-template-badge");
+
+            if (inputColor && tpl.color) {
+                inputColor.value = tpl.color;
+                if (labelColor) labelColor.innerText = tpl.color;
+            }
+            if (selectSize && tpl.size) selectSize.value = tpl.size;
+            if (selectPos && tpl.position) selectPos.value = tpl.position;
+            if (badge) badge.style.display = "inline-flex";
+        }
+    } catch (e) {
+        console.warn("Falha ao carregar template:", e);
     }
 }
 
@@ -109,18 +219,26 @@ function initUrlListener() {
         clearTimeout(previewDebounceTimer);
         previewDebounceTimer = setTimeout(() => {
             handleUrlChange(input.value.trim());
-        }, 350);
+        }, 300);
     });
 
-    input.addEventListener("paste", (e) => {
+    input.addEventListener("paste", () => {
         setTimeout(() => {
             handleUrlChange(input.value.trim());
         }, 100);
     });
 
-    // Se já houver link inicial, busca prévia
     if (input.value.trim()) {
         handleUrlChange(input.value.trim());
+    }
+
+    // Color picker label listener
+    const colorPicker = document.getElementById("custom-sub-color");
+    const colorLabel = document.getElementById("custom-sub-color-label");
+    if (colorPicker && colorLabel) {
+        colorPicker.addEventListener("input", (e) => {
+            colorLabel.innerText = e.target.value.toUpperCase();
+        });
     }
 }
 
@@ -143,21 +261,18 @@ async function handleUrlChange(url) {
     const videoId = ytMatch[1];
     if (spinner) spinner.style.display = "inline-flex";
 
-    // 1. Imediato: monta capa e dados rápidos via oEmbed do YouTube (cliente-side, sem delay)
     const fallbackThumb = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
     document.getElementById("preview-thumb").src = fallbackThumb;
-    document.getElementById("preview-title").innerText = "Carregando informações do vídeo...";
+    document.getElementById("preview-title").innerText = "Identificando vídeo...";
     document.getElementById("preview-channel").innerText = "YouTube";
     document.getElementById("preview-duration").innerText = "12:00";
     if (previewCard) previewCard.style.display = "flex";
 
     try {
-        // Tenta obter título e autor via oEmbed oficial público
         const oembedPromise = fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`)
             .then(r => r.ok ? r.json() : null)
             .catch(() => null);
 
-        // Tenta obter metadados exatos do backend (duração e título)
         const infoPromise = fetch(`/api/video-info?url=${encodeURIComponent(url)}`)
             .then(r => r.ok ? r.json() : fetch(`/api/project/info?url=${encodeURIComponent(url)}`).then(r2 => r2.ok ? r2.json() : null))
             .catch(() => null);
@@ -167,7 +282,7 @@ async function handleUrlChange(url) {
         const title = infoData?.title || oembedData?.title || "Vídeo Selecionado";
         const channel = infoData?.channel || oembedData?.author_name || "";
         const thumb = infoData?.thumbnail || oembedData?.thumbnail_url || fallbackThumb;
-        const durationFormatted = infoData?.duration_formatted || (infoData?.duration ? `${Math.floor(infoData.duration/60)}:${Math.floor(infoData.duration%60).toString().padStart(2, '0')}` : "");
+        const durationFormatted = infoData?.duration_formatted || "";
 
         document.getElementById("preview-thumb").src = thumb;
         document.getElementById("preview-title").innerText = title;
@@ -187,36 +302,38 @@ async function handleUrlChange(url) {
     }
 }
 
-// Iniciar Encontro de Melhores Momentos
+// PASSO 6: Avançar e Gerar Cortes Virais
 async function startAnalysis() {
     const url = document.getElementById("input-main-url").value.trim();
-    const isAutoBroll = document.getElementById("btn-broll-auto").classList.contains("tech-card-active");
-    const brollUrl = document.getElementById("input-broll-url").value.trim();
+    const isAutoBroll = document.getElementById("btn-broll-auto")?.classList.contains("tech-card-active") ?? true;
+    const brollUrl = document.getElementById("input-broll-url")?.value.trim() || "";
+    const activeGenre = window.selectedGenre || document.getElementById("selected-genre-input")?.value || selectedGenre || "auto";
 
     if (!url) {
         showToast("Por favor, cole um link do YouTube para começar.", "error");
+        document.getElementById("input-main-url").focus();
         return;
     }
 
-    const btn = document.getElementById("btn-analyze");
+    const btn = document.getElementById("btn-advance");
     btn.disabled = true;
-    btn.innerHTML = `<span class="radar-dot"></span> Procurando momentos incríveis...`;
+    btn.innerHTML = `<span class="radar-dot"></span><span>Analisando vídeo em alta velocidade...</span>`;
 
-    document.getElementById("progress-section").style.display = "block";
+    const progSection = document.getElementById("progress-section");
+    if (progSection) progSection.style.display = "block";
     updateProgress(15, "Lendo o vídeo em alta velocidade...");
 
     try {
-            const activeGenre = window.selectedGenre || document.getElementById("selected-genre-input")?.value || selectedGenre || "auto";
-            const res = await fetch("/api/project/analyze", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    source_url: url,
-                    broll_mode: isAutoBroll ? "auto_extract" : "external",
-                    broll_url: brollUrl,
-                    genre: activeGenre
-                })
-            });
+        const res = await fetch("/api/project/analyze", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                source_url: url,
+                broll_mode: isAutoBroll ? "auto_extract" : "external",
+                broll_url: brollUrl,
+                genre: activeGenre
+            })
+        });
 
         if (!res.ok) {
             const err = await res.json();
@@ -228,20 +345,24 @@ async function startAnalysis() {
     } catch (e) {
         showToast(e.message, "error");
         btn.disabled = false;
-        btn.innerHTML = `✨ Encontrar Melhores Momentos`;
-        document.getElementById("progress-section").style.display = "none";
+        btn.innerHTML = `<span>⚡ Avançar e Gerar Cortes Virais</span>`;
+        if (progSection) progSection.style.display = "none";
     }
 }
 
-function updateProgress(percent, msg) {
-    document.getElementById("progress-fill").style.width = `${percent}%`;
-    document.getElementById("progress-status").innerText = msg;
-    document.getElementById("progress-percent").innerText = `${percent}%`;
+function updateProgress(percent, message) {
+    const fill = document.getElementById("progress-fill");
+    const text = document.getElementById("progress-status");
+    const pct = document.getElementById("progress-percent");
+
+    if (fill) fill.style.width = `${percent}%`;
+    if (text) text.innerHTML = `<span class="radar-dot"></span><span>${message}</span>`;
+    if (pct) pct.innerText = `${percent}%`;
 }
 
-// Acompanhar Análise
 function pollTask(taskId) {
-    clearInterval(pollingInterval);
+    if (pollingInterval) clearInterval(pollingInterval);
+
     pollingInterval = setInterval(async () => {
         try {
             const res = await fetch(`/api/task/${taskId}`);
@@ -251,140 +372,243 @@ function pollTask(taskId) {
 
             if (task.status === "completed") {
                 clearInterval(pollingInterval);
-                showToast("Pronto! Encontramos os melhores momentos.", "success");
-                
                 currentProjectId = task.result.project_id;
-                currentCuts = task.result.cuts;
+                currentCuts = task.result.cuts || [];
 
-                renderCuts(currentCuts, task.result.title);
-                
-                document.getElementById("btn-analyze").disabled = false;
-                document.getElementById("btn-analyze").innerHTML = `✨ Encontrar Melhores Momentos`;
                 document.getElementById("progress-section").style.display = "none";
+                const btn = document.getElementById("btn-advance");
+                btn.disabled = false;
+                btn.innerHTML = `<span>⚡ Avançar e Gerar Cortes Virais</span>`;
 
-                // Rola para a seção dos momentos
-                document.getElementById("cuts-section").scrollIntoView({ behavior: "smooth" });
+                const titleDisplay = document.getElementById("project-title-display");
+                if (titleDisplay) titleDisplay.innerText = task.result.title || "Vídeo Selecionado";
+
+                renderCutsList(currentCuts, false);
+
+                const cutsSection = document.getElementById("cuts-section");
+                if (cutsSection) {
+                    cutsSection.style.display = "block";
+                    cutsSection.scrollIntoView({ behavior: "smooth", block: "start" });
+                }
+
+                showToast(`Encontramos ${currentCuts.length} momentos virais incríveis!`, "success");
             } else if (task.status === "error") {
                 clearInterval(pollingInterval);
-                showToast("Não conseguimos analisar este vídeo. Tente outro link.", "error");
-                document.getElementById("btn-analyze").disabled = false;
-                document.getElementById("btn-analyze").innerHTML = `✨ Encontrar Melhores Momentos`;
-                document.getElementById("progress-section").style.display = "none";
+                showToast(task.message || "Erro no processamento.", "error");
+                const btn = document.getElementById("btn-advance");
+                btn.disabled = false;
+                btn.innerHTML = `<span>⚡ Avançar e Gerar Cortes Virais</span>`;
             }
         } catch (e) {
-            console.error(e);
+            console.error("Erro no polling:", e);
         }
     }, 1000);
 }
 
-// Exibir Cards de Momentos com Selos de Potencial
-function renderCuts(cuts, title) {
+// Renderização dos Cards de Cortes Ranqueados
+function renderCutsList(cuts, append = false) {
     const container = document.getElementById("cuts-container");
-    container.innerHTML = "";
-    document.getElementById("cuts-section").style.display = "block";
-    document.getElementById("project-title-display").innerText = title || "Vídeo Selecionado";
+    if (!container) return;
 
-    cuts.forEach((c) => {
-        const card = document.createElement("div");
-        card.className = "tech-card p-5 cursor-pointer relative flex flex-col justify-between";
-        card.id = `cut-card-${c.id}`;
+    if (!append) {
+        container.innerHTML = "";
+    }
 
-        const duration = Math.round(c.end - c.start);
-        const score = parseInt(c.virality_score, 10) || 85;
+    cuts.forEach((cut) => {
+        const durationSec = Math.round(cut.end - cut.start);
+        const startFmt = formatSeconds(cut.start);
+        const endFmt = formatSeconds(cut.end);
+        const score = cut.virality_score || 85;
 
-        let scoreClass = "score-pill-viral";
-        let scoreIcon = "⚡";
-        let scoreLabel = "Potencial Viral";
-
-        if (score >= 90) {
-            scoreClass = "score-pill-viral";
-            scoreIcon = "⚡";
-            scoreLabel = "Potencial Viral";
-        } else if (score >= 80) {
-            scoreClass = "score-pill-high";
-            scoreIcon = "🔥";
-            scoreLabel = "Alto Impacto";
-        } else {
-            scoreClass = "score-pill-mid";
-            scoreIcon = "✨";
-            scoreLabel = "Bom Engajamento";
+        let scoreBadgeClass = "score-pill-viral";
+        let scoreLabel = "⚡ Potencial Viral";
+        if (score < 85 && score >= 75) {
+            scoreBadgeClass = "score-pill-high";
+            scoreLabel = "🔥 Alto Impacto";
+        } else if (score < 75) {
+            scoreBadgeClass = "score-pill-mid";
+            scoreLabel = "✨ Bom Engajamento";
         }
 
+        const tagText = cut.tag || scoreLabel;
+        const captionText = cut.caption_seo || `${cut.title} 🔥\n\nVocê teria a mesma reação? Comente aqui embaixo!\n\n#foryou #viral #cortes #shorts #reels`;
+
+        const card = document.createElement("div");
+        card.id = `card-cut-${cut.id}`;
+        card.className = "tech-card p-5 flex flex-col justify-between gap-4 border border-white/10 hover:border-white/20 transition-all";
+
         card.innerHTML = `
-            <div>
-                <div class="flex justify-between items-start mb-3 gap-2">
-                    <div class="flex flex-wrap items-center gap-2">
-                        <span class="${scoreClass}">
-                            <span>${scoreIcon}</span>
-                            <span>${scoreLabel}: ${score}/100</span>
-                        </span>
-                        <span class="badge-zinc">${c.tag || '🔥 Destaque'}</span>
-                    </div>
-                    <span class="text-xs text-zinc-400 font-mono bg-white/5 border border-white/10 px-2 py-0.5 rounded whitespace-nowrap">
-                        ⏱️ ${duration}s
+            <div class="space-y-3">
+                <!-- Cabeçalho do Card: Selo de Viralidade e Minutagem -->
+                <div class="flex items-center justify-between gap-2 flex-wrap">
+                    <span class="${scoreBadgeClass}">
+                        <span>${score}/100</span>
+                        <span>${tagText}</span>
+                    </span>
+                    <span class="text-xs font-mono text-zinc-400 bg-white/5 px-2.5 py-1 rounded-md border border-white/5">
+                        ⏱️ ${startFmt} - ${endFmt} (${durationSec}s)
                     </span>
                 </div>
-                
-                <h3 class="text-base font-bold text-white mb-2 leading-snug">${c.title}</h3>
 
-                <div class="bg-black/40 border border-white/5 rounded-lg p-2.5 mb-3">
-                    <div class="text-[11px] font-semibold text-[#00FF66] mb-1 flex items-center gap-1.5">
-                        <span>🎯 Gancho dos primeiros 3 segundos:</span>
+                <!-- Título Chamativo -->
+                <h3 class="text-base font-bold text-white leading-snug">
+                    ${escapeHtml(cut.title)}
+                </h3>
+
+                <!-- Gancho Inicial -->
+                <div class="p-2.5 rounded-lg bg-white/5 border border-white/5 text-xs text-zinc-300 flex items-start gap-2">
+                    <span class="text-[#00FF66] font-bold shrink-0">🎯</span>
+                    <div>
+                        <strong class="text-white">Gancho inicial (3s):</strong>
+                        <span>"${escapeHtml(cut.hook || 'Preste atenção nisso...')}"</span>
                     </div>
-                    <p class="text-xs text-zinc-300 italic">"${c.hook}"</p>
                 </div>
 
-                ${c.rationale ? `<p class="text-xs text-zinc-400 mb-3">${c.rationale}</p>` : ''}
+                <!-- Legenda com SEO para Redes Sociais -->
+                <div class="space-y-1.5 pt-1">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[11px] font-semibold text-zinc-400">LEGENDA COM SEO PRONTA PARA POSTAR:</span>
+                        <button type="button" onclick="copyCaption(this, decodeURIComponent('${encodeURIComponent(captionText)}'))" class="btn-copy-seo">
+                            <span>📋 Copiar Legenda</span>
+                        </button>
+                    </div>
+                    <div class="seo-caption-box">${escapeHtml(captionText)}</div>
+                </div>
             </div>
 
-            <div class="flex justify-between items-center pt-3 border-t border-white/5 mt-auto">
-                <span class="text-xs text-zinc-500 font-mono">${c.start.toFixed(1)}s até ${c.end.toFixed(1)}s</span>
-                <button onclick="selectCut('${c.id}')" class="btn-neon text-xs py-1.5 px-3">
-                    <span>Criar Este Vídeo →</span>
+            <!-- Botão de Ação: Criar Vídeo (MP4) -->
+            <div class="pt-3 border-t border-white/5 flex items-center justify-between gap-3">
+                <span class="text-xs text-zinc-400">9:16 Vertical • Pronto</span>
+                <button type="button" onclick="renderCut('${cut.id}')" class="btn-neon text-xs py-2.5 px-4 font-bold">
+                    <span>🚀 Criar Vídeo (MP4)</span>
                 </button>
             </div>
         `;
 
         container.appendChild(card);
     });
+}
 
-    if (cuts.length > 0) {
-        selectCut(cuts[0].id);
+function formatSeconds(sec) {
+    const s = Math.floor(sec || 0);
+    const m = Math.floor(s / 60);
+    const rem = s % 60;
+    return `${m.toString().padStart(2, '0')}:${rem.toString().padStart(2, '0')}`;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement("div");
+    div.innerText = text || "";
+    return div.innerHTML;
+}
+
+// 1-Clique Copiar Legenda
+function copyCaption(btn, text) {
+    if (!text) return;
+
+    const performCopy = () => {
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = `<span>✓ Copiado!</span>`;
+        btn.classList.add("copied");
+
+        setTimeout(() => {
+            btn.innerHTML = originalHtml;
+            btn.classList.remove("copied");
+        }, 2500);
+
+        showToast("Legenda e hashtags copiadas com sucesso!", "success");
+    };
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(performCopy).catch(() => {
+            fallbackCopy(text);
+            performCopy();
+        });
+    } else {
+        fallbackCopy(text);
+        performCopy();
     }
 }
 
-// Selecionar Momento
-function selectCut(cutId) {
-    selectedCut = currentCuts.find(c => c.id === cutId);
-    if (!selectedCut) return;
-
-    document.querySelectorAll("[id^='cut-card-']").forEach(el => el.classList.remove("tech-card-active"));
-    const activeCard = document.getElementById(`cut-card-${cutId}`);
-    if (activeCard) activeCard.classList.add("tech-card-active");
-
-    document.getElementById("studio-section").style.display = "block";
-    document.getElementById("studio-cut-title").innerText = selectedCut.title;
-    document.getElementById("studio-cut-meta").innerText = `⏱️ ${Math.round(selectedCut.end - selectedCut.start)} segundos  |  ${selectedCut.virality_score}% de chance de viralizar  |  ${selectedCut.tag}`;
-
-    document.getElementById("studio-section").scrollIntoView({ behavior: "smooth" });
+function fallbackCopy(text) {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.left = "-9999px";
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand("copy"); } catch (e) {}
+    document.body.removeChild(ta);
 }
 
-// Gerar Vídeo Pronto
-async function renderCurrentCut() {
-    if (!currentProjectId || !selectedCut) {
-        showToast("Escolha um dos momentos acima primeiro.", "error");
+// Botão "Gerar +5 Cortes"
+async function generateMoreCuts() {
+    if (!currentProjectId) {
+        showToast("Nenhum projeto ativo para buscar mais cortes.", "error");
         return;
     }
 
-    const layout = document.getElementById("select-layout").value;
-    const style = document.getElementById("select-sub-style").value;
-    const speed = document.getElementById("range-speed").value;
-
-    const btn = document.getElementById("btn-render-cut");
+    const btn = document.getElementById("btn-more-cuts");
     btn.disabled = true;
-    btn.innerHTML = `<span class="radar-dot"></span> Criando seu vídeo...`;
+    btn.innerHTML = `<span class="radar-dot"></span><span>Buscando +5 momentos virais...</span>`;
 
-    document.getElementById("render-progress-section").style.display = "block";
+    try {
+        const res = await fetch("/api/project/more-cuts", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ project_id: currentProjectId })
+        });
+
+        if (!res.ok) {
+            throw new Error("Não foi possível gerar mais cortes agora.");
+        }
+
+        const data = await res.json();
+        const newCuts = data.new_cuts || [];
+
+        if (newCuts.length === 0) {
+            showToast("Todos os melhores momentos já foram gerados!", "info");
+        } else {
+            currentCuts.push(...newCuts);
+            renderCutsList(newCuts, true);
+            showToast(`+5 novos cortes adicionados com sucesso!`, "success");
+
+            // Rola suavemente até o primeiro novo corte
+            const firstNewCard = document.getElementById(`card-cut-${newCuts[0].id}`);
+            if (firstNewCard) {
+                firstNewCard.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
+        }
+    } catch (e) {
+        showToast(e.message, "error");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<span>⚡ Gerar +5 Cortes Deste Vídeo</span>`;
+    }
+}
+
+// Renderizar Corte Escolhido
+async function renderCut(cutId) {
+    if (!currentProjectId) return;
+
+    const customColor = document.getElementById("custom-sub-color")?.value || "#00FF66";
+    const customSize = parseInt(document.getElementById("custom-sub-size")?.value || "76");
+    const customPos = parseInt(document.getElementById("custom-sub-position")?.value || "520");
+    const subStyle = window.selectedSubStyle || selectedSubStyle || "hormozi_pop";
+
+    const enableZoom = document.getElementById("toggle-zoom")?.checked ?? true;
+    const enableDrift = document.getElementById("toggle-drift")?.checked ?? true;
+
+    const renderSection = document.getElementById("render-progress-section");
+    const renderFill = document.getElementById("render-progress-fill");
+    const renderStatus = document.getElementById("render-progress-status");
+
+    if (renderSection) {
+        renderSection.style.display = "block";
+        renderSection.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+    if (renderFill) renderFill.style.width = "10%";
+    if (renderStatus) renderStatus.innerText = "Iniciando renderização de vídeo em alta velocidade...";
 
     try {
         const res = await fetch("/api/project/render", {
@@ -392,46 +616,53 @@ async function renderCurrentCut() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 project_id: currentProjectId,
-                cut_id: selectedCut.id,
-                layout: layout,
-                subtitle_style: style,
-                speed: parseFloat(speed)
+                cut_id: cutId,
+                layout: "split_screen",
+                subtitle_style: subStyle,
+                custom_color: customColor,
+                custom_font_size: customSize,
+                custom_margin_v: customPos,
+                enable_zoom: enableZoom,
+                enable_drift: enableDrift,
+                speed: 1.05
             })
         });
+
+        if (!res.ok) {
+            throw new Error("Falha ao iniciar renderização.");
+        }
 
         const data = await res.json();
         pollRenderTask(data.render_task_id);
     } catch (e) {
         showToast(e.message, "error");
-        btn.disabled = false;
-        btn.innerHTML = `🚀 Criar Vídeo Pronto para Postar`;
+        if (renderSection) renderSection.style.display = "none";
     }
 }
 
-// Acompanhar Criação do Vídeo
 function pollRenderTask(renderTaskId) {
     const poll = setInterval(async () => {
         try {
             const res = await fetch(`/api/task/${renderTaskId}`);
             const task = await res.json();
 
-            document.getElementById("render-progress-fill").style.width = `${task.progress}%`;
-            document.getElementById("render-progress-status").innerText = task.message;
+            const renderFill = document.getElementById("render-progress-fill");
+            const renderStatus = document.getElementById("render-progress-status");
+            const renderSection = document.getElementById("render-progress-section");
+
+            if (renderFill) renderFill.style.width = `${task.progress}%`;
+            if (renderStatus) renderStatus.innerText = task.message;
 
             if (task.status === "completed") {
                 clearInterval(poll);
                 showToast("Vídeo pronto com sucesso!", "success");
-
-                document.getElementById("btn-render-cut").disabled = false;
-                document.getElementById("btn-render-cut").innerHTML = `🚀 Criar Vídeo Pronto para Postar`;
-                document.getElementById("render-progress-section").style.display = "none";
-
+                if (renderSection) renderSection.style.display = "none";
+                incrementMonthlyCounter();
                 openVideoModal(task.output_url, task.filename);
             } else if (task.status === "error") {
                 clearInterval(poll);
                 showToast("Não foi possível gerar o vídeo. Tente novamente.", "error");
-                document.getElementById("btn-render-cut").disabled = false;
-                document.getElementById("btn-render-cut").innerHTML = `🚀 Criar Vídeo Pronto para Postar`;
+                if (renderSection) renderSection.style.display = "none";
             }
         } catch (e) {
             console.error(e);
@@ -439,35 +670,48 @@ function pollRenderTask(renderTaskId) {
     }, 1200);
 }
 
-// Visualizador do Vídeo Pronto
+// Modal do Vídeo Pronto
 function openVideoModal(videoUrl, filename) {
     const modal = document.getElementById("video-modal");
     const video = document.getElementById("modal-video-player");
     const downloadBtn = document.getElementById("modal-download-btn");
 
-    video.src = videoUrl;
-    downloadBtn.href = `/api/download/${filename}`;
-    downloadBtn.download = filename;
+    if (video) video.src = videoUrl;
+    if (downloadBtn) {
+        downloadBtn.href = `/api/download/${filename}`;
+        downloadBtn.download = filename;
+    }
 
-    modal.style.display = "flex";
-    video.play();
+    if (modal) modal.style.display = "flex";
+    if (video) video.play().catch(() => {});
 }
 
 function closeVideoModal() {
     const modal = document.getElementById("video-modal");
     const video = document.getElementById("modal-video-player");
-    video.pause();
-    modal.style.display = "none";
+    if (video) video.pause();
+    if (modal) modal.style.display = "none";
 }
 
+// Inicialização
 document.addEventListener("DOMContentLoaded", () => {
-    checkHealth();
+    initMonthlyStats();
     initUrlListener();
+    loadSavedTemplate();
+
+    // Event listeners para chips de gênero
     document.querySelectorAll(".genre-chip").forEach(btn => {
         btn.addEventListener("click", (e) => {
-            e.preventDefault();
             const g = btn.getAttribute("data-genre");
             if (g) setGenre(g);
+        });
+    });
+
+    // Event listeners para cards de legenda
+    document.querySelectorAll(".sub-card").forEach(card => {
+        card.addEventListener("click", () => {
+            const s = card.getAttribute("data-sub-style");
+            if (s) setSubStyle(s);
         });
     });
 });

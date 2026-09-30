@@ -18,21 +18,22 @@ export async function onRequestPost(context) {
 
         // Prompt para o Diretor Criativo Gemini na Nuvem
         const promptText = `
-Você é um Diretor de Criação Especialista em Cortes Virais para TikTok, Reels e Shorts (nível OpusClip / PlaySquad).
+Você é um Diretor de Criação Especialista em Cortes Virais para TikTok, Reels e Shorts.
 
 Vídeo de entrada: "${sourceUrl}".
 Estilo de conteúdo selecionado: "${genre}".
 
-Crie entre 4 e 5 cortes altamente virais e atraentes para esse conteúdo.
+Crie exatamente 5 cortes altamente virais e atraentes para esse conteúdo ranqueados por potencial de viralização.
 Para cada corte, retorne:
 - "title": Título chamativo e curioso (sem mentiras).
 - "hook": Primeira frase de abertura dos primeiros 3 segundos.
 - "start": Segundo inicial (float, ex: 15.0).
-- "end": Segundo final (float, ex: 55.0).
+- "end": Segundo final (float, ex: 52.0).
 - "virality_score": Nota de potencial de 0 a 100.
-- "tag": Categoria simples (ex: "😂 Engraçado", "🔥 Momento Épico", "💡 Dica de Ouro", "😮 Reação Marcante", "🏆 Veredito").
+- "tag": Categoria (ex: "⚡ Potencial Viral", "🔥 Momento Épico", "💡 Dica de Ouro", "😂 Engraçado", "🏆 Veredito").
+- "caption_seo": Texto pronto para postar com gancho, CTA e 8 a 12 hashtags relevantes (ex: #foryou #viral #cortes #shorts #reels).
 
-Responda ESTRITAMENTE em formato JSON (uma lista de objetos):
+Responda ESTRITAMENTE em formato JSON (uma lista com 5 objetos):
 [
   {
     "id": "corte_01",
@@ -40,8 +41,9 @@ Responda ESTRITAMENTE em formato JSON (uma lista de objetos):
     "hook": "...",
     "start": 12.0,
     "end": 48.0,
-    "virality_score": 96,
-    "tag": "🔥 Destaque"
+    "virality_score": 98,
+    "tag": "⚡ Potencial Viral",
+    "caption_seo": "Você teria a mesma reação? 👀 Veja até o final e me diga nos comentários!\n\n#cortes #viral #podcast #shorts #reels #foryou"
   }
 ]
 `;

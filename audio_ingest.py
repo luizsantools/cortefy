@@ -3,6 +3,8 @@ import sys
 import subprocess
 import json
 import time
+import random
+import re
 from typing import Dict, Any, List, Optional
 
 CREATE_NO_WINDOW = 0x08000000 if sys.platform == 'win32' else 0
@@ -32,6 +34,139 @@ class AudioIngestEngine:
             print("[AudioIngest] Carregando modelo Whisper...")
             self._whisper_model = whisper.load_model("base")
         return self._whisper_model
+
+    def parse_vtt_file(self, vtt_path: str) -> tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+        """Faz o parse de arquivo WebVTT extraindo segmentos limpos e palavras com timestamps."""
+        if not os.path.exists(vtt_path):
+            return [], []
+
+        with open(vtt_path, 'r', encoding='utf-8', errors='ignore') as f:
+            lines = f.readlines()
+
+        time_re = re.compile(r'(\d{2}:\d{2}:\d{2}\.\d{3})\s*-->\s*(\d{2}:\d{2}:\d{2}\.\d{3})')
+        tag_re = re.compile(r'<[^>]+>')
+        word_time_re = re.compile(r'<(\d{2}:\d{2}:\d{2}\.\d{3})><c>\s*([^<]+)</c>')
+
+        def parse_ts(ts: str) -> float:
+            parts = ts.split(':')
+            h = int(parts[0])
+            m = int(parts[1])
+            s = float(parts[2])
+            return h * 3600 + m * 60 + s
+
+        segments = []
+        words = []
+        i = 0
+        seen_texts = set()
+
+        while i < len(lines):
+            line = lines[i].strip()
+            m = time_re.search(line)
+            if m:
+                start_sec = parse_ts(m.group(1))
+                end_sec = parse_ts(m.group(2))
+                i += 1
+                text_block = []
+                while i < len(lines) and lines[i].strip() and not time_re.search(lines[i]):
+                    raw_line = lines[i]
+                    for wm in word_time_re.finditer(raw_line):
+                        w_start = parse_ts(wm.group(1))
+                        w_text = wm.group(2).strip()
+                        if w_text:
+                            words.append({"word": w_text, "start": round(w_start, 3), "end": round(w_start + 0.35, 3)})
+
+                    clean_line = tag_re.sub('', raw_line).strip()
+                    if clean_line and clean_line not in text_block:
+                        text_block.append(clean_line)
+                    i += 1
+
+                if text_block:
+                    full_text = ' '.join(text_block)
+                    if full_text not in seen_texts and len(full_text) > 1:
+                        seen_texts.add(full_text)
+                        segments.append({
+                            "start": round(start_sec, 2),
+                            "end": round(end_sec, 2),
+                            "text": full_text
+                        })
+            else:
+                i += 1
+
+        if not words and segments:
+            for seg in segments:
+                raw_words = [w for w in seg["text"].split() if w]
+                if raw_words:
+                    step = max(0.2, (seg["end"] - seg["start"]) / len(raw_words))
+                    for idx, w in enumerate(raw_words):
+                        words.append({
+                            "word": w,
+                            "start": round(seg["start"] + idx * step, 3),
+                            "end": round(seg["start"] + (idx + 1) * step, 3)
+                        })
+
+        return segments, words
+
+    def extract_youtube_transcript_fast(self, youtube_url: str, progress_callback=None) -> Dict[str, Any]:
+        """Extrai transcrição oficial/automática do YouTube em ~2 segundos com yt-dlp sem baixar áudio."""
+        if progress_callback:
+            progress_callback(20, "Identificando fala do vídeo em alta velocidade...")
+
+        ytdlp_bin = get_bin("yt-dlp")
+        rand_id = random.randint(1000, 9999)
+        base_sub_name = os.path.join(self.temp_dir, f"sub_fast_{int(time.time())}_{rand_id}")
+
+        cmd = [
+            ytdlp_bin,
+            '--skip-download',
+            '--write-auto-sub',
+            '--write-sub',
+            '--sub-lang', 'pt,pt-BR,en',
+            '--sub-format', 'vtt',
+            '--no-warnings',
+            '--no-simulate',
+            '--print', '%(title)s',
+            '-o', f"{base_sub_name}.%(ext)s",
+            youtube_url
+        ]
+
+        title = "Vídeo do YouTube"
+        try:
+            res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, creationflags=CREATE_NO_WINDOW, timeout=12)
+            if res.stdout.strip():
+                title = res.stdout.strip().split('\n')[0].strip()
+        except Exception as e:
+            print(f"[AudioIngest] Falha na extração de legendas: {e}")
+
+        vtt_file = None
+        for lang in ['pt', 'pt-BR', 'en']:
+            candidate = f"{base_sub_name}.{lang}.vtt"
+            if os.path.exists(candidate) and os.path.getsize(candidate) > 200:
+                vtt_file = candidate
+                break
+
+        if not vtt_file:
+            for f in os.listdir(self.temp_dir):
+                if f.startswith(f"sub_fast_") and f.endswith(".vtt"):
+                    full_p = os.path.join(self.temp_dir, f)
+                    if os.path.getsize(full_p) > 200:
+                        vtt_file = full_p
+                        break
+
+        if vtt_file:
+            segments, words = self.parse_vtt_file(vtt_file)
+            if segments:
+                if progress_callback:
+                    progress_callback(35, f"Transcrição obtida em segundos ({len(segments)} falas identificadas)!")
+                return {
+                    "success": True,
+                    "title": title,
+                    "segments": segments,
+                    "words": words,
+                    "duration": segments[-1]["end"] if segments else 0.0,
+                    "vtt_file": vtt_file
+                }
+
+        return {"success": False, "title": title}
 
     def download_youtube_audio(self, youtube_url: str, progress_callback=None) -> tuple[str, str]:
         """Baixa apenas a trilha de áudio em segundos para processamento rápido."""

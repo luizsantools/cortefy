@@ -48,6 +48,8 @@ video_pipeline = VideoPipeline()
 # Armazenamento em memória para tarefas e estado
 TASKS: Dict[str, Dict[str, Any]] = {}
 ACTIVE_PROJECTS: Dict[str, Dict[str, Any]] = {}
+TRANSCRIPT_CACHE: Dict[str, Dict[str, Any]] = {}
+MONTHLY_USAGE: Dict[str, int] = {"used": 18, "limit": 100}
 
 @app.get("/", response_class=HTMLResponse)
 async def serve_index():
@@ -71,6 +73,15 @@ async def health_check():
         "timestamp": time.time()
     }
 
+@app.get("/api/monthly-stats")
+async def get_monthly_stats():
+    return MONTHLY_USAGE
+
+@app.post("/api/monthly-stats/increment")
+async def increment_monthly_stats():
+    MONTHLY_USAGE["used"] = min(MONTHLY_USAGE["limit"], MONTHLY_USAGE["used"] + 1)
+    return MONTHLY_USAGE
+
 @app.get("/api/video-info")
 async def get_video_info(url: str):
     """Retorna metadados do vídeo para a prévia instantânea (título, capa, duração)."""
@@ -88,7 +99,6 @@ async def start_analysis(payload: Dict[str, Any], background_tasks: BackgroundTa
     genre = payload.get("genre", "auto").strip()
 
     if not source_url:
-        # Se nenhuma URL foi passada, usa o vídeo padrão de amostra existente
         sample_path = os.path.join(os.path.dirname(BASE_DIR), "video_source.mp4")
         if os.path.exists(sample_path):
             source_url = sample_path
@@ -109,15 +119,14 @@ async def start_analysis(payload: Dict[str, Any], background_tasks: BackgroundTa
 
         def heartbeat():
             messages = [
-                (45, "Ouvindo o que foi falado no vídeo..."),
-                (55, "Identificando as falas mais marcantes e engraçadas..."),
-                (68, "Avaliando os momentos com maior chance de viralizar..."),
-                (80, "Verificando o ritmo e a emoção da conversa..."),
-                (90, "Quase pronto, organizando os melhores cortes...")
+                (45, "Identificando as falas e ritmo da conversa..."),
+                (60, "Calculando o potencial de retenção e ganchos virais..."),
+                (80, "Criando títulos irresistíveis e legendas com SEO..."),
+                (92, "Quase pronto, organizando os 5 melhores cortes...")
             ]
             idx = 0
             while heartbeat_running and idx < len(messages):
-                time.sleep(3.0)
+                time.sleep(2.0)
                 if not heartbeat_running:
                     break
                 prog, msg = messages[idx]
@@ -133,27 +142,48 @@ async def start_analysis(payload: Dict[str, Any], background_tasks: BackgroundTa
                 TASKS[task_id]["progress"] = prog
                 TASKS[task_id]["message"] = msg
 
-            # 1. Download do áudio leve
-            update_progress(15, "Lendo o vídeo em alta velocidade...")
-            if source_url.startswith("http://") or source_url.startswith("https://"):
-                audio_path, video_title = audio_engine.download_youtube_audio(source_url, progress_callback=update_progress)
-            else:
-                ingest_res = audio_engine.extract_audio_from_local_file(source_url, progress_callback=update_progress)
-                audio_path = ingest_res["audio_path"]
-                video_title = ingest_res.get("title", "Vídeo")
-
-            update_progress(40, "Identificando os momentos mais marcantes...")
-
-            # 2. Tenta análise direta com Gemini (15 segundos) com suporte a gênero
-            cuts = ai_director.analyze_audio_directly(audio_path, video_title=video_title, genre=genre)
+            cuts = []
             words = []
+            video_title = "Vídeo Selecionado"
 
-            # 3. Fallback se necessário
+            # 1. Estratégia Ultra-Rápida: Cache ou Extração Direta de Legendas em 2 segundos
+            cached = TRANSCRIPT_CACHE.get(source_url)
+            if cached:
+                update_progress(30, "Vídeo já memorizado! Encontrando cortes virais...")
+                video_title = cached.get("title", "Vídeo")
+                words = cached.get("words", [])
+                cuts = ai_director.analyze_virality(cached["segments"], video_title=video_title, genre=genre, batch_index=1)
+            elif source_url.startswith("http://") or source_url.startswith("https://"):
+                update_progress(15, "Lendo falas do vídeo em altíssima velocidade...")
+                fast_sub = audio_engine.extract_youtube_transcript_fast(source_url, progress_callback=update_progress)
+                if fast_sub.get("success") and fast_sub.get("segments"):
+                    video_title = fast_sub.get("title", "Vídeo")
+                    words = fast_sub.get("words", [])
+                    TRANSCRIPT_CACHE[source_url] = {
+                        "segments": fast_sub["segments"],
+                        "words": words,
+                        "title": video_title
+                    }
+                    update_progress(50, "Avaliando momentos com maior potencial viral...")
+                    cuts = ai_director.analyze_virality(fast_sub["segments"], video_title=video_title, genre=genre, batch_index=1)
+
+            # 2. Fallback por Áudio leve caso não haja legendas no YouTube ou seja arquivo local
             if not cuts:
-                update_progress(60, "Organizando as falas e ganchos...")
-                ingest_res = audio_engine.transcribe_audio_file(audio_path, video_title=video_title, progress_callback=update_progress)
-                cuts = ai_director.analyze_virality(ingest_res["segments"], video_title=video_title, genre=genre)
-                words = ingest_res.get("words", [])
+                update_progress(40, "Processando trilha de áudio...")
+                if source_url.startswith("http://") or source_url.startswith("https://"):
+                    audio_path, video_title = audio_engine.download_youtube_audio(source_url, progress_callback=update_progress)
+                else:
+                    ingest_res = audio_engine.extract_audio_from_local_file(source_url, progress_callback=update_progress)
+                    audio_path = ingest_res["audio_path"]
+                    video_title = ingest_res.get("title", "Vídeo")
+
+                update_progress(60, "Identificando os melhores momentos...")
+                cuts = ai_director.analyze_audio_directly(audio_path, video_title=video_title, genre=genre)
+
+                if not cuts:
+                    ingest_res = audio_engine.transcribe_audio_file(audio_path, video_title=video_title, progress_callback=update_progress)
+                    cuts = ai_director.analyze_virality(ingest_res["segments"], video_title=video_title, genre=genre)
+                    words = ingest_res.get("words", [])
 
             heartbeat_running = False
 
@@ -172,7 +202,7 @@ async def start_analysis(payload: Dict[str, Any], background_tasks: BackgroundTa
 
             TASKS[task_id]["status"] = "completed"
             TASKS[task_id]["progress"] = 100
-            TASKS[task_id]["message"] = f"Pronto! Encontramos {len(cuts)} momentos incríveis para você."
+            TASKS[task_id]["message"] = f"Pronto! Encontramos {len(cuts)} cortes virais ranqueados."
             TASKS[task_id]["result"] = {
                 "project_id": project_id,
                 "title": video_title,
@@ -187,6 +217,40 @@ async def start_analysis(payload: Dict[str, Any], background_tasks: BackgroundTa
     threading.Thread(target=process_task, daemon=True).start()
     return {"task_id": task_id}
 
+@app.post("/api/project/more-cuts")
+async def generate_more_cuts(payload: Dict[str, Any]):
+    """Gera mais 5 cortes virais sem reprocessar o vídeo do zero."""
+    project_id = payload.get("project_id")
+    project = ACTIVE_PROJECTS.get(project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Projeto não encontrado.")
+
+    existing_cuts = project.get("cuts", [])
+    source_url = project.get("source_url")
+    genre = project.get("genre", "auto")
+    video_title = project.get("title", "")
+
+    cached = TRANSCRIPT_CACHE.get(source_url)
+    segments = cached.get("segments") if cached else None
+
+    batch_idx = (len(existing_cuts) // 5) + 1
+    if segments:
+        new_cuts = ai_director.analyze_virality(
+            segments,
+            video_title=video_title,
+            genre=genre,
+            batch_index=batch_idx,
+            exclude_cuts=existing_cuts
+        )
+    else:
+        new_cuts = ai_director._heuristic_fallback([{"end": 600.0}], batch_index=batch_idx)
+
+    project["cuts"].extend(new_cuts)
+    return {
+        "new_cuts": new_cuts,
+        "total_cuts": len(project["cuts"])
+    }
+
 @app.get("/api/task/{task_id}")
 async def get_task_status(task_id: str):
     task = TASKS.get(task_id)
@@ -199,10 +263,15 @@ async def start_render(payload: Dict[str, Any]):
     project_id = payload.get("project_id")
     cut_id = payload.get("cut_id")
     layout = payload.get("layout", "split_screen")
-    subtitle_style = payload.get("subtitle_style", "yellow_viral")
+    subtitle_style = payload.get("subtitle_style", "hormozi_pop")
+    custom_color = payload.get("custom_color")
+    custom_font_size = payload.get("custom_font_size")
+    custom_margin_v = payload.get("custom_margin_v")
     speed = float(payload.get("speed", 1.05))
     broll_mode = payload.get("broll_mode", "auto_extract")
     broll_source = payload.get("broll_source")
+    enable_zoom = bool(payload.get("enable_zoom", True))
+    enable_drift = bool(payload.get("enable_drift", True))
 
     project = ACTIVE_PROJECTS.get(project_id)
     if not project:
@@ -211,6 +280,9 @@ async def start_render(payload: Dict[str, Any]):
     selected_cut = next((c for c in project["cuts"] if c["id"] == cut_id), None)
     if not selected_cut:
         raise HTTPException(status_code=404, detail="Corte não encontrado.")
+
+    # Incrementa contador mensal
+    MONTHLY_USAGE["used"] = min(MONTHLY_USAGE["limit"], MONTHLY_USAGE["used"] + 1)
 
     render_task_id = f"render_{uuid.uuid4().hex[:8]}"
     TASKS[render_task_id] = {
@@ -236,7 +308,12 @@ async def start_render(payload: Dict[str, Any]):
                 broll_mode=broll_mode or project.get("broll_mode", "auto_extract"),
                 broll_source=broll_source or project.get("broll_url"),
                 subtitle_style=subtitle_style,
+                custom_color=custom_color,
+                custom_font_size=custom_font_size,
+                custom_margin_v=custom_margin_v,
                 speed=speed,
+                enable_zoom=enable_zoom,
+                enable_drift=enable_drift,
                 progress_cb=update_cb
             )
 

@@ -5,12 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cortefy — Crie Vídeos Curtos e Virais</title>
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
-    <!-- Tailwind CDN for rapid utility classes -->
+    <!-- Tailwind CDN para estilização rápida -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="/static/css/cortefy.css?v=2.7.0">
+    <link rel="stylesheet" href="/static/css/cortefy.css?v=2.8.0">
     <script>
-        // Seleção de Tipo de Conteúdo resiliente e imediata (executa antes de qualquer render ou clique)
+        // Seleção de Tipo de Conteúdo e Estado do Aplicativo
         window.selectedGenre = 'auto';
+        window.selectedSubStyle = 'hormozi_pop';
+
         window.setGenre = function(genre) {
             window.selectedGenre = genre;
             var chips = document.querySelectorAll('.genre-chip');
@@ -43,22 +45,35 @@
             if (hidden) hidden.value = genre;
         };
 
-        document.addEventListener('DOMContentLoaded', function() {
-            var chips = document.querySelectorAll('.genre-chip');
-            chips.forEach(function(chip) {
-                chip.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    var g = chip.getAttribute('data-genre');
-                    if (g) window.setGenre(g);
-                });
+        window.setSubStyle = function(styleKey) {
+            window.selectedSubStyle = styleKey;
+            var cards = document.querySelectorAll('.sub-card');
+            cards.forEach(function(card) {
+                var isMatch = card.getAttribute('data-sub-style') === styleKey;
+                var radio = card.querySelector('.sub-radio');
+                if (isMatch) {
+                    card.classList.add('sub-card-active');
+                    if (radio) {
+                        radio.textContent = '●';
+                        radio.style.color = '#00FF66';
+                    }
+                } else {
+                    card.classList.remove('sub-card-active');
+                    if (radio) {
+                        radio.textContent = '○';
+                        radio.style.color = '#71717A';
+                    }
+                }
             });
-        });
+            var hidden = document.getElementById('selected-sub-style-input');
+            if (hidden) hidden.value = styleKey;
+        };
     </script>
 </head>
-<body class="selection:bg-[#00FF66] selection:text-black">
+<body class="selection:bg-[#00FF66] selection:text-black min-h-screen bg-black text-white">
 
     <!-- Cabeçalho Principal -->
-    <header class="header-glass py-4 px-6 md:px-12 flex justify-between items-center">
+    <header class="header-glass py-4 px-6 md:px-12 flex justify-between items-center sticky top-0 z-50">
         <div class="flex items-center gap-4">
             <img src="/static/logo.svg" alt="Cortefy" class="h-8">
             <span class="badge-neon hidden sm:inline-flex">
@@ -67,12 +82,19 @@
             </span>
         </div>
 
-        <div class="flex items-center gap-3">
-            <div id="status-system" class="badge-zinc hidden md:flex items-center gap-2">
-                <span class="radar-dot"></span>
-                <span>Pronto para Criar</span>
+        <div class="flex items-center gap-4">
+            <!-- Contador Mensal de Cortes -->
+            <div class="monthly-badge flex items-center gap-2.5 px-3.5 py-1.5 rounded-full text-xs">
+                <span class="text-[#00FF66] font-bold">🔥</span>
+                <span class="text-zinc-300 font-medium">
+                    <strong id="header-cuts-used" class="text-white font-mono">18</strong> / <span id="header-cuts-limit" class="text-zinc-400">100</span> cortes este mês
+                </span>
+                <div class="w-16 h-1.5 bg-zinc-800 rounded-full overflow-hidden hidden md:block">
+                    <div id="header-cuts-bar" class="h-full bg-gradient-to-r from-[#00FF66] to-[#00DF82] rounded-full" style="width: 18%;"></div>
+                </div>
             </div>
-            <button onclick="document.getElementById('input-main-url').focus()" class="btn-secondary text-xs">
+
+            <button onclick="document.getElementById('input-main-url').focus()" class="btn-secondary text-xs hidden sm:inline-flex">
                 <span>Criar Novo Vídeo</span>
             </button>
         </div>
@@ -82,104 +104,145 @@
     <main class="max-w-5xl mx-auto px-6 py-10 space-y-12">
 
         <!-- Apresentação -->
-        <section class="text-center space-y-4 pt-4">
+        <section class="text-center space-y-4 pt-2">
             <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-white/10 bg-white/5 text-xs text-zinc-400">
                 <span class="text-[#00FF66]">●</span>
-                <span>Crie vídeos para TikTok, Reels e Shorts em 1 clique</span>
+                <span>Gerador de Cortes em Formato 9:16 para TikTok, Reels e Shorts</span>
             </div>
             <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight text-white">
                 Transforme Vídeos Longos em <br>
                 <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#00FF66] to-[#00DF82]">Cortes Prontos para Postar</span>
             </h1>
             <p class="text-zinc-400 text-sm md:text-base max-w-2xl mx-auto">
-                Cole o link de qualquer vídeo do YouTube. O Cortefy encontra os melhores momentos, cria legendas dinâmicas e ajusta tudo no formato vertical para redes sociais.
+                Cole o link de qualquer vídeo do YouTube. O Cortefy encontra os momentos mais virais, aplica legendas animadas estilo CapCut e gera o texto ideal com SEO para você postar e viralizar.
             </p>
         </section>
 
-        <!-- Etapa 1: Escolha do Vídeo -->
-        <section class="tech-card p-6 md:p-8 space-y-6">
-            <div class="flex items-center justify-between border-b border-white/5 pb-4">
-                <div class="flex items-center gap-3">
-                    <span class="text-[#00FF66] font-bold text-sm">Passo 1</span>
-                    <h2 class="text-lg font-bold text-white">Escolha o seu Vídeo</h2>
-                </div>
-                <span class="badge-zinc">Super Rápido</span>
-            </div>
+        <!-- Formulário do Estúdio (Passos 1 a 6) -->
+        <section class="tech-card p-6 md:p-8 space-y-8">
 
-            <!-- Campo do Vídeo Principal -->
-            <div class="space-y-3">
-                <div class="flex items-center justify-between">
-                    <label class="block text-xs font-semibold text-zinc-400 tracking-wider">LINK DO VÍDEO DO YOUTUBE</label>
-                    <span id="preview-loading-spinner" class="text-xs text-[#00FF66] items-center gap-1.5" style="display: none;">
-                        <span class="radar-dot"></span>
-                        <span>Identificando vídeo...</span>
-                    </span>
-                </div>
-                <input 
-                    type="text" 
-                    id="input-main-url"
-                    class="tech-input w-full"
-                    placeholder="Cole o link do YouTube aqui (ex: https://www.youtube.com/watch?v=...)"
-                    value=""
-                    autocomplete="off"
-                >
-
-                <!-- Card de Prévia Instantânea do Vídeo -->
-                <div id="video-preview-card" class="preview-card p-4 flex flex-col sm:flex-row gap-4 items-center" style="display: none;">
-                    <div class="relative w-full sm:w-48 aspect-video rounded-lg overflow-hidden border border-white/10 shrink-0 bg-zinc-950">
-                        <img id="preview-thumb" src="" alt="Capa do Vídeo" class="w-full h-full object-cover">
-                        <span id="preview-duration" class="absolute bottom-1.5 right-1.5 bg-black/85 text-[11px] text-[#00FF66] font-mono px-2 py-0.5 rounded border border-white/10 font-bold">--:--</span>
+            <!-- PASSO 1: Escolha do Vídeo -->
+            <div class="space-y-4">
+                <div class="flex items-center justify-between border-b border-white/5 pb-3">
+                    <div class="flex items-center gap-3">
+                        <span class="text-[#00FF66] font-bold text-sm">Passo 1</span>
+                        <h2 class="text-lg font-bold text-white">Cole o Link do Vídeo</h2>
                     </div>
-                    <div class="flex-1 text-left space-y-1.5 w-full">
-                        <div class="flex items-center gap-2">
-                            <span class="badge-neon text-[10px]">
-                                <span class="radar-dot"></span>
-                                <span>Vídeo Identificado</span>
-                            </span>
-                            <span id="preview-channel" class="text-xs text-zinc-400 truncate max-w-[200px]"></span>
+                    <span class="badge-zinc">Detecção Instantânea</span>
+                </div>
+
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <label class="block text-xs font-semibold text-zinc-400 tracking-wider">LINK DO VÍDEO DO YOUTUBE</label>
+                        <span id="preview-loading-spinner" class="text-xs text-[#00FF66] items-center gap-1.5" style="display: none;">
+                            <span class="radar-dot"></span>
+                            <span>Identificando vídeo...</span>
+                        </span>
+                    </div>
+                    <input 
+                        type="text" 
+                        id="input-main-url"
+                        class="tech-input w-full"
+                        placeholder="Cole o link do YouTube aqui (ex: https://www.youtube.com/watch?v=...)"
+                        value=""
+                        autocomplete="off"
+                    >
+
+                    <!-- Card de Prévia Instantânea do Vídeo -->
+                    <div id="video-preview-card" class="preview-card p-4 flex flex-col sm:flex-row gap-4 items-center" style="display: none;">
+                        <div class="relative w-full sm:w-48 aspect-video rounded-lg overflow-hidden border border-white/10 shrink-0 bg-zinc-950">
+                            <img id="preview-thumb" src="" alt="Capa do Vídeo" class="w-full h-full object-cover">
+                            <span id="preview-duration" class="absolute bottom-1.5 right-1.5 bg-black/85 text-[11px] text-[#00FF66] font-mono px-2 py-0.5 rounded border border-white/10 font-bold">--:--</span>
                         </div>
-                        <h3 id="preview-title" class="text-sm sm:text-base font-bold text-white line-clamp-2"></h3>
-                        <p class="text-xs text-zinc-400">
-                            Vídeo identificado! Vamos encontrar os momentos com maior chance de prender a atenção das pessoas.
-                        </p>
+                        <div class="flex-1 text-left space-y-1.5 w-full">
+                            <div class="flex items-center gap-2">
+                                <span class="badge-neon text-[10px]">
+                                    <span class="radar-dot"></span>
+                                    <span>Vídeo Identificado</span>
+                                </span>
+                                <span id="preview-channel" class="text-xs text-zinc-400 truncate max-w-[200px]"></span>
+                            </div>
+                            <h3 id="preview-title" class="text-sm sm:text-base font-bold text-white line-clamp-2"></h3>
+                            <p class="text-xs text-zinc-400">
+                                Vídeo identificado com sucesso! Configure as preferências abaixo para calibrar seus cortes.
+                            </p>
+                        </div>
                     </div>
-                    <button type="button" onclick="startAnalysis()" class="btn-neon text-xs py-2.5 px-4 whitespace-nowrap shrink-0 w-full sm:w-auto">
-                        <span>✨ Gerar Cortes em 1 Clique</span>
-                    </button>
                 </div>
             </div>
 
-            <!-- Tipo de Conteúdo -->
-            <div class="space-y-2 pt-1">
-                <label class="block text-xs font-semibold text-zinc-400 tracking-wider">TIPO DE CONTEÚDO (PARA CALIBRAR OS CORTES)</label>
+            <!-- PASSO 2: Tipo de Conteúdo -->
+            <div class="space-y-4">
+                <div class="flex items-center justify-between border-b border-white/5 pb-3">
+                    <div class="flex items-center gap-3">
+                        <span class="text-[#00FF66] font-bold text-sm">Passo 2</span>
+                        <h2 class="text-lg font-bold text-white">Tipo de Conteúdo (para Calibrar os Cortes)</h2>
+                    </div>
+                    <span class="badge-zinc">Calibração de Ritmo</span>
+                </div>
+
                 <input type="hidden" id="selected-genre-input" value="auto">
-                <div id="genre-container" class="flex flex-wrap gap-2">
-                    <button type="button" data-genre="auto" onclick="setGenre('auto')" id="genre-btn-auto" class="genre-chip genre-chip-active" style="background-color: rgba(0, 255, 102, 0.15); border-color: #00FF66; color: #00FF66; box-shadow: 0 0 16px rgba(0, 255, 102, 0.25);">
-                        <span class="genre-radio" style="color: #00FF66;">●</span>
-                        <span>✨ Automático (Recomendado)</span>
+                <div id="genre-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                    <!-- Automático -->
+                    <button type="button" data-genre="auto" onclick="setGenre('auto')" id="genre-btn-auto" class="genre-chip genre-chip-active text-left p-3.5 rounded-xl border border-white/10 flex items-start gap-3 transition-all" style="background-color: rgba(0, 255, 102, 0.15); border-color: #00FF66; color: #00FF66; box-shadow: 0 0 16px rgba(0, 255, 102, 0.25);">
+                        <span class="genre-radio text-base leading-none font-bold shrink-0 mt-0.5" style="color: #00FF66;">●</span>
+                        <div>
+                            <div class="text-sm font-bold text-white flex items-center gap-1.5">
+                                <span>✨ Automático</span>
+                                <span class="badge-neon text-[9px] py-0 px-1.5">Recomendado</span>
+                            </div>
+                            <p class="text-xs text-zinc-400 mt-1">Identifica sozinho os momentos de maior retenção e impacto.</p>
+                        </div>
                     </button>
-                    <button type="button" data-genre="podcast" onclick="setGenre('podcast')" id="genre-btn-podcast" class="genre-chip">
-                        <span class="genre-radio" style="color: #71717A;">○</span>
-                        <span>🎙️ Conversa / Podcast</span>
+
+                    <!-- Conversa / Podcast -->
+                    <button type="button" data-genre="podcast" onclick="setGenre('podcast')" id="genre-btn-podcast" class="genre-chip text-left p-3.5 rounded-xl border border-white/10 flex items-start gap-3 transition-all">
+                        <span class="genre-radio text-base leading-none font-bold shrink-0 mt-0.5" style="color: #71717A;">○</span>
+                        <div>
+                            <div class="text-sm font-bold text-white">🎙️ Conversa / Podcast</div>
+                            <p class="text-xs text-zinc-400 mt-1">Foco em diálogos marcantes, histórias e momentos de debate.</p>
+                        </div>
                     </button>
-                    <button type="button" data-genre="commentary" onclick="setGenre('commentary')" id="genre-btn-commentary" class="genre-chip">
-                        <span class="genre-radio" style="color: #71717A;">○</span>
-                        <span>💬 Opinião / React</span>
+
+                    <!-- Opinião / React -->
+                    <button type="button" data-genre="commentary" onclick="setGenre('commentary')" id="genre-btn-commentary" class="genre-chip text-left p-3.5 rounded-xl border border-white/10 flex items-start gap-3 transition-all">
+                        <span class="genre-radio text-base leading-none font-bold shrink-0 mt-0.5" style="color: #71717A;">○</span>
+                        <div>
+                            <div class="text-sm font-bold text-white">💬 Opinião / React</div>
+                            <p class="text-xs text-zinc-400 mt-1">Expressões fortes, reações espontâneas e quebras de expectativa.</p>
+                        </div>
                     </button>
-                    <button type="button" data-genre="academic" onclick="setGenre('academic')" id="genre-btn-academic" class="genre-chip">
-                        <span class="genre-radio" style="color: #71717A;">○</span>
-                        <span>📚 Aulas / Dicas</span>
+
+                    <!-- Aulas / Dicas -->
+                    <button type="button" data-genre="academic" onclick="setGenre('academic')" id="genre-btn-academic" class="genre-chip text-left p-3.5 rounded-xl border border-white/10 flex items-start gap-3 transition-all">
+                        <span class="genre-radio text-base leading-none font-bold shrink-0 mt-0.5" style="color: #71717A;">○</span>
+                        <div>
+                            <div class="text-sm font-bold text-white">📚 Aulas / Dicas</div>
+                            <p class="text-xs text-zinc-400 mt-1">Ensinamentos práticos, dicas passo a passo e insights 'eureka'.</p>
+                        </div>
                     </button>
-                    <button type="button" data-genre="vlog" onclick="setGenre('vlog')" id="genre-btn-vlog" class="genre-chip">
-                        <span class="genre-radio" style="color: #71717A;">○</span>
-                        <span>🎬 Histórias / Vlogs</span>
+
+                    <!-- Histórias / Vlogs -->
+                    <button type="button" data-genre="vlog" onclick="setGenre('vlog')" id="genre-btn-vlog" class="genre-chip text-left p-3.5 rounded-xl border border-white/10 flex items-start gap-3 transition-all">
+                        <span class="genre-radio text-base leading-none font-bold shrink-0 mt-0.5" style="color: #71717A;">○</span>
+                        <div>
+                            <div class="text-sm font-bold text-white">🎬 Histórias / Vlogs</div>
+                            <p class="text-xs text-zinc-400 mt-1">Reviravoltas no enredo, suspense e narrativa envolvente.</p>
+                        </div>
                     </button>
                 </div>
             </div>
 
-            <!-- Opções de Vídeo de Apoio (Tela Dividida) -->
-            <div class="space-y-3 pt-2">
-                <label class="block text-xs font-semibold text-zinc-400 tracking-wider">VÍDEO DE APOIO PARA O TOPO (TELA DIVIDIDA)</label>
+            <!-- PASSO 3: Vídeo de Apoio (Tela Dividida) -->
+            <div class="space-y-4">
+                <div class="flex items-center justify-between border-b border-white/5 pb-3">
+                    <div class="flex items-center gap-3">
+                        <span class="text-[#00FF66] font-bold text-sm">Passo 3</span>
+                        <h2 class="text-lg font-bold text-white">Vídeo de Apoio (Tela Dividida)</h2>
+                    </div>
+                    <span class="badge-zinc">Estilo Viral TikTok</span>
+                </div>
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <!-- Opção A: Cenas do próprio vídeo -->
                     <div 
@@ -192,7 +255,7 @@
                             <span class="badge-neon text-[10px]">MAIS FÁCIL</span>
                         </div>
                         <p class="text-xs text-zinc-400">
-                            Encontra automaticamente os momentos mais dinâmicos do próprio vídeo para colocar no topo da tela.
+                            Seleciona automaticamente os momentos mais dinâmicos do próprio vídeo para ilustrar o topo da tela.
                         </p>
                     </div>
 
@@ -203,128 +266,356 @@
                         class="tech-card p-4 cursor-pointer flex flex-col justify-between"
                     >
                         <div class="flex items-center justify-between mb-2">
-                            <span class="text-sm font-bold text-white">🎬 Colocar um trailer da internet</span>
+                            <span class="text-sm font-bold text-white">🎬 Colocar um trailer ou cena externa</span>
                             <span class="badge-zinc text-[10px]">PERSONALIZADO</span>
                         </div>
                         <p class="text-xs text-zinc-400">
-                            Cole o link de um trailer oficial ou cenas de ação do YouTube para passar no topo enquanto a pessoa fala embaixo.
+                            Cole o link de um trailer oficial, gameplay ou cena de ação para passar no topo enquanto o áudio roda.
                         </p>
                     </div>
                 </div>
 
                 <!-- Input Condicional de Vídeo Externo -->
-                <div id="broll-external-input" class="space-y-2 pt-2" style="display: none;">
-                    <label class="block text-xs font-semibold text-zinc-400 tracking-wider">LINK DO TRAILER OU CENA DO YOUTUBE PARA O TOPO</label>
+                <div id="broll-external-input" class="space-y-2 pt-1" style="display: none;">
+                    <label class="block text-xs font-semibold text-zinc-400 tracking-wider">LINK DO TRAILER OU CENA NO YOUTUBE</label>
                     <input 
                         type="text" 
                         id="input-broll-url"
                         class="tech-input w-full"
-                        placeholder="Cole o link do trailer no YouTube"
+                        placeholder="Cole aqui o link do trailer ou cena (ex: https://www.youtube.com/watch?v=...)"
                     >
                 </div>
             </div>
 
-            <!-- Botão de Análise Principal -->
-            <div class="pt-4 flex justify-end">
-                <button id="btn-analyze" onclick="startAnalysis()" class="btn-neon w-full sm:w-auto">
-                    <span>✨ Encontrar Melhores Momentos</span>
-                </button>
-            </div>
-
-            <!-- Barra de Progresso Amigável -->
-            <div id="progress-section" class="space-y-2 pt-2" style="display: none;">
-                <div class="flex justify-between text-xs text-zinc-400 font-medium">
-                    <span id="progress-status">Carregando...</span>
-                    <span id="progress-percent" class="text-[#00FF66] font-bold">0%</span>
-                </div>
-                <div class="progress-neon-bar">
-                    <div id="progress-fill" class="progress-neon-fill" style="width: 0%;"></div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Etapa 2: Cortes Encontrados -->
-        <section id="cuts-section" class="space-y-6" style="display: none;">
-            <div class="flex items-center justify-between border-b border-white/5 pb-4">
-                <div class="flex items-center gap-3">
-                    <span class="text-[#00FF66] font-bold text-sm">Passo 2</span>
-                    <h2 class="text-lg font-bold text-white">Escolha os Melhores Momentos</h2>
-                </div>
-                <span id="project-title-display" class="badge-zinc truncate max-w-xs"></span>
-            </div>
-
-            <div id="cuts-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Cards de cortes injetados via JavaScript -->
-            </div>
-        </section>
-
-        <!-- Etapa 3: Personalizar e Gerar -->
-        <section id="studio-section" class="tech-card p-6 md:p-8 space-y-6" style="display: none;">
-            <div class="flex items-center justify-between border-b border-white/5 pb-4">
-                <div class="flex items-center gap-3">
-                    <span class="text-[#00FF66] font-bold text-sm">Passo 3</span>
-                    <h2 class="text-lg font-bold text-white">Personalizar e Gerar Vídeo</h2>
-                </div>
-                <span class="badge-neon">Formato Reels e TikTok</span>
-            </div>
-
-            <div class="space-y-2">
-                <span class="text-xs text-zinc-400 font-medium">MOMENTO ESCOLHIDO:</span>
-                <h3 id="studio-cut-title" class="text-xl font-extrabold text-white"></h3>
-                <p id="studio-cut-meta" class="text-xs text-zinc-400"></p>
-            </div>
-
-            <!-- Controles Simples B2C -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
-                <!-- Layout -->
-                <div class="space-y-2">
-                    <label class="block text-xs font-semibold text-zinc-400 tracking-wider">FORMATO DO VÍDEO</label>
-                    <select id="select-layout" class="tech-input w-full">
-                        <option value="split_screen" selected>Tela Dividida (Cena no Topo / Rosto Embaixo)</option>
-                        <option value="portrait">Tela Cheia (Foco no Rosto com Zooms)</option>
-                    </select>
-                </div>
-
-                <!-- Estilo de Legenda -->
-                <div class="space-y-2">
-                    <label class="block text-xs font-semibold text-zinc-400 tracking-wider">ESTILO DAS LEGENDAS</label>
-                    <select id="select-sub-style" class="tech-input w-full">
-                        <option value="yellow_viral" selected>Amarelo Dinâmico (Mais Chamativo)</option>
-                        <option value="cyan_neon">Azul Neon</option>
-                        <option value="white_black">Branco com Borda Preta</option>
-                    </select>
-                </div>
-
-                <!-- Ritmo / Velocidade -->
-                <div class="space-y-2">
-                    <div class="flex justify-between text-xs text-zinc-400 font-medium">
-                        <span>VELOCIDADE DO VÍDEO</span>
-                        <span id="label-speed" class="text-[#00FF66] font-bold">Dinâmico</span>
+            <!-- PASSO 4: Modelo de Legendas (10 Opções CapCut + Personalizador + Template) -->
+            <div class="space-y-4">
+                <div class="flex items-center justify-between border-b border-white/5 pb-3">
+                    <div class="flex items-center gap-3">
+                        <span class="text-[#00FF66] font-bold text-sm">Passo 4</span>
+                        <h2 class="text-lg font-bold text-white">Modelo de Legendas (10 Opções Estilo CapCut)</h2>
                     </div>
-                    <select id="range-speed" class="tech-input w-full">
-                        <option value="1.0">Original (Velocidade Normal)</option>
-                        <option value="1.05" selected>Dinâmico (Prende a Atenção)</option>
-                        <option value="1.15">Rápido (Sem Enrolação)</option>
-                    </select>
+                    <button type="button" onclick="toggleCustomizeDrawer()" class="btn-secondary text-xs py-1 px-3">
+                        <span>⚙️ Personalizar & Salvar Template</span>
+                    </button>
+                </div>
+
+                <input type="hidden" id="selected-sub-style-input" value="hormozi_pop">
+
+                <!-- Grid com os 10 Modelos -->
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                    
+                    <!-- 1. Hormozi Pop -->
+                    <div data-sub-style="hormozi_pop" onclick="setSubStyle('hormozi_pop')" class="sub-card sub-card-active">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-white">Hormozi Pop</span>
+                            <span class="sub-radio text-[#00FF66] font-bold text-xs">●</span>
+                        </div>
+                        <div class="sub-preview-box">
+                            <span class="sub-style-hormozi">PRESTE <span class="anim-word text-white">ATENÇÃO</span> NISSO</span>
+                        </div>
+                    </div>
+
+                    <!-- 2. Neon Cyber -->
+                    <div data-sub-style="neon_cyber" onclick="setSubStyle('neon_cyber')" class="sub-card">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-white">Neon Cyber</span>
+                            <span class="sub-radio text-zinc-500 font-bold text-xs">○</span>
+                        </div>
+                        <div class="sub-preview-box">
+                            <span class="sub-style-neon">CORTE <span class="anim-word text-white">VIRAL</span> AGORA</span>
+                        </div>
+                    </div>
+
+                    <!-- 3. Beast Bold -->
+                    <div data-sub-style="beast_bold" onclick="setSubStyle('beast_bold')" class="sub-card">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-white">Beast Bold</span>
+                            <span class="sub-radio text-zinc-500 font-bold text-xs">○</span>
+                        </div>
+                        <div class="sub-preview-box">
+                            <span class="sub-style-beast">OLHA O QUE <span class="anim-word text-[#EF4444]">ACONTECEU!</span></span>
+                        </div>
+                    </div>
+
+                    <!-- 4. Ciano Elétrico -->
+                    <div data-sub-style="cyan_electric" onclick="setSubStyle('cyan_electric')" class="sub-card">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-white">Ciano Elétrico</span>
+                            <span class="sub-radio text-zinc-500 font-bold text-xs">○</span>
+                        </div>
+                        <div class="sub-preview-box">
+                            <span class="sub-style-cyan">MOMENTO <span class="anim-word text-white">ÉPICO</span></span>
+                        </div>
+                    </div>
+
+                    <!-- 5. Roxo Viral -->
+                    <div data-sub-style="purple_viral" onclick="setSubStyle('purple_viral')" class="sub-card">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-white">Roxo Viral</span>
+                            <span class="sub-radio text-zinc-500 font-bold text-xs">○</span>
+                        </div>
+                        <div class="sub-preview-box">
+                            <span class="sub-style-purple">VAI <span class="anim-word text-[#FFE600]">EXPLODIR</span> DE VIEWS</span>
+                        </div>
+                    </div>
+
+                    <!-- 6. Clean Minimal -->
+                    <div data-sub-style="clean_minimal" onclick="setSubStyle('clean_minimal')" class="sub-card">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-white">Clean Minimal</span>
+                            <span class="sub-radio text-zinc-500 font-bold text-xs">○</span>
+                        </div>
+                        <div class="sub-preview-box">
+                            <span class="sub-style-minimal">Direto ao ponto</span>
+                        </div>
+                    </div>
+
+                    <!-- 7. Karaokê Dourado -->
+                    <div data-sub-style="gold_karaoke" onclick="setSubStyle('gold_karaoke')" class="sub-card">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-white">Karaokê Dourado</span>
+                            <span class="sub-radio text-zinc-500 font-bold text-xs">○</span>
+                        </div>
+                        <div class="sub-preview-box">
+                            <span class="sub-style-gold">DICA <span class="anim-word text-white">DE OURO</span></span>
+                        </div>
+                    </div>
+
+                    <!-- 8. Fogo Sunset -->
+                    <div data-sub-style="fire_sunset" onclick="setSubStyle('fire_sunset')" class="sub-card">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-white">Fogo Sunset</span>
+                            <span class="sub-radio text-zinc-500 font-bold text-xs">○</span>
+                        </div>
+                        <div class="sub-preview-box">
+                            <span class="sub-style-fire">ALTA <span class="anim-word text-[#FFE600]">ENERGIA</span></span>
+                        </div>
+                    </div>
+
+                    <!-- 9. Esmeralda VIP -->
+                    <div data-sub-style="emerald_vip" onclick="setSubStyle('emerald_vip')" class="sub-card">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-white">Esmeralda VIP</span>
+                            <span class="sub-radio text-zinc-500 font-bold text-xs">○</span>
+                        </div>
+                        <div class="sub-preview-box">
+                            <span class="sub-style-emerald">ELEGÂNCIA <span class="anim-word text-white">PURISTA</span></span>
+                        </div>
+                    </div>
+
+                    <!-- 10. Monocromo 3D -->
+                    <div data-sub-style="monochrome_3d" onclick="setSubStyle('monochrome_3d')" class="sub-card">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-white">Monocromo 3D</span>
+                            <span class="sub-radio text-zinc-500 font-bold text-xs">○</span>
+                        </div>
+                        <div class="sub-preview-box">
+                            <span class="sub-style-mono3d">CONTRASTE <span class="anim-word text-zinc-400">TOTAL</span></span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Gaveta Expansível de Personalização e Template -->
+                <div id="sub-customizer-drawer" class="preview-card p-5 space-y-4" style="display: none;">
+                    <div class="flex items-center justify-between border-b border-white/5 pb-2">
+                        <span class="text-xs font-bold text-white flex items-center gap-2">
+                            <span>🎨 Personalizador de Legenda</span>
+                            <span id="saved-template-badge" class="badge-neon text-[9px]" style="display: none;">Template Ativo</span>
+                        </span>
+                        <span class="text-[11px] text-zinc-400">Ajuste fino visual</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                        <!-- Cor do Destaque -->
+                        <div class="space-y-1.5">
+                            <label class="block text-[11px] font-semibold text-zinc-400">COR DO DESTAQUE</label>
+                            <div class="flex items-center gap-2">
+                                <input type="color" id="custom-sub-color" value="#00FF66" class="w-8 h-8 rounded border border-white/10 bg-transparent cursor-pointer">
+                                <span id="custom-sub-color-label" class="text-xs font-mono text-zinc-300">#00FF66</span>
+                            </div>
+                        </div>
+
+                        <!-- Tamanho da Fonte -->
+                        <div class="space-y-1.5">
+                            <label class="block text-[11px] font-semibold text-zinc-400">TAMANHO DO TEXTO</label>
+                            <select id="custom-sub-size" class="tech-input w-full py-1.5 text-xs">
+                                <option value="64">Pequeno (64px)</option>
+                                <option value="76" selected>Médio (76px - Ideal)</option>
+                                <option value="86">Grande (86px - Impacto)</option>
+                            </select>
+                        </div>
+
+                        <!-- Posição da Legenda -->
+                        <div class="space-y-1.5">
+                            <label class="block text-[11px] font-semibold text-zinc-400">POSIÇÃO NA TELA</label>
+                            <select id="custom-sub-position" class="tech-input w-full py-1.5 text-xs">
+                                <option value="360">Inferior (Padrão)</option>
+                                <option value="520" selected>Centro Inferior (Melhor Retenção)</option>
+                                <option value="750">Centro da Tela</option>
+                            </select>
+                        </div>
+
+                        <!-- Ações de Template -->
+                        <div class="space-y-1.5 flex flex-col justify-end">
+                            <button type="button" onclick="saveSubtitleTemplate()" class="btn-neon text-xs py-2 justify-center">
+                                <span>💾 Salvar Como Meu Template</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Progresso de Criação -->
-            <div id="render-progress-section" class="space-y-2 pt-2" style="display: none;">
-                <div class="flex justify-between text-xs text-zinc-400 font-medium">
-                    <span id="render-progress-status">Montando seu vídeo...</span>
+            <!-- PASSO 5: Toggles de Efeitos Cinematográficos -->
+            <div class="space-y-4">
+                <div class="flex items-center justify-between border-b border-white/5 pb-3">
+                    <div class="flex items-center gap-3">
+                        <span class="text-[#00FF66] font-bold text-sm">Passo 5</span>
+                        <h2 class="text-lg font-bold text-white">Efeitos de Retenção & Dinamismo</h2>
+                    </div>
+                    <span class="badge-zinc">Retenção de Audiência</span>
                 </div>
-                <div class="progress-neon-bar">
-                    <div id="render-progress-fill" class="progress-neon-fill" style="width: 0%;"></div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                    
+                    <!-- Toggle 1: Zoom Dinâmico -->
+                    <div class="tech-card p-3.5 flex items-center justify-between gap-3">
+                        <div class="space-y-0.5">
+                            <div class="text-xs font-bold text-white flex items-center gap-1.5">
+                                <span>🔍 Zoom Dinâmico</span>
+                            </div>
+                            <p class="text-[11px] text-zinc-400">Aproximação suave a cada 4s para reter atenção.</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="toggle-zoom" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <!-- Toggle 2: Movimento Lateral -->
+                    <div class="tech-card p-3.5 flex items-center justify-between gap-3">
+                        <div class="space-y-0.5">
+                            <div class="text-xs font-bold text-white flex items-center gap-1.5">
+                                <span>↔️ Movimento Lateral</span>
+                            </div>
+                            <p class="text-[11px] text-zinc-400">Pan sutil horizontal para dinamismo visual.</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="toggle-drift" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <!-- Toggle 3: Centralizar Rostos -->
+                    <div class="tech-card p-3.5 flex items-center justify-between gap-3">
+                        <div class="space-y-0.5">
+                            <div class="text-xs font-bold text-white flex items-center gap-1.5">
+                                <span>👤 Centralizar Rostos</span>
+                            </div>
+                            <p class="text-[11px] text-zinc-400">Enquadramento inteligente na pessoa que fala.</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="toggle-center-face" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <!-- Toggle 4: Incluir Motion Graphics -->
+                    <div class="tech-card p-3.5 flex items-center justify-between gap-3">
+                        <div class="space-y-0.5">
+                            <div class="text-xs font-bold text-white flex items-center gap-1.5">
+                                <span>✨ Motion Graphics</span>
+                            </div>
+                            <p class="text-[11px] text-zinc-400">Elementos visuais nas palavras de destaque.</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="toggle-motion-graphics" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <!-- Toggle 5: Efeitos Sonoros -->
+                    <div class="tech-card p-3.5 flex items-center justify-between gap-3">
+                        <div class="space-y-0.5">
+                            <div class="text-xs font-bold text-white flex items-center gap-1.5">
+                                <span>🔊 Efeitos Sonoros</span>
+                            </div>
+                            <p class="text-[11px] text-zinc-400">Whooshes e pops sincronizados com cortes.</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="toggle-sound-effects" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
                 </div>
             </div>
 
-            <div class="pt-4 flex justify-end">
-                <button id="btn-render-cut" onclick="renderCurrentCut()" class="btn-neon w-full sm:w-auto">
-                    <span>🚀 Criar Vídeo Pronto para Postar</span>
+            <!-- PASSO 6: Botão de Ação "Avançar!" -->
+            <div class="pt-4 space-y-4">
+                <button id="btn-advance" onclick="startAnalysis()" class="btn-neon w-full py-4 text-base font-extrabold flex items-center justify-center gap-2 shadow-[0_0_30px_rgba(0,255,102,0.3)]">
+                    <span>⚡ Avançar e Gerar Cortes Virais</span>
+                </button>
+
+                <!-- Barra de Progresso Ultra-Rápida -->
+                <div id="progress-section" class="space-y-2 pt-2" style="display: none;">
+                    <div class="flex justify-between text-xs text-zinc-400 font-medium">
+                        <span id="progress-status" class="flex items-center gap-2">
+                            <span class="radar-dot"></span>
+                            <span>Iniciando processamento em alta velocidade...</span>
+                        </span>
+                        <span id="progress-percent" class="text-[#00FF66] font-bold font-mono">0%</span>
+                    </div>
+                    <div class="progress-neon-bar">
+                        <div id="progress-fill" class="progress-neon-fill" style="width: 0%;"></div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- SEÇÃO DE RESULTADOS: 5 Cortes Iniciais Ranqueados com SEO -->
+        <section id="cuts-section" class="space-y-6" style="display: none;">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/5 pb-4">
+                <div class="space-y-1">
+                    <div class="flex items-center gap-2">
+                        <span class="badge-neon text-xs">
+                            <span class="radar-dot"></span>
+                            <span>Cortes Ranqueados</span>
+                        </span>
+                        <h2 class="text-xl font-extrabold text-white">5 Melhores Momentos Encontrados</h2>
+                    </div>
+                    <p class="text-xs text-zinc-400">Ordenados do maior para o menor potencial de retenção e viralização.</p>
+                </div>
+                <span id="project-title-display" class="badge-zinc truncate max-w-sm"></span>
+            </div>
+
+            <!-- Grid de Cortes Injetados via JavaScript -->
+            <div id="cuts-container" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <!-- Preenchido via app.js -->
+            </div>
+
+            <!-- Botão de Gerar Mais 5 Cortes -->
+            <div class="pt-6 flex justify-center">
+                <button id="btn-more-cuts" onclick="generateMoreCuts()" class="btn-secondary py-3 px-8 text-sm font-bold flex items-center gap-2 border border-white/20 hover:border-[#00FF66]">
+                    <span>⚡ Gerar +5 Cortes Deste Vídeo</span>
                 </button>
             </div>
         </section>
+
+        <!-- Progresso de Renderização de Vídeo -->
+        <div id="render-progress-section" class="preview-card p-6 space-y-3" style="display: none;">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span class="radar-dot"></span>
+                    <span id="render-progress-status" class="text-sm font-bold text-white">Criando seu corte em 9:16...</span>
+                </div>
+                <span class="badge-neon text-xs">Renderizador Ultra-Rápido</span>
+            </div>
+            <div class="progress-neon-bar">
+                <div id="render-progress-fill" class="progress-neon-fill" style="width: 0%;"></div>
+            </div>
+        </div>
 
     </main>
 
@@ -355,6 +646,6 @@
     <!-- Notificações Flutuantes -->
     <div id="toast-container"></div>
 
-    <script src="/static/js/app.js?v=2.7.0"></script>
+    <script src="/static/js/app.js?v=2.8.0"></script>
 </body>
 </html>
