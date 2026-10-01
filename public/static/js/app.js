@@ -321,6 +321,8 @@ async function startAnalysis() {
     const toggleZoom = document.getElementById("toggle-zoom")?.checked ?? true;
     const toggleDrift = document.getElementById("toggle-drift")?.checked ?? true;
     const toggleCenterFace = document.getElementById("toggle-center-face")?.checked ?? true;
+    const toggleMotionGraphics = document.getElementById("toggle-motion-graphics")?.checked ?? true;
+    const toggleSoundEffects = document.getElementById("toggle-sound-effects")?.checked ?? true;
 
     if (!url) {
         showToast("Por favor, cole um link do YouTube para começar.", "error");
@@ -352,6 +354,8 @@ async function startAnalysis() {
                 enable_zoom: toggleZoom,
                 enable_drift: toggleDrift,
                 center_face: toggleCenterFace,
+                motion_graphics: toggleMotionGraphics,
+                sound_effects: toggleSoundEffects,
                 layout: (brollUrl && !isAutoBroll) ? "split_screen" : "portrait"
             })
         });
@@ -494,26 +498,37 @@ function renderCutsList(cuts, append = false) {
                     </div>
                 </div>
 
-                <!-- Legenda com SEO para Redes Sociais -->
+                <!-- Legenda com SEO para Redes Sociais (Editável em Tempo Real) -->
                 <div class="space-y-1.5 pt-1">
-                    <div class="flex items-center justify-between">
-                        <span class="text-[11px] font-black text-zinc-800 uppercase tracking-wider">LEGENDA COM SEO PRONTA PARA POSTAR:</span>
-                        <button type="button" onclick="copyCaption(this, decodeURIComponent('${encodeURIComponent(captionText)}'))" class="btn-copy-seo">
-                            <span>📋 Copiar Legenda</span>
-                        </button>
+                    <div class="flex items-center justify-between flex-wrap gap-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-[11px] font-black text-zinc-800 uppercase tracking-wider">LEGENDA COM SEO (EDITÁVEL):</span>
+                            <span id="tag-badge-${cut.id}" class="badge-blue text-[10px] font-black">5 / 5 hashtags</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <button type="button" onclick="saveCaption('${cut.id}')" class="btn-copy-seo" title="Salvar alterações na legenda">
+                                <span>💾 Salvar Legenda</span>
+                            </button>
+                            <button type="button" onclick="copyCaptionById('${cut.id}', this)" class="btn-copy-seo" title="Copiar legenda para a área de transferência">
+                                <span>📋 Copiar</span>
+                            </button>
+                        </div>
                     </div>
-                    <div class="seo-caption-box font-medium">${escapeHtml(captionText)}</div>
+                    <textarea id="caption-input-${cut.id}" oninput="updateHashtagBadge('${cut.id}')" class="seo-caption-box font-medium w-full text-xs font-sans resize-y focus:outline-none focus:border-[#FF5C00]" rows="4">${escapeHtml(captionText)}</textarea>
                 </div>
 
                 <!-- Botões de Ação: Baixar MP4 Imediato e Opções -->
                 <div class="pt-3 border-t-2 border-black flex flex-wrap items-center justify-between gap-3">
-                    <span class="text-xs text-zinc-700 font-bold">9:16 Vertical • Pronto</span>
-                    <div class="flex items-center gap-2">
-                        <a href="${videoSrc || '#'}" download="${escapeHtml(cut.title || cut.id)}.mp4" class="btn-neon text-xs py-2.5 px-4 font-black flex items-center gap-1.5 shadow-[2px_2px_0px_#000]">
-                            <span>⬇️ Baixar Vídeo (MP4)</span>
+                    <span class="text-xs text-zinc-700 font-bold">9:16 Vertical • Efeitos Ativos</span>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <a id="btn-download-${cut.id}" href="${videoSrc || '#'}" download="${escapeHtml(cut.title || cut.id)}.mp4" class="btn-neon text-xs py-2 px-3.5 font-black flex items-center gap-1.5 shadow-[2px_2px_0px_#000]">
+                            <span>⬇️ Baixar Vídeo</span>
                         </a>
-                        <button type="button" onclick="renderCut('${cut.id}')" class="btn-secondary text-xs py-2 px-3 font-bold" title="Re-renderizar com legenda animada personalizada">
-                            <span>🎨 Legenda Especial</span>
+                        <button type="button" onclick="openSubtitleEditorModal('${cut.id}')" class="btn-secondary text-xs py-2 px-3 font-black flex items-center gap-1.5" title="Corrigir termos, estilo ou frases faladas da legenda">
+                            <span>✏️ Corrigir Legenda</span>
+                        </button>
+                        <button type="button" onclick="generateThumbnailsForCut('${cut.id}')" class="btn-blue text-xs py-2 px-3 font-black flex items-center gap-1.5" title="Gerar 3 opções de Thumbnails para YouTube com Clickscore">
+                            <span>🎨 3 Thumbnails</span>
                         </button>
                     </div>
                 </div>
@@ -521,6 +536,7 @@ function renderCutsList(cuts, append = false) {
         `;
 
         container.appendChild(card);
+        updateHashtagBadge(cut.id);
     });
 }
 
@@ -574,6 +590,385 @@ function fallbackCopy(text) {
     ta.select();
     try { document.execCommand("copy"); } catch (e) {}
     document.body.removeChild(ta);
+}
+
+// --- SISTEMA DE LEGENDA SEO & HASHTAGS (LIMITE 5 TAGS) ---
+
+function updateHashtagBadge(cutId) {
+    const input = document.getElementById(`caption-input-${cutId}`);
+    const badge = document.getElementById(`tag-badge-${cutId}`);
+    if (!input || !badge) return;
+
+    const val = input.value || "";
+    const matches = val.match(/#[^\s#]+/g) || [];
+    const count = matches.length;
+
+    if (count > 5) {
+        badge.className = "text-[10px] font-black px-2 py-0.5 rounded-md border-2 border-black bg-[#FF3333] text-white shadow-[1px_1px_0px_#000]";
+        badge.innerText = `${count} / 5 (máx 5 no Instagram!)`;
+    } else if (count === 5) {
+        badge.className = "badge-neon text-[10px] font-black";
+        badge.innerText = `5 / 5 hashtags ✓`;
+    } else {
+        badge.className = "badge-blue text-[10px] font-black";
+        badge.innerText = `${count} / 5 hashtags`;
+    }
+}
+
+async function saveCaption(cutId) {
+    if (!currentProjectId) {
+        showToast("Projeto não encontrado.", "error");
+        return;
+    }
+    const input = document.getElementById(`caption-input-${cutId}`);
+    if (!input) return;
+    const captionVal = input.value.trim();
+
+    try {
+        const res = await fetch("/api/cut/update-caption", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                project_id: currentProjectId,
+                cut_id: cutId,
+                caption_seo: captionVal
+            })
+        });
+
+        if (!res.ok) throw new Error("Não foi possível salvar a legenda.");
+        const data = await res.json();
+
+        // Atualiza objeto em memória
+        const cut = currentCuts.find(c => c.id === cutId);
+        if (cut && data.cut) {
+            cut.caption_seo = data.cut.caption_seo;
+        }
+
+        updateHashtagBadge(cutId);
+        showToast("Legenda salva com sucesso!", "success");
+    } catch (e) {
+        showToast(e.message || "Erro ao salvar legenda", "error");
+    }
+}
+
+function copyCaptionById(cutId, btn) {
+    const input = document.getElementById(`caption-input-${cutId}`);
+    if (!input) return;
+    copyCaption(btn, input.value);
+}
+
+// --- MODAL DE CORREÇÃO DE LEGENDA DO VÍDEO (9:16) ---
+
+let activeEditingCutId = null;
+
+function openSubtitleEditorModal(cutId) {
+    const cut = currentCuts.find(c => c.id === cutId);
+    if (!cut) {
+        showToast("Corte não encontrado.", "error");
+        return;
+    }
+
+    activeEditingCutId = cutId;
+    const modal = document.getElementById("modal-subtitle-editor");
+    const textArea = document.getElementById("edit-sub-text");
+    const styleSelect = document.getElementById("edit-sub-style");
+    const colorInput = document.getElementById("edit-sub-color");
+    const colorLabel = document.getElementById("edit-sub-color-label");
+
+    // Preenche com o texto falado (transcrição do corte ou hook)
+    let initialText = "";
+    if (cut.edited_subtitles && Array.isArray(cut.edited_subtitles)) {
+        initialText = cut.edited_subtitles.map(w => w.word).join(" ");
+    } else if (cut.transcription) {
+        initialText = cut.transcription;
+    } else if (cut.subtitles && Array.isArray(cut.subtitles)) {
+        initialText = cut.subtitles.map(s => s.text).join(" ");
+    } else {
+        initialText = cut.hook || "";
+    }
+
+    if (textArea) textArea.value = initialText;
+    if (styleSelect) styleSelect.value = cut.subtitle_style || window.selectedSubStyle || "hormozi_pop";
+    if (colorInput) {
+        const col = cut.custom_color || "#FFE500";
+        colorInput.value = col;
+        if (colorLabel) colorLabel.innerText = col.toUpperCase();
+    }
+
+    if (modal) modal.style.display = "flex";
+}
+
+function closeSubtitleEditorModal() {
+    const modal = document.getElementById("modal-subtitle-editor");
+    if (modal) modal.style.display = "none";
+    activeEditingCutId = null;
+}
+
+async function submitSubtitleCorrection() {
+    if (!currentProjectId || !activeEditingCutId) {
+        showToast("Selecione um corte primeiro.", "error");
+        return;
+    }
+
+    const cutId = activeEditingCutId;
+    const textArea = document.getElementById("edit-sub-text");
+    const styleSelect = document.getElementById("edit-sub-style");
+    const colorInput = document.getElementById("edit-sub-color");
+    const saveBtn = document.getElementById("btn-save-subtitles");
+
+    const editedText = textArea ? textArea.value.trim() : "";
+    const subStyle = styleSelect ? styleSelect.value : "hormozi_pop";
+    const subColor = colorInput ? colorInput.value : "#FFE500";
+
+    if (!editedText) {
+        showToast("Digite o texto das falas da legenda.", "warning");
+        return;
+    }
+
+    const origBtnHtml = saveBtn ? saveBtn.innerHTML : "";
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = `<span class="radar-dot"></span><span>Regerando corte 9:16 com nova legenda...</span>`;
+    }
+
+    try {
+        const res = await fetch("/api/cut/update-subtitles", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                project_id: currentProjectId,
+                cut_id: cutId,
+                edited_text: editedText,
+                subtitle_style: subStyle,
+                custom_color: subColor
+            })
+        });
+
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.detail || "Erro ao regerar vídeo com novas legendas.");
+        }
+
+        const data = await res.json();
+        const updatedVideoUrl = data.video_url;
+
+        // Atualiza o player do card
+        const cardPlayer = document.getElementById(`player-cut-${cutId}`);
+        if (cardPlayer) {
+            cardPlayer.src = updatedVideoUrl;
+            cardPlayer.load();
+        }
+
+        // Atualiza o botão de download do card
+        const dlBtn = document.getElementById(`btn-download-${cutId}`);
+        if (dlBtn) {
+            dlBtn.href = updatedVideoUrl;
+        }
+
+        // Atualiza dados locais
+        const cut = currentCuts.find(c => c.id === cutId);
+        if (cut) {
+            cut.video_url = updatedVideoUrl;
+            cut.subtitle_style = subStyle;
+            cut.custom_color = subColor;
+            if (data.cut) {
+                cut.edited_subtitles = data.cut.edited_subtitles;
+            }
+        }
+
+        closeSubtitleEditorModal();
+        showToast("Vídeo 9:16 regerado com a nova legenda!", "success");
+
+        // Abre modal para visualização imediata
+        openVideoModal(updatedVideoUrl, `${cut?.title || cutId}.mp4`);
+    } catch (e) {
+        showToast(e.message || "Erro ao salvar legendas", "error");
+    } finally {
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = origBtnHtml;
+        }
+    }
+}
+
+// --- GERAÇÃO DE 3 THUMBNAILS VIRAL YOUTUBE COM CLICKSCORE ---
+
+async function generateProjectThumbnails(cutId = null) {
+    if (!currentProjectId) {
+        showToast("Nenhum vídeo em processamento.", "error");
+        return;
+    }
+
+    const thumbsSection = document.getElementById("thumbs-section");
+    const container = document.getElementById("thumbs-container");
+    if (!thumbsSection || !container) return;
+
+    thumbsSection.style.display = "block";
+    thumbsSection.scrollIntoView({ behavior: "smooth", block: "start" });
+
+    container.innerHTML = `
+        <div class="col-span-full py-12 flex flex-col items-center justify-center text-center space-y-4">
+            <div class="radar-dot w-6 h-6 bg-[#FF5C00]"></div>
+            <div class="space-y-1">
+                <h3 class="text-base font-black text-black">Gerando 3 Thumbnails em Alta Qualidade...</h3>
+                <p class="text-xs text-zinc-600 font-medium">Recortando o interlocutor, buscando artes da obra na web e calculando o Clickscore de CTR.</p>
+            </div>
+        </div>
+    `;
+
+    try {
+        const res = await fetch("/api/project/thumbnails", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                project_id: currentProjectId,
+                cut_id: cutId
+            })
+        });
+
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.detail || "Erro ao gerar thumbnails.");
+        }
+
+        const data = await res.json();
+        renderThumbnailsList(data.thumbnails || [], data.subject || "");
+        showToast("3 Thumbnails para YouTube geradas com sucesso!", "success");
+    } catch (e) {
+        container.innerHTML = `
+            <div class="col-span-full p-6 tech-card border-2 border-red-500 text-center">
+                <p class="text-sm font-black text-red-600">Erro: ${escapeHtml(e.message)}</p>
+                <button onclick="generateProjectThumbnails()" class="mt-3 btn-secondary text-xs">Tentar Novamente</button>
+            </div>
+        `;
+        showToast(e.message, "error");
+    }
+}
+
+function generateThumbnailsForCut(cutId) {
+    generateProjectThumbnails(cutId);
+}
+
+function renderThumbnailsList(thumbnails, subject) {
+    const container = document.getElementById("thumbs-container");
+    if (!container) return;
+
+    if (!thumbnails || thumbnails.length === 0) {
+        container.innerHTML = `<div class="col-span-full text-center py-8 text-zinc-600 font-bold">Nenhuma thumbnail gerada.</div>`;
+        return;
+    }
+
+    container.innerHTML = "";
+
+    thumbnails.forEach((thumb, index) => {
+        const score = thumb.clickscore || 85;
+        const strategyTitle = thumb.strategy_name || thumb.name || `Opção ${index + 1}`;
+        const description = thumb.description || thumb.rationale || "";
+        const badgeText = thumb.badge || `Variação 0${index + 1}`;
+        const breakdown = thumb.score_breakdown || thumb.metrics || {};
+        const faceEmotion = breakdown.facial_emotion || breakdown.face_emotion || 92;
+        const mobileRead = breakdown.mobile_readability || 95;
+        const visualContrast = breakdown.visual_contrast || breakdown.contrast || 90;
+        const curiosity = breakdown.curiosity_gap || 94;
+        const titles = thumb.suggested_titles || (thumb.suggested_title ? [thumb.suggested_title] : []);
+
+        // Cor do badge de Clickscore
+        let scoreBadgeClass = "badge-neon";
+        let scoreEmoji = "🔥";
+        if (score >= 90) {
+            scoreBadgeClass = "bg-[#25F4EE] text-black font-black border-2 border-black shadow-[2px_2px_0px_#000] px-2.5 py-1 rounded-md text-xs";
+            scoreEmoji = "🚀 Alta Conversão";
+        } else if (score >= 80) {
+            scoreBadgeClass = "bg-[#FFE500] text-black font-black border-2 border-black shadow-[2px_2px_0px_#000] px-2.5 py-1 rounded-md text-xs";
+            scoreEmoji = "⚡ Ótimo CTR";
+        } else {
+            scoreBadgeClass = "bg-[#FFF] text-black font-black border-2 border-black shadow-[2px_2px_0px_#000] px-2.5 py-1 rounded-md text-xs";
+            scoreEmoji = "👍 Bom Potencial";
+        }
+
+        const card = document.createElement("div");
+        card.className = "preview-card p-4 space-y-4 flex flex-col justify-between";
+        card.innerHTML = `
+            <div class="space-y-3">
+                <!-- Cabeçalho da Variação -->
+                <div class="flex items-center justify-between gap-2 border-b-2 border-black pb-2">
+                    <div>
+                        <span class="badge-blue text-[10px] font-black uppercase">${escapeHtml(badgeText)}</span>
+                        <h3 class="text-sm font-black text-black leading-snug font-display mt-1">
+                            ${escapeHtml(strategyTitle)}
+                        </h3>
+                    </div>
+                    <div class="text-right">
+                        <div class="${scoreBadgeClass}">
+                            Clickscore: <span class="font-extrabold text-sm">${score}</span>/100
+                        </div>
+                        <span class="text-[10px] font-bold text-zinc-600 block mt-0.5">${scoreEmoji}</span>
+                    </div>
+                </div>
+
+                <!-- Preview 16:9 Imagem Ultra Qualidade -->
+                <div class="relative w-full aspect-video rounded-lg overflow-hidden border-2 border-black shadow-[3px_3px_0px_#000] bg-black group">
+                    <img src="${thumb.image_url}" alt="Thumbnail ${index + 1}" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy">
+                    <div class="absolute bottom-2 left-2 bg-black/80 text-white text-[10px] font-mono px-2 py-0.5 rounded border border-white/20">
+                        1280x720 • HD
+                    </div>
+                </div>
+
+                <p class="text-[11px] text-zinc-600 font-medium">
+                    ${escapeHtml(description)}
+                </p>
+
+                <!-- Breakdown de Clickscore -->
+                <div class="p-2.5 rounded-lg bg-[#F4F3EE] border-2 border-black text-[11px] space-y-1">
+                    <strong class="text-black font-extrabold block uppercase text-[10px]">Métricas de CTR Estimadas:</strong>
+                    <div class="grid grid-cols-2 gap-1 text-[10px] font-mono">
+                        <div>Expressão Facial: <b class="text-black">${faceEmotion}%</b></div>
+                        <div>Legibilidade Mobile: <b class="text-black">${mobileRead}%</b></div>
+                        <div>Contraste Visual: <b class="text-black">${visualContrast}%</b></div>
+                        <div>Gatilho Curiosidade: <b class="text-black">${curiosity}%</b></div>
+                    </div>
+                </div>
+
+                <!-- Títulos Sugeridos para YouTube -->
+                ${titles.length > 0 ? `
+                <div class="space-y-1.5 pt-1">
+                    <span class="text-[10px] font-black text-zinc-800 uppercase tracking-wider block">Títulos Sugeridos para CTR Alto:</span>
+                    <div class="space-y-1">
+                        ${titles.slice(0, 2).map(t => `
+                            <div class="p-1.5 bg-white border border-black rounded text-[11px] font-bold text-black flex items-center justify-between gap-1 shadow-[1px_1px_0px_#000]">
+                                <span class="truncate">"${escapeHtml(t)}"</span>
+                                <button type="button" onclick="copySuggestedTitle(this, '${escapeHtml(t).replace(/'/g, "\\'")}')" class="text-[10px] font-black text-[#0052FF] hover:underline shrink-0">Copiar</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                ` : ''}
+            </div>
+
+            <!-- Botão de Download da Imagem 1280x720 -->
+            <div class="pt-3 border-t-2 border-black flex gap-2">
+                <a href="${thumb.image_url}" download="thumb_${thumb.id || thumb.variation_id || index + 1}.jpg" class="btn-neon w-full justify-center text-xs py-2.5 font-black shadow-[2px_2px_0px_#000]">
+                    <span>⬇️ Baixar Thumbnail (1280x720)</span>
+                </a>
+            </div>
+        `;
+        container.appendChild(card);
+    });
+}
+
+function copySuggestedTitle(btn, titleText) {
+    if (!titleText) return;
+    const orig = btn.innerText;
+    navigator.clipboard.writeText(titleText).then(() => {
+        btn.innerText = "✓";
+        setTimeout(() => { btn.innerText = orig; }, 2000);
+        showToast("Título copiado!", "success");
+    }).catch(() => {
+        fallbackCopy(titleText);
+        btn.innerText = "✓";
+        setTimeout(() => { btn.innerText = orig; }, 2000);
+        showToast("Título copiado!", "success");
+    });
 }
 
 // Botão "Gerar +5 Cortes"
@@ -769,4 +1164,13 @@ document.addEventListener("DOMContentLoaded", () => {
             if (s) setSubStyle(s);
         });
     });
+
+    // Listener para o color picker da legenda no modal
+    const subColorInput = document.getElementById("edit-sub-color");
+    if (subColorInput) {
+        subColorInput.addEventListener("input", (e) => {
+            const lbl = document.getElementById("edit-sub-color-label");
+            if (lbl) lbl.innerText = e.target.value.toUpperCase();
+        });
+    }
 });

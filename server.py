@@ -33,6 +33,7 @@ import db
 from ai_director import AIDirector
 from audio_ingest import AudioIngestEngine
 from video_pipeline import VideoPipeline, get_bin, CREATE_NO_WINDOW
+from thumbnail_generator import ThumbnailGenerator
 
 app = FastAPI(title="Editize", version="3.1.0")
 
@@ -52,6 +53,7 @@ app.mount("/outputs", StaticFiles(directory=os.path.join(BASE_DIR, "outputs")), 
 ai_director = AIDirector()
 audio_engine = AudioIngestEngine()
 video_pipeline = VideoPipeline()
+thumbnail_generator = ThumbnailGenerator()
 
 # Armazenamento em memória para tarefas e estado
 TASKS: Dict[str, Dict[str, Any]] = {}
@@ -375,6 +377,9 @@ async def start_analysis(payload: Dict[str, Any], background_tasks: BackgroundTa
     speed = float(payload.get("speed", 1.0))
     enable_zoom = bool(payload.get("enable_zoom", True))
     enable_drift = bool(payload.get("enable_drift", True))
+    center_face = bool(payload.get("center_face", True))
+    motion_graphics = bool(payload.get("motion_graphics", True))
+    sound_effects = bool(payload.get("sound_effects", True))
 
     if broll_mode == "external" and broll_url:
         layout = "split_screen"
@@ -516,6 +521,9 @@ async def start_analysis(payload: Dict[str, Any], background_tasks: BackgroundTa
                         speed=speed,
                         enable_zoom=enable_zoom,
                         enable_drift=enable_drift,
+                        center_face=center_face,
+                        enable_motion_graphics=motion_graphics,
+                        enable_sound_effects=sound_effects,
                         output_file=out_path
                     )
                     c["video_url"] = f"/outputs/{out_filename}"
@@ -551,6 +559,9 @@ async def start_analysis(payload: Dict[str, Any], background_tasks: BackgroundTa
                 "speed": speed,
                 "enable_zoom": enable_zoom,
                 "enable_drift": enable_drift,
+                "center_face": center_face,
+                "motion_graphics": motion_graphics,
+                "sound_effects": sound_effects,
                 "title": video_title,
                 "duration": 0,
                 "words": words,
@@ -623,6 +634,9 @@ async def generate_more_cuts(payload: Dict[str, Any]):
                 speed=project.get("speed", 1.0),
                 enable_zoom=project.get("enable_zoom", True),
                 enable_drift=project.get("enable_drift", True),
+                center_face=project.get("center_face", True),
+                enable_motion_graphics=project.get("motion_graphics", True),
+                enable_sound_effects=project.get("sound_effects", True),
                 output_file=out_path
             )
             c["video_url"] = f"/outputs/{out_filename}"
@@ -727,6 +741,152 @@ async def start_render(payload: Dict[str, Any]):
 
     threading.Thread(target=render_worker, daemon=True).start()
     return {"render_task_id": render_task_id}
+
+@app.post("/api/cut/update-caption")
+async def update_cut_caption(payload: Dict[str, Any]):
+    """Atualiza a legenda SEO (texto, emojis e hashtags) do corte."""
+    project_id = payload.get("project_id")
+    cut_id = payload.get("cut_id")
+    caption_seo = payload.get("caption_seo", "").strip()
+    title = payload.get("title", "").strip()
+
+    if not project_id or not cut_id:
+        raise HTTPException(status_code=400, detail="project_id e cut_id são obrigatórios.")
+
+    project = ACTIVE_PROJECTS.get(project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Projeto não encontrado.")
+
+    target_cut = next((c for c in project.get("cuts", []) if c["id"] == cut_id), None)
+    if not target_cut:
+        raise HTTPException(status_code=404, detail="Corte não encontrado.")
+
+    from ai_director import sanitize_instagram_caption
+    if caption_seo:
+        target_cut["caption_seo"] = sanitize_instagram_caption(caption_seo)
+    if title:
+        target_cut["title"] = title
+
+    return {"success": True, "cut": target_cut}
+
+@app.post("/api/cut/update-subtitles")
+async def update_cut_subtitles(payload: Dict[str, Any]):
+    """
+    Permite corrigir as palavras da legenda do vídeo, trocar estilo/cor e regerar o vídeo 9:16 imediatamente.
+    """
+    project_id = payload.get("project_id")
+    cut_id = payload.get("cut_id")
+    edited_text = payload.get("edited_text", "").strip()
+    subtitle_style = payload.get("subtitle_style")
+    custom_color = payload.get("custom_color")
+    custom_size = payload.get("custom_size")
+
+    project = ACTIVE_PROJECTS.get(project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Projeto não encontrado.")
+
+    target_cut = next((c for c in project.get("cuts", []) if c["id"] == cut_id), None)
+    if not target_cut:
+        raise HTTPException(status_code=404, detail="Corte não encontrado.")
+
+    if subtitle_style:
+        target_cut["subtitle_style"] = subtitle_style
+    else:
+        subtitle_style = target_cut.get("subtitle_style", project.get("subtitle_style", "hormozi_pop"))
+
+    # Converte o texto editado em palavras sincronizadas
+    if edited_text:
+        target_cut["hook"] = edited_text
+        words_raw = edited_text.split()
+        dur = max(3.0, target_cut["end"] - target_cut["start"])
+        step = dur / max(1, len(words_raw))
+        rebuilt_words = []
+        for idx, w in enumerate(words_raw):
+            s = target_cut["start"] + idx * step
+            rebuilt_words.append({
+                "word": w,
+                "start": round(s, 2),
+                "end": round(s + min(step, 0.45), 2)
+            })
+        target_cut["edited_subtitles"] = rebuilt_words
+
+    out_filename = f"{cut_id}_edited_{uuid.uuid4().hex[:6]}.mp4"
+    out_path = os.path.join(video_pipeline.output_dir, out_filename)
+
+    try:
+        video_pipeline.render_viral_cut(
+            source_video=project["source_url"],
+            cut_info=target_cut,
+            words=project.get("words", []),
+            layout=project.get("layout", "portrait"),
+            broll_mode=project.get("broll_mode", "auto_extract"),
+            broll_source=project.get("broll_url"),
+            subtitle_style=subtitle_style,
+            custom_color=custom_color or project.get("custom_color"),
+            custom_font_size=custom_size or project.get("custom_size"),
+            custom_margin_v=project.get("custom_margin"),
+            speed=project.get("speed", 1.0),
+            enable_zoom=project.get("enable_zoom", True),
+            enable_drift=project.get("enable_drift", True),
+            center_face=project.get("center_face", True),
+            enable_motion_graphics=project.get("motion_graphics", True),
+            enable_sound_effects=project.get("sound_effects", True),
+            output_file=out_path
+        )
+        target_cut["video_url"] = f"/outputs/{out_filename}"
+        target_cut["filename"] = out_filename
+        return {"success": True, "video_url": target_cut["video_url"], "cut": target_cut}
+    except Exception as e:
+        print(f"[Server] Erro ao regerar corte com legendas corrigidas: {e}")
+        raise HTTPException(status_code=500, detail="Não foi possível regerar o vídeo com a nova legenda.")
+
+@app.post("/api/project/thumbnails")
+async def generate_project_thumbnails(payload: Dict[str, Any]):
+    """
+    Gera o pacote de 3 Thumbnails Virais para YouTube (1280x720) com Extrema Qualidade:
+    - Recorte de pessoa em alta definição com contorno profissional
+    - Busca de pôster/capa da obra/livro/série/filme ou assunto
+    - 3 Estratégias Visuais (Choque, Mistério/VS e Neo-Brutalist)
+    - Clickscore (0-100) com análise de CTR
+    """
+    project_id = payload.get("project_id")
+    cut_id = payload.get("cut_id")
+    custom_subject = payload.get("subject", "").strip()
+
+    project = ACTIVE_PROJECTS.get(project_id)
+    if not project:
+        source_url = payload.get("source_url")
+        if not source_url:
+            raise HTTPException(status_code=404, detail="Projeto ou vídeo não localizado.")
+        actual_source = source_url
+        video_title = payload.get("title", "Vídeo Selecionado")
+        target_cut = None
+        cut_timestamp = 12.0
+    else:
+        actual_source = project["source_url"]
+        video_title = project.get("title", "Vídeo Selecionado")
+        target_cut = next((c for c in project.get("cuts", []) if c["id"] == cut_id), None) if cut_id else (project.get("cuts", [])[0] if project.get("cuts") else None)
+        cut_timestamp = target_cut["start"] + 3.0 if target_cut else 12.0
+
+    topic_data = ai_director.generate_thumbnail_strategy(
+        video_title=video_title,
+        cut_info=target_cut
+    )
+    if custom_subject:
+        topic_data["subject"] = custom_subject
+        topic_data["search_query"] = f"{custom_subject} book movie poster"
+
+    thumbs = thumbnail_generator.generate_thumbnails_pack(
+        video_path=actual_source,
+        topic_data=topic_data,
+        cut_timestamp=cut_timestamp
+    )
+
+    return {
+        "success": True,
+        "subject": topic_data.get("subject", video_title),
+        "thumbnails": thumbs
+    }
 
 @app.get("/api/download/{filename}")
 async def download_rendered_file(filename: str):

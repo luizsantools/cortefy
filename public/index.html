@@ -598,7 +598,12 @@
                     </div>
                     <p class="text-xs text-zinc-600 font-medium">Ordenados do maior para o menor potencial de retenção e viralização.</p>
                 </div>
-                <span id="project-title-display" class="badge-zinc truncate max-w-sm"></span>
+                <div class="flex items-center gap-3">
+                    <span id="project-title-display" class="badge-zinc truncate max-w-xs"></span>
+                    <button type="button" onclick="generateProjectThumbnails()" class="btn-neon text-xs py-2 px-3.5 font-black flex items-center gap-1.5 shadow-[2px_2px_0px_#000]">
+                        <span>🎨 Gerar 3 Thumbnails Virais</span>
+                    </button>
+                </div>
             </div>
 
             <!-- Grid de Cortes com Player Embutido em Cada Card -->
@@ -611,6 +616,30 @@
                 <button id="btn-more-cuts" onclick="generateMoreCuts()" class="btn-secondary py-3 px-8 text-sm font-black flex items-center gap-2">
                     <span>⚡ Gerar +5 Cortes Deste Vídeo</span>
                 </button>
+            </div>
+        </section>
+
+        <!-- SEÇÃO DE THUMBNAILS PARA YOUTUBE COM CLICKSCORE -->
+        <section id="thumbs-section" class="space-y-6 pt-6" style="display: none;">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b-2 border-black pb-4">
+                <div class="space-y-1">
+                    <div class="flex items-center gap-2">
+                        <span class="badge-neon text-xs">
+                            <span class="radar-dot"></span>
+                            <span>YouTube 16:9 • 1280x720</span>
+                        </span>
+                        <h2 class="text-xl font-black text-black font-display">3 Variáveis de Thumbnail para YouTube</h2>
+                    </div>
+                    <p class="text-xs text-zinc-600 font-medium">Recorte do interlocutor em alta definição, pôster/arte da obra buscada na web e análise de Clickscore (CTR).</p>
+                </div>
+                <button type="button" onclick="generateProjectThumbnails()" class="btn-secondary text-xs py-2 px-4 font-bold flex items-center gap-1.5">
+                    <span>🔄 Regenerar Thumbnails</span>
+                </button>
+            </div>
+
+            <!-- Grid das 3 Thumbnails com Clickscore -->
+            <div id="thumbs-container" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Preenchido via app.js -->
             </div>
         </section>
 
@@ -629,6 +658,60 @@
         </div>
 
     </main>
+
+    <!-- Modal de Correção de Legenda do Vídeo (Subtitles 9:16) -->
+    <div id="modal-subtitle-editor" class="modal-overlay" style="display: none;">
+        <div class="tech-card p-6 max-w-lg w-full mx-4 space-y-4 relative">
+            <button onclick="closeSubtitleEditorModal()" class="absolute top-4 right-4 text-black hover:text-[#FF5C00] font-black text-lg">✕</button>
+
+            <div class="flex items-center gap-2">
+                <span class="radar-dot"></span>
+                <span class="text-sm font-black text-black uppercase">Corrigir Legenda do Vídeo 9:16</span>
+            </div>
+
+            <p class="text-xs text-zinc-600 font-medium leading-relaxed">
+                Edite os termos, nomes próprios ou frases faladas. Ao salvar, o vídeo 9:16 será renderizado novamente com as legendas corrigidas sincronizadas.
+            </p>
+
+            <div class="space-y-1.5">
+                <label class="block text-[11px] font-black text-zinc-800 uppercase">FALAS / TEXTO DA LEGENDA:</label>
+                <textarea id="edit-sub-text" rows="4" class="tech-input text-xs w-full font-medium" placeholder="Digite as frases faladas..."></textarea>
+            </div>
+
+            <!-- Estilo e Cor da Legenda -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <div class="space-y-1">
+                    <label class="block text-[11px] font-black text-zinc-800 uppercase">ESTILO VISUAL:</label>
+                    <select id="edit-sub-style" class="tech-input text-xs w-full font-bold">
+                        <option value="hormozi_pop">Hormozi Pop (Amarelo Neon)</option>
+                        <option value="tiktok_bounce">TikTok Bounce (Verde Lima)</option>
+                        <option value="beast_impact">MrBeast Impact (Vermelho/Laranja)</option>
+                        <option value="cyan_electric">Ciano Elétrico</option>
+                        <option value="purple_viral">Roxo Viral</option>
+                        <option value="clean_minimal">Clean Minimal (Branco)</option>
+                        <option value="gold_karaoke">Karaokê Dourado</option>
+                        <option value="fire_sunset">Fogo Sunset (Laranja)</option>
+                        <option value="emerald_vip">Esmeralda VIP (Verde)</option>
+                        <option value="monochrome_3d">Monocromo 3D</option>
+                    </select>
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-[11px] font-black text-zinc-800 uppercase">COR DO DESTAQUE:</label>
+                    <div class="flex items-center gap-2">
+                        <input type="color" id="edit-sub-color" value="#FFE500" class="w-9 h-9 rounded border-2 border-black bg-transparent cursor-pointer">
+                        <span id="edit-sub-color-label" class="text-xs font-mono font-bold text-black">#FFE500</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-3 flex gap-3">
+                <button onclick="closeSubtitleEditorModal()" class="btn-secondary flex-1 justify-center text-xs">Cancelar</button>
+                <button id="btn-save-subtitles" onclick="submitSubtitleCorrection()" class="btn-neon flex-1 justify-center text-xs font-black">
+                    <span>⚡ Regerar Vídeo com Novas Legendas</span>
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Modal do Vídeo Pronto -->
     <div id="video-modal" class="modal-overlay" style="display: none;">

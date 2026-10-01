@@ -83,6 +83,42 @@ class VideoPipeline:
 
         return output_path
 
+    def detect_speaker_x_center(self, video_path: str, start: float = 0.0, end: float = 10.0) -> int:
+        """Detecta o centro horizontal do interlocutor no corte para enquadramento 9:16 preciso."""
+        try:
+            mid = (start + end) / 2.0
+            ffmpeg_bin = get_bin("ffmpeg")
+            sample_img = os.path.join(self.temp_dir, f"face_detect_{int(time.time()*1000)}.jpg")
+            cmd = [
+                ffmpeg_bin, "-y", "-ss", f"{mid:.2f}", "-i", video_path,
+                "-vframes", "1", "-q:v", "3", sample_img
+            ]
+            subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=CREATE_NO_WINDOW)
+            if os.path.exists(sample_img) and os.path.getsize(sample_img) > 3000:
+                import rembg
+                import numpy as np
+                from PIL import Image
+                im = Image.open(sample_img)
+                orig_w, orig_h = im.size
+                small = im.copy()
+                small.thumbnail((320, 180))
+                session = rembg.new_session("u2netp")
+                mask = rembg.remove(small, session=session, only_mask=True)
+                arr = np.array(mask)
+                col_sums = np.sum(arr > 40, axis=0)
+                try:
+                    os.remove(sample_img)
+                except Exception:
+                    pass
+                if np.sum(col_sums) > 0:
+                    x_ratio = np.average(np.arange(len(col_sums)), weights=col_sums) / len(col_sums)
+                    x_center = int(x_ratio * orig_w)
+                    crop_w = int(orig_h * (9 / 16))
+                    return max(0, min(orig_w - crop_w, x_center - (crop_w // 2)))
+        except Exception as e:
+            print(f"[VideoPipeline] Detecção de centro de rosto: {e}")
+        return 656  # Centro padrão em 1920x1080: (1920 - 608) / 2
+
     def generate_ass_subtitles(
         self,
         words: List[Dict[str, Any]],
@@ -93,28 +129,28 @@ class VideoPipeline:
         custom_color: Optional[str] = None,
         custom_font_size: Optional[int] = None,
         custom_margin_v: Optional[int] = None,
-        cut_info: Optional[Dict[str, Any]] = None
+        cut_info: Optional[Dict[str, Any]] = None,
+        enable_motion_graphics: bool = True
     ) -> str:
-        """Gera legendas animadas em formato Advanced SubStation Alpha (.ass) com 10 estilos estilo CapCut."""
-        # 10 Modelos de Legendas Inspirados em Ferramentas Populares (CapCut/Hormozi/MrBeast)
+        """Gera legendas ASS com animação dinâmica estilo CapCut, cores vibrantes e suporte a motion graphics."""
         styles = {
             "hormozi_pop": {
                 "name": "Hormozi Pop",
+                "font": "Impact", "size": 80,
+                "primary": "&H0000FFFF",  # Amarelo Neon
+                "outline_color": "&H00000000", "outline_w": 8, "shadow": 4, "margin_v": 420
+            },
+            "tiktok_bounce": {
+                "name": "TikTok Bounce",
                 "font": "Arial Black", "size": 76,
-                "primary": "&H0000FFFF",  # Amarelo Vibrante
+                "primary": "&H0000FF00",  # Verde Lima
                 "outline_color": "&H00000000", "outline_w": 7, "shadow": 3, "margin_v": 420
             },
-            "neon_cyber": {
-                "name": "Neon Cyber",
-                "font": "Arial Black", "size": 74,
-                "primary": "&H0066FF00",  # Verde Neon
-                "outline_color": "&H00111111", "outline_w": 6, "shadow": 4, "margin_v": 420
-            },
-            "beast_bold": {
-                "name": "Beast Bold",
-                "font": "Impact", "size": 82,
-                "primary": "&H0000FFFF",  # Amarelo com contorno vermelho
-                "outline_color": "&H000000D0", "outline_w": 8, "shadow": 4, "margin_v": 420
+            "beast_impact": {
+                "name": "MrBeast Impact",
+                "font": "Impact", "size": 84,
+                "primary": "&H000055FF",  # Vermelho / Laranja
+                "outline_color": "&H00000000", "outline_w": 9, "shadow": 5, "margin_v": 420
             },
             "cyan_electric": {
                 "name": "Ciano Elétrico",
@@ -181,6 +217,7 @@ ScaledBorderAndShadow: yes
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
 Style: Default,{cfg['font']},{cfg['size']},{cfg['primary']},&H000000FF,{cfg['outline_color']},&H80000000,-1,0,0,0,100,100,1,0,1,{cfg['outline_w']},{cfg['shadow']},2,60,60,{cfg['margin_v']},1
+Style: MotionPop,Arial,95,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,-1,0,0,0,100,100,0,0,1,3,0,2,60,60,{cfg['margin_v'] + 120},1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -192,9 +229,14 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             cs = int((seconds - int(seconds)) * 100)
             return f"{h:01d}:{m:02d}:{s:02d}.{cs:02d}"
 
-        # Filtra palavras do corte com margem suave de 0.2s
-        cut_words = [w for w in words if w.get("start", 0) >= (cut_start - 0.2) and w.get("end", 0) <= (cut_end + 0.2)]
-        
+        # 1. Verifica se o usuário enviou legendas corrigidas/personalizadas
+        edited_subs = cut_info.get("edited_subtitles") if cut_info else None
+        if edited_subs and isinstance(edited_subs, list) and len(edited_subs) > 0:
+            cut_words = edited_subs
+        else:
+            # Filtra palavras do corte com margem suave de 0.2s
+            cut_words = [w for w in words if w.get("start", 0) >= (cut_start - 0.2) and w.get("end", 0) <= (cut_end + 0.2)]
+
         # Caso haja poucas palavras mapeadas, utiliza o gancho/título real para sincronizar as legendas
         if len(cut_words) < 3 and cut_info:
             fallback_text = cut_info.get("hook") or cut_info.get("text") or cut_info.get("title") or ""
@@ -213,17 +255,30 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
                     })
 
         if not cut_words:
-            cut_words = [{"word": "Editize", "start": cut_start, "end": cut_end}]
+            cut_words = [{"word": "EDITIZE", "start": cut_start, "end": cut_end}]
 
-        # Agrupa em blocos de 2 a 3 palavras para ritmo viral estilo CapCut
+        # Emojis para Motion Graphics virais
+        viral_emojis = ["🔥", "⚡", "💥", "😱", "💡", "🎯", "🚀", "👑"]
+
+        # Agrupa em blocos de 2 a 3 palavras com animação de impacto (Bounce / Pop)
         dialogue_lines = []
-        chunk_size = 2 if len(cut_words) > 40 else 3
+        chunk_size = 2 if len(cut_words) > 35 else 3
         for i in range(0, len(cut_words), chunk_size):
             chunk = cut_words[i:i + chunk_size]
             s_time = max(0.0, chunk[0]["start"] - cut_start)
             e_time = max(s_time + 0.35, chunk[-1]["end"] - cut_start)
-            text_str = " ".join([c["word"].upper() for c in chunk])
-            dialogue_lines.append(f"Dialogue: 0,{fmt_time(s_time)},{fmt_time(e_time)},Default,,0,0,0,,{text_str}")
+            words_text = [c.get("word", "").upper() for c in chunk]
+            text_str = " ".join(words_text)
+
+            # Efeito Bounce / Pop ao surgir a palavra
+            anim_text = f"{{\\t(0,70,\\fscx112\\fscy112)\\t(70,140,\\fscx100\\fscy100)}}{text_str}"
+            dialogue_lines.append(f"Dialogue: 0,{fmt_time(s_time)},{fmt_time(e_time)},Default,,0,0,0,,{anim_text}")
+
+            # Motion Graphics: insere sticker flutuante a cada ~5-7 segundos
+            if enable_motion_graphics and (i % 6 == 0):
+                emoji_choice = viral_emojis[(i // 6) % len(viral_emojis)]
+                anim_emoji = f"{{\\t(0,90,\\fscx130\\fscy130)\\t(90,180,\\fscx100\\fscy100)}}{emoji_choice}"
+                dialogue_lines.append(f"Dialogue: 1,{fmt_time(s_time)},{fmt_time(min(e_time + 0.3, s_time + 1.2))},MotionPop,,0,0,0,,{anim_emoji}")
 
         content = header + "\n".join(dialogue_lines)
         with open(output_path, "w", encoding="utf-8-sig") as f:
@@ -246,6 +301,9 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         speed: float = 1.0,
         enable_zoom: bool = True,
         enable_drift: bool = True,
+        center_face: bool = True,
+        enable_motion_graphics: bool = True,
+        enable_sound_effects: bool = True,
         bgm_name: str = "Cyber Lounge Sem Copyright",
         output_file: Optional[str] = None,
         progress_cb = None
@@ -281,7 +339,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             if not os.path.exists(temp_segment) or os.path.getsize(temp_segment) == 0:
                 raise RuntimeError(f"Não foi possível obter o trecho de vídeo de {start}s a {end}s.")
 
-            # 2. Gera arquivo de legenda ASS
+            # 2. Gera arquivo de legenda ASS com animação e motion graphics
             if progress_cb:
                 progress_cb(35, "Gerando legendas dinâmicas animadas...")
             self.generate_ass_subtitles(
@@ -290,10 +348,11 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
                 custom_color=custom_color,
                 custom_font_size=custom_font_size,
                 custom_margin_v=custom_margin_v,
-                cut_info=cut_info
+                cut_info=cut_info,
+                enable_motion_graphics=enable_motion_graphics
             )
 
-            # 3. Monta filtros de vídeo
+            # 3. Monta filtros de vídeo com efeitos dinâmicos completos
             if progress_cb:
                 progress_cb(55, "Processando enquadramento 9:16 e dinamismo visual...")
 
@@ -333,11 +392,28 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
                     )
                 curr_v = "[vsplit]"
             else:
+                # 1. Centralização Inteligente de Rostos
+                if center_face:
+                    base_x = self.detect_speaker_x_center(temp_segment, 0.0, min(8.0, duration))
+                else:
+                    base_x = 656
+
+                # 2. Movimento Lateral (Drift) com Pan Suave
+                if enable_drift:
+                    crop_expr = f"crop=608:1080:x='clip({base_x}+24*sin(2*PI*t/6.5),0,in_w-608)':y=0"
+                else:
+                    crop_expr = f"crop=608:1080:{base_x}:0"
+
                 # Modo Portrait 9:16 vertical direto normalizado
                 filter_chains.append(
-                    "[0:v]scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,crop=608:1080:640:0,scale=1080:1920:flags=lanczos,setsar=1[vport]"
+                    f"[0:v]scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,{crop_expr},scale=1080:1920:flags=lanczos,setsar=1[vport]"
                 )
                 curr_v = "[vport]"
+
+            # 3. Zoom Dinâmico Focal (Pulse sutil a cada ciclo)
+            if enable_zoom:
+                filter_chains.append(f"{curr_v}zoompan=z='1.0+0.05*sin(2*PI*in/100)':d=1:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=1080x1920:fps=30[vzoom]")
+                curr_v = "[vzoom]"
 
             # Velocidade acelerada para retenção (ex: 1.05x)
             if abs(speed - 1.0) > 0.01:
@@ -347,13 +423,30 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             # Queima de legendas ASS animadas
             filter_chains.append(f"{curr_v}subtitles='{escaped_ass}'[vfinal]")
 
-            # Filtro de áudio com preservação de tom vocal
-            audio_filter = f"[0:a]atempo={speed:.2f}[afinal]" if abs(speed - 1.0) > 0.01 else ""
-            audio_map = "[afinal]" if audio_filter else "0:a"
+            # 4. Filtro de áudio com preservação vocal e Efeitos Sonoros (Whoosh / Pops)
+            audio_chains = []
+            main_audio = "[0:a]"
+            if abs(speed - 1.0) > 0.01:
+                audio_chains.append(f"[0:a]atempo={speed:.2f}[aspeed]")
+                main_audio = "[aspeed]"
+
+            if enable_sound_effects:
+                sfx_whoosh = os.path.join(self.base_dir, "static", "sfx", "whoosh.wav")
+                if os.path.exists(sfx_whoosh):
+                    sfx_idx = len(inputs) // 2
+                    inputs.extend(['-i', sfx_whoosh])
+                    audio_chains.append(f"[{sfx_idx}:a]adelay=150|150,volume=0.55[sfx_w]")
+                    audio_chains.append(f"{main_audio}[sfx_w]amix=inputs=2:duration=first:dropout_transition=2[afinal]")
+                    audio_map = "[afinal]"
+                else:
+                    audio_map = main_audio
+            else:
+                audio_map = main_audio
+
+            if audio_chains:
+                filter_chains.extend(audio_chains)
 
             filter_complex_str = ";".join(filter_chains)
-            if audio_filter:
-                filter_complex_str = f"{filter_complex_str};{audio_filter}"
 
             if progress_cb:
                 progress_cb(75, "Renderizando vídeo final em 1080x1920...")
@@ -376,8 +469,6 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
                 filter_chains_fb = [fc for fc in filter_chains if 'subtitles=' not in fc]
                 last_node = curr_v.strip("[]")
                 fb_complex = ";".join(filter_chains_fb)
-                if audio_filter:
-                    fb_complex = f"{fb_complex};{audio_filter}"
 
                 cmd_fb = [
                     ffmpeg_bin, *inputs,
