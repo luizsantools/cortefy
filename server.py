@@ -555,11 +555,22 @@ async def start_analysis(payload: Dict[str, Any], background_tasks: BackgroundTa
                 except Exception as ex:
                     print(f"[Server] Aviso ao renderizar {c_id}: {ex}")
                     try:
-                        video_pipeline.extract_or_download_segment(actual_source, c["start"], c["end"], out_path)
+                        # Re-tentativa segura garantindo sempre enquadramento 9:16 e legendas sincronizadas
+                        video_pipeline.render_viral_cut(
+                            source_video=actual_source,
+                            cut_info=c,
+                            words=words,
+                            layout=layout,
+                            subtitle_style=subtitle_style,
+                            enable_zoom=False,
+                            enable_drift=False,
+                            enable_sound_effects=False,
+                            output_file=out_path
+                        )
                         c["video_url"] = f"/outputs/{out_filename}"
                         c["filename"] = out_filename
-                    except Exception:
-                        pass
+                    except Exception as ex2:
+                        print(f"[Server] Erro na renderização de {c_id}: {ex2}")
                 return c
 
             with concurrent.futures.ThreadPoolExecutor(max_workers=3) as pool:

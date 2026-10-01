@@ -207,9 +207,10 @@ def get_subtitle_presets_dict() -> Dict[str, Dict[str, Any]]:
 
 class VideoPipeline:
     def __init__(self, output_dir: Optional[str] = None):
-        self.output_dir = output_dir or os.path.join(get_base_dir(), "outputs")
+        self.base_dir = get_base_dir()
+        self.output_dir = output_dir or os.path.join(self.base_dir, "outputs")
         os.makedirs(self.output_dir, exist_ok=True)
-        self.temp_dir = os.path.join(get_base_dir(), "temp_video")
+        self.temp_dir = os.path.join(self.base_dir, "temp_video")
         os.makedirs(self.temp_dir, exist_ok=True)
 
     def extract_or_download_segment(self, source: str, start: float, end: float, output_path: str) -> str:
@@ -243,23 +244,27 @@ class VideoPipeline:
                 cmd_down.append(source)
                 subprocess.run(cmd_down, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True, creationflags=CREATE_NO_WINDOW)
 
-            # Recorte local instantâneo via FFmpeg (0.05s)
+            # Recorte local com sincronização milimétrica e normalização de timestamps
             cmd_cut = [
                 ffmpeg_bin,
-                "-ss", f"{start:.2f}",
-                "-to", f"{end:.2f}",
+                "-ss", f"{start:.3f}",
+                "-to", f"{end:.3f}",
                 "-i", source_cache_file,
-                "-c", "copy",
+                "-c:v", "libx264", "-preset", "ultrafast", "-crf", "22",
+                "-c:a", "aac", "-b:a", "192k",
+                "-avoid_negative_ts", "make_zero",
                 output_path, "-y"
             ]
             subprocess.run(cmd_cut, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True, creationflags=CREATE_NO_WINDOW)
         else:
             cmd = [
                 ffmpeg_bin,
-                "-ss", f"{start:.2f}",
-                "-to", f"{end:.2f}",
+                "-ss", f"{start:.3f}",
+                "-to", f"{end:.3f}",
                 "-i", source,
-                "-c", "copy",
+                "-c:v", "libx264", "-preset", "ultrafast", "-crf", "22",
+                "-c:a", "aac", "-b:a", "192k",
+                "-avoid_negative_ts", "make_zero",
                 output_path, "-y"
             ]
             subprocess.run(cmd, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True, creationflags=CREATE_NO_WINDOW)
@@ -559,18 +564,35 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             final_file = os.path.join(self.output_dir, safe_name)
 
         timestamp_id = int(time.time() * 1000)
-        temp_segment = os.path.join(self.temp_dir, f"raw_{cid}_{timestamp_id}.mp4")
         temp_ass = os.path.join(self.temp_dir, f"sub_{cid}_{timestamp_id}.ass")
         temp_broll_ext = os.path.join(self.temp_dir, f"broll_ext_{cid}_{timestamp_id}.mp4")
 
-        cleanup_files = [temp_segment, temp_ass, temp_broll_ext]
+        cleanup_files = [temp_ass, temp_broll_ext]
 
         try:
-            # 1. Extrai ou baixa o segmento bruto do corte
-            self.extract_or_download_segment(source_video, start, end, temp_segment)
+            # 1. Garante que o vídeo fonte é local (se for URL, faz download do original com cache)
+            local_source = source_video
+            if source_video.startswith("http://") or source_video.startswith("https://"):
+                url_hash = hashlib.md5(source_video.encode("utf-8")).hexdigest()[:12]
+                local_source = os.path.join(self.temp_dir, f"source_{url_hash}.mp4")
+                if not os.path.exists(local_source) or os.path.getsize(local_source) < 10000:
+                    ytdlp_bin = get_bin("yt-dlp")
+                    ffmpeg_dir = os.path.dirname(ffmpeg_bin) if os.path.exists(ffmpeg_bin) else ""
+                    cmd_down = [
+                        ytdlp_bin,
+                        "--no-playlist",
+                        "--force-overwrites",
+                        "-f", "bestvideo[height<=1080]+bestaudio/best[height<=1080]/best",
+                        "--merge-output-format", "mp4",
+                        "-o", local_source
+                    ]
+                    if ffmpeg_dir:
+                        cmd_down.extend(["--ffmpeg-location", ffmpeg_dir])
+                    cmd_down.append(source_video)
+                    subprocess.run(cmd_down, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True, creationflags=CREATE_NO_WINDOW)
 
-            if not os.path.exists(temp_segment) or os.path.getsize(temp_segment) == 0:
-                raise RuntimeError(f"Não foi possível obter o trecho de vídeo de {start}s a {end}s.")
+            if not os.path.exists(local_source) or os.path.getsize(local_source) == 0:
+                raise RuntimeError(f"Não foi possível obter o vídeo fonte para o corte.")
 
             # 2. Gera arquivo de legenda ASS com animação e motion graphics
             if progress_cb:
@@ -597,12 +619,13 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
                 enable_motion_graphics=enable_motion_graphics
             )
 
-            # 3. Monta filtros de vídeo com efeitos dinâmicos completos
+            # 3. Monta filtros de vídeo com efeitos dinâmicos completos em 9:16 direto
             if progress_cb:
                 progress_cb(55, "Processando enquadramento 9:16 e dinamismo visual...")
 
             escaped_ass = temp_ass.replace('\\', '/').replace(':', r'\:')
-            inputs = ['-i', temp_segment]
+            # Busca direta com precisão de milissegundos e áudio 100% em sincronia
+            inputs = ['-ss', f"{start:.3f}", '-to', f"{end:.3f}", '-i', local_source]
             filter_chains = []
 
             # Tratamento de Layout
@@ -637,9 +660,9 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
                     )
                 curr_v = "[vsplit]"
             else:
-                # 1. Centralização Inteligente de Rostos
+                # 1. Centralização Inteligente de Rostos diretamente do ponto do corte
                 if center_face:
-                    base_x = self.detect_speaker_x_center(temp_segment, 0.0, min(8.0, duration))
+                    base_x = self.detect_speaker_x_center(local_source, start, end)
                 else:
                     base_x = 656
 
@@ -678,7 +701,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             if enable_sound_effects:
                 sfx_whoosh = os.path.join(self.base_dir, "static", "sfx", "whoosh.wav")
                 if os.path.exists(sfx_whoosh):
-                    sfx_idx = len(inputs) // 2
+                    sfx_idx = inputs.count('-i')
                     inputs.extend(['-i', sfx_whoosh])
                     audio_chains.append(f"[{sfx_idx}:a]adelay=150|150,volume=0.55[sfx_w]")
                     audio_chains.append(f"{main_audio}[sfx_w]amix=inputs=2:duration=first:dropout_transition=2[afinal]")
@@ -702,6 +725,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
                 '-map', '[vfinal]', '-map', audio_map,
                 '-c:v', 'libx264', '-preset', 'ultrafast', '-tune', 'fastdecode', '-threads', '0', '-crf', '22',
                 '-c:a', 'aac', '-b:a', '192k',
+                '-avoid_negative_ts', 'make_zero',
                 final_file, '-y'
             ]
 
@@ -710,7 +734,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             except subprocess.CalledProcessError as e:
                 err_log = e.stderr.decode('utf-8', errors='replace') if e.stderr else str(e)
                 print(f"[Render Fallback] Legendas/filtro falharam: {err_log[:200]}")
-                # Fallback sem legendas caso ocorra erro no filtro subtitles
+                # Fallback garantindo sempre 9:16 vertical mesmo que o filtro de legendas falhe
                 filter_chains_fb = [fc for fc in filter_chains if 'subtitles=' not in fc]
                 last_node = curr_v.strip("[]")
                 fb_complex = ";".join(filter_chains_fb)
@@ -721,6 +745,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
                     '-map', f"[{last_node}]", '-map', audio_map,
                     '-c:v', 'libx264', '-preset', 'ultrafast', '-threads', '0', '-crf', '22',
                     '-c:a', 'aac', '-b:a', '192k',
+                    '-avoid_negative_ts', 'make_zero',
                     final_file, '-y'
                 ]
                 subprocess.run(cmd_fb, capture_output=True, check=True, creationflags=CREATE_NO_WINDOW)
