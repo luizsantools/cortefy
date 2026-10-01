@@ -594,11 +594,43 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             if not os.path.exists(local_source) or os.path.getsize(local_source) == 0:
                 raise RuntimeError(f"Não foi possível obter o vídeo fonte para o corte.")
 
-            # 2. Gera arquivo de legenda ASS com animação e motion graphics
+            # 2. Garante legendas de altíssima precisão acústica (nível CapCut)
+            cut_words_to_use = words
+            if cut_info and cut_info.get("edited_subtitles"):
+                cut_words_to_use = cut_info["edited_subtitles"]
+            elif cut_info and cut_info.get("edited_words"):
+                cut_words_to_use = cut_info["edited_words"]
+            else:
+                try:
+                    if progress_cb:
+                        progress_cb(25, "Ouvindo falas com precisão acústica avançada...")
+                    cut_audio_temp = os.path.join(self.temp_dir, f"cut_audio_{cid}_{timestamp_id}.wav")
+                    cmd_audio = [
+                        ffmpeg_bin,
+                        "-ss", f"{start:.3f}",
+                        "-to", f"{end:.3f}",
+                        "-i", local_source,
+                        "-vn", "-ar", "16000", "-ac", "1",
+                        cut_audio_temp, "-y"
+                    ]
+                    subprocess.run(cmd_audio, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True, creationflags=CREATE_NO_WINDOW)
+                    cleanup_files.append(cut_audio_temp)
+
+                    from audio_ingest import AudioIngestEngine
+                    if not hasattr(self, "_audio_engine") or self._audio_engine is None:
+                        self._audio_engine = AudioIngestEngine(self.temp_dir)
+
+                    precise_words = self._audio_engine.transcribe_cut_audio(cut_audio_temp, cut_start=start, cut_title=title)
+                    if precise_words and len(precise_words) > 0:
+                        cut_words_to_use = precise_words
+                except Exception as ex_sub:
+                    print(f"[VideoPipeline] Transcrição acústica direta: {ex_sub}")
+
+            # Gera arquivo de legenda ASS com animação e motion graphics
             if progress_cb:
                 progress_cb(35, "Gerando legendas dinâmicas animadas...")
             self.generate_ass_subtitles(
-                words, start, end, temp_ass,
+                cut_words_to_use, start, end, temp_ass,
                 style_key=subtitle_style,
                 custom_color=custom_color,
                 custom_font_size=custom_font_size,
