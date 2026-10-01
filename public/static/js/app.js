@@ -132,10 +132,194 @@ function setBRollMode(mode) {
     }
 }
 
-// Alternar Modelo de Legendas (10 Opções)
+// 24 Presets Profissionais de Alta Retenção Visual
+const SUBTITLE_PRESETS = {
+    hormozi_pop: {
+        id: "hormozi_pop", name: "Hormozi Pop", category: "Viral TikTok",
+        font: "Impact", size: 82, primary: "#FFFFFF", highlight: "#FFE500",
+        outline_color: "#000000", outline_w: 8, shadow: 4, shadow_color: "#000000",
+        border_style: 1, bg_color: "#000000", animation: "bounce", casing: "uppercase",
+        chunk_size: 2, margin_v: 420
+    },
+    tiktok_bounce: {
+        id: "tiktok_bounce", name: "TikTok Lime Bounce", category: "Viral TikTok",
+        font: "Arial Black", size: 76, primary: "#FFFFFF", highlight: "#00FF66",
+        outline_color: "#000000", outline_w: 7, shadow: 3, shadow_color: "#000000",
+        border_style: 1, bg_color: "#000000", animation: "bounce", casing: "uppercase",
+        chunk_size: 2, margin_v: 420
+    },
+    beast_impact: {
+        id: "beast_impact", name: "MrBeast Explosivo", category: "Impacto & Drama",
+        font: "Impact", size: 86, primary: "#FFFFFF", highlight: "#FF3B30",
+        outline_color: "#000000", outline_w: 9, shadow: 5, shadow_color: "#FF5C00",
+        border_style: 1, bg_color: "#000000", animation: "pop_zoom", casing: "uppercase",
+        chunk_size: 2, margin_v: 440
+    },
+    cyan_electric: {
+        id: "cyan_electric", name: "Ciano Cyberpunk", category: "Gamer / Cyber",
+        font: "Arial Black", size: 74, primary: "#FFFFFF", highlight: "#00FFFF",
+        outline_color: "#050B14", outline_w: 7, shadow: 5, shadow_color: "#0055FF",
+        border_style: 1, bg_color: "#000000", animation: "bounce", casing: "uppercase",
+        chunk_size: 2, margin_v: 420
+    },
+    purple_viral: {
+        id: "purple_viral", name: "Roxo Aesthetic", category: "Viral TikTok",
+        font: "Arial Black", size: 74, primary: "#FFFFFF", highlight: "#C084FC",
+        outline_color: "#1E0B2B", outline_w: 7, shadow: 4, shadow_color: "#581C87",
+        border_style: 1, bg_color: "#000000", animation: "bounce", casing: "uppercase",
+        chunk_size: 2, margin_v: 420
+    },
+    clean_minimal: {
+        id: "clean_minimal", name: "Clean Minimalist", category: "Minimalista",
+        font: "Segoe UI", size: 68, primary: "#FFFFFF", highlight: "#38BDF8",
+        outline_color: "#000000", outline_w: 4, shadow: 2, shadow_color: "#000000",
+        border_style: 1, bg_color: "#000000", animation: "fade", casing: "original",
+        chunk_size: 3, margin_v: 380
+    },
+    gold_karaoke: {
+        id: "gold_karaoke", name: "Karaokê Ouro VIP", category: "YouTube Shorts",
+        font: "Impact", size: 78, primary: "#FFFFFF", highlight: "#FFD700",
+        outline_color: "#000000", outline_w: 8, shadow: 4, shadow_color: "#78350F",
+        border_style: 1, bg_color: "#000000", animation: "karaoke", casing: "uppercase",
+        chunk_size: 2, margin_v: 420
+    },
+    fire_sunset: {
+        id: "fire_sunset", name: "Fogo Sunset Laranja", category: "Impacto & Drama",
+        font: "Impact", size: 82, primary: "#FFE500", highlight: "#FF5C00",
+        outline_color: "#000000", outline_w: 8, shadow: 4, shadow_color: "#7C2D12",
+        border_style: 1, bg_color: "#000000", animation: "pop_zoom", casing: "uppercase",
+        chunk_size: 2, margin_v: 420
+    },
+    emerald_vip: {
+        id: "emerald_vip", name: "Esmeralda Finanças", category: "YouTube Shorts",
+        font: "Arial Black", size: 75, primary: "#FFFFFF", highlight: "#10B981",
+        outline_color: "#064E3B", outline_w: 7, shadow: 4, shadow_color: "#022C22",
+        border_style: 1, bg_color: "#000000", animation: "bounce", casing: "uppercase",
+        chunk_size: 2, margin_v: 420
+    },
+    monochrome_3d: {
+        id: "monochrome_3d", name: "Monocromo 3D Heavy", category: "Impacto & Drama",
+        font: "Impact", size: 84, primary: "#FFFFFF", highlight: "#E4E4E7",
+        outline_color: "#000000", outline_w: 9, shadow: 6, shadow_color: "#27272A",
+        border_style: 1, bg_color: "#000000", animation: "shake", casing: "uppercase",
+        chunk_size: 2, margin_v: 420
+    },
+    neobrutalist_black: {
+        id: "neobrutalist_black", name: "Neo-Brutalist Tarja Preta", category: "Neo-Brutalist",
+        font: "Impact", size: 78, primary: "#FFE500", highlight: "#FF5C00",
+        outline_color: "#000000", outline_w: 10, shadow: 5, shadow_color: "#000000",
+        border_style: 3, bg_color: "#000000", animation: "bounce", casing: "uppercase",
+        chunk_size: 2, margin_v: 420
+    },
+    neobrutalist_blue: {
+        id: "neobrutalist_blue", name: "Neo-Brutalist Royal Blue", category: "Neo-Brutalist",
+        font: "Arial Black", size: 76, primary: "#FFFFFF", highlight: "#FFE500",
+        outline_color: "#0052FF", outline_w: 8, shadow: 5, shadow_color: "#000000",
+        border_style: 3, bg_color: "#0052FF", animation: "pop_zoom", casing: "uppercase",
+        chunk_size: 2, margin_v: 420
+    },
+    retro_arcade: {
+        id: "retro_arcade", name: "Retro Synthwave 80s", category: "Gamer / Cyber",
+        font: "Trebuchet MS", size: 76, primary: "#FFFFFF", highlight: "#FF007F",
+        outline_color: "#200030", outline_w: 7, shadow: 5, shadow_color: "#00F0FF",
+        border_style: 1, bg_color: "#000000", animation: "bounce", casing: "uppercase",
+        chunk_size: 2, margin_v: 420
+    },
+    comic_pop: {
+        id: "comic_pop", name: "Quadrinhos Comic Hero", category: "Viral TikTok",
+        font: "Comic Sans MS", size: 78, primary: "#FFE500", highlight: "#FF0000",
+        outline_color: "#000000", outline_w: 8, shadow: 4, shadow_color: "#000000",
+        border_style: 1, bg_color: "#000000", animation: "bounce", casing: "uppercase",
+        chunk_size: 2, margin_v: 420
+    },
+    glitch_matrix: {
+        id: "glitch_matrix", name: "Matrix Hacker Green", category: "Gamer / Cyber",
+        font: "Courier New", size: 74, primary: "#FFFFFF", highlight: "#22C55E",
+        outline_color: "#052E16", outline_w: 6, shadow: 4, shadow_color: "#15803D",
+        border_style: 1, bg_color: "#000000", animation: "shake", casing: "uppercase",
+        chunk_size: 3, margin_v: 400
+    },
+    cinema_letterbox: {
+        id: "cinema_letterbox", name: "Cinema Clássico 2.35", category: "Minimalista",
+        font: "Georgia", size: 66, primary: "#FFFBEB", highlight: "#F59E0B",
+        outline_color: "#1C1917", outline_w: 3, shadow: 2, shadow_color: "#000000",
+        border_style: 1, bg_color: "#000000", animation: "fade", casing: "original",
+        chunk_size: 4, margin_v: 360
+    },
+    breaking_news: {
+        id: "breaking_news", name: "Plantão Urgente (News)", category: "Impacto & Drama",
+        font: "Arial Black", size: 76, primary: "#FFFFFF", highlight: "#FFE500",
+        outline_color: "#7F1D1D", outline_w: 8, shadow: 4, shadow_color: "#000000",
+        border_style: 3, bg_color: "#DC2626", animation: "pop_zoom", casing: "uppercase",
+        chunk_size: 2, margin_v: 440
+    },
+    red_danger: {
+        id: "red_danger", name: "Alerta Vermelho Shock", category: "Impacto & Drama",
+        font: "Impact", size: 86, primary: "#FFFFFF", highlight: "#EF4444",
+        outline_color: "#450A0A", outline_w: 9, shadow: 5, shadow_color: "#000000",
+        border_style: 1, bg_color: "#000000", animation: "shake", casing: "uppercase",
+        chunk_size: 1, margin_v: 430
+    },
+    sunset_glow: {
+        id: "sunset_glow", name: "Sunset Coral Glow", category: "YouTube Shorts",
+        font: "Trebuchet MS", size: 76, primary: "#FFFFFF", highlight: "#FB7185",
+        outline_color: "#4C0519", outline_w: 7, shadow: 5, shadow_color: "#E11D48",
+        border_style: 1, bg_color: "#000000", animation: "bounce", casing: "uppercase",
+        chunk_size: 2, margin_v: 420
+    },
+    midnight_neon: {
+        id: "midnight_neon", name: "Midnight Cobalt Neon", category: "Gamer / Cyber",
+        font: "Impact", size: 80, primary: "#FFFFFF", highlight: "#38BDF8",
+        outline_color: "#0C4A6E", outline_w: 8, shadow: 5, shadow_color: "#0284C7",
+        border_style: 1, bg_color: "#000000", animation: "pop_zoom", casing: "uppercase",
+        chunk_size: 2, margin_v: 420
+    },
+    lemon_lime: {
+        id: "lemon_lime", name: "Citrus Lime Punch", category: "Viral TikTok",
+        font: "Impact", size: 82, primary: "#FFFFFF", highlight: "#A3E635",
+        outline_color: "#14532D", outline_w: 8, shadow: 4, shadow_color: "#000000",
+        border_style: 1, bg_color: "#000000", animation: "bounce", casing: "uppercase",
+        chunk_size: 2, margin_v: 420
+    },
+    typewriter_clean: {
+        id: "typewriter_clean", name: "Máquina de Escrever Retrô", category: "Minimalista",
+        font: "Courier New", size: 70, primary: "#F3F4F6", highlight: "#FBBF24",
+        outline_color: "#111827", outline_w: 5, shadow: 2, shadow_color: "#000000",
+        border_style: 1, bg_color: "#000000", animation: "fade", casing: "original",
+        chunk_size: 3, margin_v: 380
+    },
+    hormozi_single_word: {
+        id: "hormozi_single_word", name: "Hormozi 1 Palavra", category: "Viral TikTok",
+        font: "Impact", size: 94, primary: "#FFE500", highlight: "#FFFFFF",
+        outline_color: "#000000", outline_w: 10, shadow: 5, shadow_color: "#000000",
+        border_style: 1, bg_color: "#000000", animation: "pop_zoom", casing: "uppercase",
+        chunk_size: 1, margin_v: 460
+    },
+    pill_badge_viral: {
+        id: "pill_badge_viral", name: "Pílula Moderna (Pill)", category: "YouTube Shorts",
+        font: "Arial Black", size: 72, primary: "#000000", highlight: "#FF5C00",
+        outline_color: "#FFFFFF", outline_w: 2, shadow: 0, shadow_color: "#000000",
+        border_style: 3, bg_color: "#FFFFFF", animation: "bounce", casing: "uppercase",
+        chunk_size: 2, margin_v: 420
+    }
+};
+
+const SAMPLE_PHRASES = [
+    "ISSO VAI MUDAR TUDO! 🔥",
+    "PRESTE MUITA ATENÇÃO NISSO!",
+    "ESSE SEGREDO NINGUÉM TE CONTA!",
+    "O MAIOR ERRO DE TODOS!",
+    "3 DICAS PRA CRESCER RÁPIDO 🚀",
+    "VOCÊ NUNCA MAIS VAI ERRAR!",
+    "RESULTADO SURPREENDENTE ⚡",
+    "COMO VIRALIZAR NO INSTAGRAM"
+];
+
+// Alternar Modelo de Legendas (24 Presets)
 function setSubStyle(styleKey) {
     selectedSubStyle = styleKey;
     window.selectedSubStyle = styleKey;
+
     document.querySelectorAll(".sub-card").forEach(el => {
         const isMatch = el.getAttribute("data-sub-style") === styleKey;
         const radio = el.querySelector(".sub-radio");
@@ -153,10 +337,309 @@ function setSubStyle(styleKey) {
             }
         }
     });
+
     const hidden = document.getElementById("selected-sub-style-input");
     if (hidden) hidden.value = styleKey;
+
+    const preset = SUBTITLE_PRESETS[styleKey];
+    if (preset) {
+        const fontEl = document.getElementById("custom-sub-font");
+        const sizeSlider = document.getElementById("custom-sub-size-slider");
+        const sizeVal = document.getElementById("custom-sub-size-val");
+        const casingEl = document.getElementById("custom-sub-casing-select");
+        const colorEl = document.getElementById("custom-sub-color");
+        const colorLbl = document.getElementById("custom-sub-color-label");
+        const hlEl = document.getElementById("custom-sub-highlight-picker");
+        const hlLbl = document.getElementById("custom-sub-highlight-label");
+        const outlineSlider = document.getElementById("custom-sub-outline-slider");
+        const outlineVal = document.getElementById("custom-sub-outline-val");
+        const shadowEl = document.getElementById("custom-sub-shadow-select");
+        const bgEl = document.getElementById("custom-sub-bg-select");
+        const animEl = document.getElementById("custom-sub-anim-select");
+        const chunkEl = document.getElementById("custom-sub-chunk-select");
+        const posEl = document.getElementById("custom-sub-pos-select");
+        const posValEl = document.getElementById("custom-sub-pos-val");
+        const presetBadge = document.getElementById("preview-preset-badge");
+
+        if (presetBadge) presetBadge.textContent = preset.name;
+        if (fontEl) fontEl.value = preset.font;
+        if (sizeSlider) {
+            sizeSlider.value = preset.size;
+            if (sizeVal) sizeVal.innerText = `${preset.size}px`;
+        }
+        if (casingEl) casingEl.value = preset.casing || "uppercase";
+        if (colorEl) {
+            colorEl.value = preset.primary;
+            if (colorLbl) colorLbl.innerText = preset.primary.toUpperCase();
+        }
+        if (hlEl) {
+            hlEl.value = preset.highlight;
+            if (hlLbl) hlLbl.innerText = preset.highlight.toUpperCase();
+        }
+        if (outlineSlider) {
+            outlineSlider.value = preset.outline_w;
+            if (outlineVal) outlineVal.innerText = `${preset.outline_w}px`;
+        }
+        if (shadowEl) {
+            shadowEl.value = preset.shadow >= 4 ? "hard_3d" : (preset.shadow > 0 ? "soft_shadow" : "none");
+        }
+        if (bgEl) {
+            if (preset.border_style === 3) {
+                if (preset.bg_color === "#0052FF") bgEl.value = "neobrutalist_blue";
+                else if (preset.bg_color === "#FFFFFF") bgEl.value = "pill";
+                else bgEl.value = "black_box";
+            } else {
+                bgEl.value = "none";
+            }
+        }
+        if (animEl) animEl.value = preset.animation || "bounce";
+        if (chunkEl) chunkEl.value = String(preset.chunk_size || 2);
+        if (posEl) {
+            posEl.value = String(preset.margin_v || 420);
+            if (posValEl) {
+                posValEl.textContent = preset.margin_v >= 1100 ? "Superior" : (preset.margin_v >= 700 ? "Centro" : "Inferior");
+            }
+        }
+    }
+
+    updateLiveSubtitlePreview();
 }
 window.setSubStyle = setSubStyle;
+
+// Filtro de Categorias de Presets
+function filterSubPresets(category, btn) {
+    document.querySelectorAll(".sub-filter-btn").forEach(b => b.classList.remove("sub-filter-btn-active"));
+    if (btn) btn.classList.add("sub-filter-btn-active");
+
+    const cards = document.querySelectorAll("#sub-presets-grid .sub-card");
+    let count = 0;
+    cards.forEach(card => {
+        const cardCat = card.getAttribute("data-category");
+        if (category === "all" || cardCat === category) {
+            card.style.display = "flex";
+            count++;
+        } else {
+            card.style.display = "none";
+        }
+    });
+
+    const badge = document.getElementById("preset-count-badge");
+    if (badge) badge.innerText = `${count} presets`;
+}
+window.filterSubPresets = filterSubPresets;
+
+// Atualização Dinâmica do Mockup de Smartphone 9:16
+function updateLiveSubtitlePreview() {
+    const box = document.getElementById("mockup-sub-box");
+    const container = document.getElementById("mockup-sub-container");
+    const prefixEl = document.getElementById("mockup-text-prefix");
+    const highlightEl = document.getElementById("mockup-text-highlight");
+    const suffixEl = document.getElementById("mockup-text-suffix");
+    const animNameEl = document.getElementById("preview-anim-name");
+    if (!box || !container || !prefixEl || !highlightEl || !suffixEl) return;
+
+    const sampleInput = document.getElementById("preview-sample-input");
+    const rawText = sampleInput ? sampleInput.value.trim() || "ISSO VAI MUDAR TUDO!" : "ISSO VAI MUDAR TUDO!";
+    const font = document.getElementById("custom-sub-font")?.value || "Impact";
+    const size = parseInt(document.getElementById("custom-sub-size-slider")?.value) || 78;
+    const casing = document.getElementById("custom-sub-casing-select")?.value || "uppercase";
+    const primaryColor = document.getElementById("custom-sub-color")?.value || "#FFFFFF";
+    const highlightColor = document.getElementById("custom-sub-highlight-picker")?.value || "#FFE500";
+    const outlineW = parseInt(document.getElementById("custom-sub-outline-slider")?.value) || 8;
+    const shadowStyle = document.getElementById("custom-sub-shadow-select")?.value || "hard_3d";
+    const bgStyle = document.getElementById("custom-sub-bg-select")?.value || "none";
+    const animType = document.getElementById("custom-sub-anim-select")?.value || "bounce";
+    const posVal = parseInt(document.getElementById("custom-sub-pos-select")?.value) || 420;
+
+    const colLbl = document.getElementById("custom-sub-color-label");
+    if (colLbl) colLbl.innerText = primaryColor.toUpperCase();
+    const hlLbl = document.getElementById("custom-sub-highlight-label");
+    if (hlLbl) hlLbl.innerText = highlightColor.toUpperCase();
+
+    let formattedText = rawText;
+    if (casing === "uppercase") {
+        formattedText = rawText.toUpperCase();
+    } else if (casing === "titlecase") {
+        formattedText = rawText.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+    }
+
+    const words = formattedText.split(/\s+/).filter(Boolean);
+    if (words.length === 0) {
+        prefixEl.textContent = "";
+        highlightEl.textContent = "";
+        suffixEl.textContent = "";
+    } else if (words.length === 1) {
+        prefixEl.textContent = "";
+        highlightEl.textContent = words[0];
+        suffixEl.textContent = "";
+    } else {
+        const hlIndex = Math.min(1, words.length - 1);
+        prefixEl.textContent = words.slice(0, hlIndex).join(" ") + " ";
+        highlightEl.textContent = words[hlIndex];
+        const rest = words.slice(hlIndex + 1).join(" ");
+        suffixEl.textContent = rest ? " " + rest : "";
+    }
+
+    const scaledSize = Math.max(12, Math.round(size * 0.22));
+    const scaledOutline = Math.max(1, Math.round(outlineW * 0.22));
+
+    box.style.fontFamily = `"${font}", sans-serif`;
+    box.style.fontSize = `${scaledSize}px`;
+    box.style.lineHeight = "1.15";
+    box.style.fontWeight = (font === "Georgia" || font === "Courier New") ? "bold" : "900";
+    box.style.color = primaryColor;
+
+    let textShadow = "";
+    if (outlineW > 0) {
+        const o = scaledOutline;
+        textShadow = `-${o}px -${o}px 0 #000, ${o}px -${o}px 0 #000, -${o}px ${o}px 0 #000, ${o}px ${o}px 0 #000, 0px -${o}px 0 #000, 0px ${o}px 0 #000, -${o}px 0px 0 #000, ${o}px 0px 0 #000`;
+    }
+
+    if (shadowStyle === "hard_3d") {
+        const s = Math.max(2, Math.round(outlineW * 0.35));
+        const shadowPart = `${s}px ${s}px 0px #000000`;
+        textShadow = textShadow ? `${textShadow}, ${shadowPart}` : shadowPart;
+    } else if (shadowStyle === "soft_shadow") {
+        const shadowPart = `0px 3px 6px rgba(0,0,0,0.85)`;
+        textShadow = textShadow ? `${textShadow}, ${shadowPart}` : shadowPart;
+    } else if (shadowStyle === "glow_neon") {
+        const shadowPart = `0 0 10px ${highlightColor}, 0 0 18px ${highlightColor}`;
+        textShadow = textShadow ? `${textShadow}, ${shadowPart}` : shadowPart;
+    }
+    box.style.textShadow = textShadow;
+
+    if (bgStyle === "black_box") {
+        box.style.backgroundColor = "#000000";
+        box.style.border = "2px solid #000000";
+        box.style.borderRadius = "4px";
+        box.style.boxShadow = "none";
+        box.style.padding = "2px 8px";
+    } else if (bgStyle === "translucent_box") {
+        box.style.backgroundColor = "rgba(0, 0, 0, 0.75)";
+        box.style.border = "1px solid rgba(255,255,255,0.2)";
+        box.style.borderRadius = "4px";
+        box.style.boxShadow = "none";
+        box.style.padding = "2px 8px";
+    } else if (bgStyle === "neobrutalist_orange") {
+        box.style.backgroundColor = "#FF5C00";
+        box.style.border = "2px solid #000000";
+        box.style.borderRadius = "0px";
+        box.style.boxShadow = "3px 3px 0px #000";
+        box.style.padding = "2px 8px";
+    } else if (bgStyle === "neobrutalist_blue") {
+        box.style.backgroundColor = "#0052FF";
+        box.style.border = "2px solid #000000";
+        box.style.borderRadius = "0px";
+        box.style.boxShadow = "3px 3px 0px #000";
+        box.style.padding = "2px 8px";
+    } else if (bgStyle === "pill") {
+        box.style.backgroundColor = "#FFFFFF";
+        box.style.border = "2px solid #000000";
+        box.style.borderRadius = "9999px";
+        box.style.boxShadow = "2px 2px 0px #000";
+        box.style.padding = "3px 12px";
+    } else {
+        box.style.backgroundColor = "transparent";
+        box.style.border = "none";
+        box.style.borderRadius = "0px";
+        box.style.boxShadow = "none";
+        box.style.padding = "0px";
+    }
+
+    highlightEl.style.color = highlightColor;
+    highlightEl.className = "anim-word";
+    
+    if (animType === "bounce") {
+        highlightEl.classList.add("anim-bounce");
+        if (animNameEl) animNameEl.textContent = "Animação: Salto Elástico";
+    } else if (animType === "pop_zoom") {
+        highlightEl.classList.add("anim-popzoom");
+        if (animNameEl) animNameEl.textContent = "Animação: Zoom Explosivo";
+    } else if (animType === "karaoke") {
+        highlightEl.classList.add("anim-karaoke");
+        if (animNameEl) animNameEl.textContent = "Animação: Karaokê Palavra";
+    } else if (animType === "shake") {
+        highlightEl.classList.add("anim-shake");
+        if (animNameEl) animNameEl.textContent = "Animação: Tremor de Impacto";
+    } else if (animType === "fade") {
+        highlightEl.classList.add("anim-fade");
+        if (animNameEl) animNameEl.textContent = "Animação: Surgimento Suave";
+    } else {
+        if (animNameEl) animNameEl.textContent = "Animação: Estático";
+    }
+
+    if (posVal >= 1100) {
+        container.style.bottom = "72%";
+    } else if (posVal >= 700) {
+        container.style.bottom = "46%";
+    } else {
+        container.style.bottom = "20%";
+    }
+}
+window.updateLiveSubtitlePreview = updateLiveSubtitlePreview;
+
+function onSizeSliderChange(val) {
+    const lbl = document.getElementById("custom-sub-size-val");
+    if (lbl) lbl.innerText = `${val}px`;
+    updateLiveSubtitlePreview();
+}
+window.onSizeSliderChange = onSizeSliderChange;
+
+function onOutlineSliderChange(val) {
+    const lbl = document.getElementById("custom-sub-outline-val");
+    if (lbl) lbl.innerText = `${val}px`;
+    updateLiveSubtitlePreview();
+}
+window.onOutlineSliderChange = onOutlineSliderChange;
+
+function onPositionPresetChange(val) {
+    const lbl = document.getElementById("custom-sub-pos-val");
+    const num = parseInt(val) || 420;
+    if (lbl) {
+        if (num >= 1100) lbl.innerText = `Superior (${num}px)`;
+        else if (num >= 700) lbl.innerText = `Centro (${num}px)`;
+        else lbl.innerText = `Inferior (${num}px)`;
+    }
+    updateLiveSubtitlePreview();
+}
+window.onPositionPresetChange = onPositionPresetChange;
+
+function setQuickHighlight(hex) {
+    const picker = document.getElementById("custom-sub-highlight-picker");
+    const label = document.getElementById("custom-sub-highlight-label");
+    if (picker) picker.value = hex;
+    if (label) label.innerText = hex.toUpperCase();
+    updateLiveSubtitlePreview();
+}
+window.setQuickHighlight = setQuickHighlight;
+
+function randomizeSampleText() {
+    const input = document.getElementById("preview-sample-input");
+    if (!input) return;
+    const current = input.value.trim();
+    const available = SAMPLE_PHRASES.filter(p => p !== current);
+    const chosen = available[Math.floor(Math.random() * available.length)] || SAMPLE_PHRASES[0];
+    input.value = chosen;
+    updateLiveSubtitlePreview();
+}
+window.randomizeSampleText = randomizeSampleText;
+
+function replaySubtitleAnimation() {
+    const hl = document.getElementById("mockup-text-highlight");
+    if (!hl) return;
+    const currentClass = hl.className;
+    hl.className = "anim-word";
+    void hl.offsetWidth;
+    hl.className = currentClass;
+}
+window.replaySubtitleAnimation = replaySubtitleAnimation;
+
+function resetSubtitleCustomizations() {
+    const currentStyle = window.selectedSubStyle || "hormozi_pop";
+    setSubStyle(currentStyle);
+    showToast("Configurações de legenda restauradas ao padrão do estilo.", "info");
+}
+window.resetSubtitleCustomizations = resetSubtitleCustomizations;
 
 // Gaveta de Personalização de Legenda
 function toggleCustomizeDrawer() {
@@ -168,17 +651,34 @@ function toggleCustomizeDrawer() {
         drawer.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
 }
+window.toggleCustomizeDrawer = toggleCustomizeDrawer;
 
 function saveSubtitleTemplate() {
-    const customColor = document.getElementById("custom-sub-color")?.value || "#FF5C00";
-    const customSize = document.getElementById("custom-sub-size")?.value || "76";
-    const customPos = document.getElementById("custom-sub-position")?.value || "520";
     const currentStyle = window.selectedSubStyle || selectedSubStyle || "hormozi_pop";
+    const customFont = document.getElementById("custom-sub-font")?.value || "Impact";
+    const customSize = document.getElementById("custom-sub-size-slider")?.value || "78";
+    const customCasing = document.getElementById("custom-sub-casing-select")?.value || "uppercase";
+    const customColor = document.getElementById("custom-sub-color")?.value || "#FFFFFF";
+    const customHighlight = document.getElementById("custom-sub-highlight-picker")?.value || "#FFE500";
+    const customOutline = document.getElementById("custom-sub-outline-slider")?.value || "8";
+    const customShadow = document.getElementById("custom-sub-shadow-select")?.value || "hard_3d";
+    const customBg = document.getElementById("custom-sub-bg-select")?.value || "none";
+    const customAnim = document.getElementById("custom-sub-anim-select")?.value || "bounce";
+    const customChunk = document.getElementById("custom-sub-chunk-select")?.value || "2";
+    const customPos = document.getElementById("custom-sub-pos-select")?.value || "420";
 
     const templateData = {
         styleKey: currentStyle,
-        color: customColor,
+        font: customFont,
         size: customSize,
+        casing: customCasing,
+        color: customColor,
+        highlight: customHighlight,
+        outline: customOutline,
+        shadow: customShadow,
+        bg: customBg,
+        animation: customAnim,
+        chunk: customChunk,
         position: customPos,
         timestamp: Date.now()
     };
@@ -190,6 +690,7 @@ function saveSubtitleTemplate() {
 
     showToast("Template salvo! Será aplicado automaticamente nos seus vídeos.", "success");
 }
+window.saveSubtitleTemplate = saveSubtitleTemplate;
 
 function loadSavedTemplate() {
     try {
@@ -197,24 +698,71 @@ function loadSavedTemplate() {
         if (raw) {
             const tpl = JSON.parse(raw);
             if (tpl.styleKey) setSubStyle(tpl.styleKey);
-            const inputColor = document.getElementById("custom-sub-color");
-            const labelColor = document.getElementById("custom-sub-color-label");
-            const selectSize = document.getElementById("custom-sub-size");
-            const selectPos = document.getElementById("custom-sub-position");
-            const badge = document.getElementById("saved-template-badge");
 
-            if (inputColor && tpl.color) {
-                inputColor.value = tpl.color;
-                if (labelColor) labelColor.innerText = tpl.color;
+            if (tpl.font) {
+                const el = document.getElementById("custom-sub-font");
+                if (el) el.value = tpl.font;
             }
-            if (selectSize && tpl.size) selectSize.value = tpl.size;
-            if (selectPos && tpl.position) selectPos.value = tpl.position;
+            if (tpl.size) {
+                const sl = document.getElementById("custom-sub-size-slider");
+                const val = document.getElementById("custom-sub-size-val");
+                if (sl) sl.value = tpl.size;
+                if (val) val.innerText = `${tpl.size}px`;
+            }
+            if (tpl.casing) {
+                const el = document.getElementById("custom-sub-casing-select");
+                if (el) el.value = tpl.casing;
+            }
+            if (tpl.color) {
+                const el = document.getElementById("custom-sub-color");
+                const lbl = document.getElementById("custom-sub-color-label");
+                if (el) el.value = tpl.color;
+                if (lbl) lbl.innerText = tpl.color.toUpperCase();
+            }
+            if (tpl.highlight) {
+                const el = document.getElementById("custom-sub-highlight-picker");
+                const lbl = document.getElementById("custom-sub-highlight-label");
+                if (el) el.value = tpl.highlight;
+                if (lbl) lbl.innerText = tpl.highlight.toUpperCase();
+            }
+            if (tpl.outline) {
+                const sl = document.getElementById("custom-sub-outline-slider");
+                const val = document.getElementById("custom-sub-outline-val");
+                if (sl) sl.value = tpl.outline;
+                if (val) val.innerText = `${tpl.outline}px`;
+            }
+            if (tpl.shadow) {
+                const el = document.getElementById("custom-sub-shadow-select");
+                if (el) el.value = tpl.shadow;
+            }
+            if (tpl.bg) {
+                const el = document.getElementById("custom-sub-bg-select");
+                if (el) el.value = tpl.bg;
+            }
+            if (tpl.animation) {
+                const el = document.getElementById("custom-sub-anim-select");
+                if (el) el.value = tpl.animation;
+            }
+            if (tpl.chunk) {
+                const el = document.getElementById("custom-sub-chunk-select");
+                if (el) el.value = tpl.chunk;
+            }
+            if (tpl.position) {
+                const el = document.getElementById("custom-sub-pos-select");
+                if (el) el.value = tpl.position;
+                onPositionPresetChange(tpl.position);
+            }
+
+            const badge = document.getElementById("saved-template-badge");
             if (badge) badge.style.display = "inline-flex";
+
+            updateLiveSubtitlePreview();
         }
     } catch (e) {
         console.warn("Falha ao carregar template:", e);
     }
 }
+window.loadSavedTemplate = loadSavedTemplate;
 
 // Detecção Automática do Link e Prévia Instantânea
 function initUrlListener() {
@@ -315,9 +863,30 @@ async function startAnalysis() {
     const brollUrl = document.getElementById("input-broll-url")?.value.trim() || "";
     const activeGenre = window.selectedGenre || document.getElementById("selected-genre-input")?.value || selectedGenre || "auto";
     const activeSubStyle = window.selectedSubStyle || selectedSubStyle || "hormozi_pop";
-    const customColor = document.getElementById("custom-sub-color")?.value || "";
-    const customSize = parseInt(document.getElementById("custom-sub-size")?.value) || 75;
-    const customMargin = parseInt(document.getElementById("custom-sub-position")?.value) || 420;
+    const customFont = document.getElementById("custom-sub-font")?.value || "Impact";
+    const customSize = parseInt(document.getElementById("custom-sub-size-slider")?.value) || 78;
+    const customCasing = document.getElementById("custom-sub-casing-select")?.value || "uppercase";
+    const customColor = document.getElementById("custom-sub-color")?.value || "#FFFFFF";
+    const customHighlight = document.getElementById("custom-sub-highlight-picker")?.value || "#FFE500";
+    const customOutlineW = parseInt(document.getElementById("custom-sub-outline-slider")?.value) || 8;
+    const customShadowSelect = document.getElementById("custom-sub-shadow-select")?.value || "hard_3d";
+    const customBgSelect = document.getElementById("custom-sub-bg-select")?.value || "none";
+    const customAnimation = document.getElementById("custom-sub-anim-select")?.value || "bounce";
+    const customChunkSize = parseInt(document.getElementById("custom-sub-chunk-select")?.value) || 2;
+    const customMargin = parseInt(document.getElementById("custom-sub-pos-select")?.value) || 420;
+
+    let customBorderStyle = 1;
+    let customBgColor = "#000000";
+    if (customBgSelect !== "none") {
+        customBorderStyle = 3;
+        if (customBgSelect === "neobrutalist_blue") customBgColor = "#0052FF";
+        else if (customBgSelect === "neobrutalist_orange") customBgColor = "#FF5C00";
+        else if (customBgSelect === "pill") customBgColor = "#FFFFFF";
+        else customBgColor = "#000000";
+    }
+
+    let customShadow = customShadowSelect === "none" ? 0 : (customShadowSelect === "hard_3d" ? 5 : 3);
+
     const toggleZoom = document.getElementById("toggle-zoom")?.checked ?? true;
     const toggleDrift = document.getElementById("toggle-drift")?.checked ?? true;
     const toggleCenterFace = document.getElementById("toggle-center-face")?.checked ?? true;
@@ -349,8 +918,20 @@ async function startAnalysis() {
                 genre: activeGenre,
                 subtitle_style: activeSubStyle,
                 custom_color: customColor,
+                custom_highlight_color: customHighlight,
+                custom_font: customFont,
                 custom_size: customSize,
                 custom_margin: customMargin,
+                custom_outline_w: customOutlineW,
+                custom_outline_color: "#000000",
+                custom_shadow: customShadow,
+                custom_shadow_color: "#000000",
+                custom_border_style: customBorderStyle,
+                custom_bg_color: customBgColor,
+                custom_animation: customAnimation,
+                custom_casing: customCasing,
+                custom_chunk_size: customChunkSize,
+                custom_alignment: 2,
                 enable_zoom: toggleZoom,
                 enable_drift: toggleDrift,
                 center_face: toggleCenterFace,
@@ -672,8 +1253,13 @@ function openSubtitleEditorModal(cutId) {
     const modal = document.getElementById("modal-subtitle-editor");
     const textArea = document.getElementById("edit-sub-text");
     const styleSelect = document.getElementById("edit-sub-style");
+    const primaryInput = document.getElementById("edit-sub-primary-color");
+    const primaryLabel = document.getElementById("edit-sub-primary-label");
     const colorInput = document.getElementById("edit-sub-color");
     const colorLabel = document.getElementById("edit-sub-color-label");
+    const animSelect = document.getElementById("edit-sub-anim");
+    const fontSelect = document.getElementById("edit-sub-font");
+    const sizeSelect = document.getElementById("edit-sub-size");
 
     // Preenche com o texto falado (transcrição do corte ou hook)
     let initialText = "";
@@ -688,21 +1274,126 @@ function openSubtitleEditorModal(cutId) {
     }
 
     if (textArea) textArea.value = initialText;
-    if (styleSelect) styleSelect.value = cut.subtitle_style || window.selectedSubStyle || "hormozi_pop";
-    if (colorInput) {
-        const col = cut.custom_color || "#FFE500";
-        colorInput.value = col;
-        if (colorLabel) colorLabel.innerText = col.toUpperCase();
+
+    const currentStyle = cut.subtitle_style || window.selectedSubStyle || "hormozi_pop";
+    if (styleSelect) styleSelect.value = currentStyle;
+
+    const preset = SUBTITLE_PRESETS[currentStyle] || SUBTITLE_PRESETS["hormozi_pop"] || {};
+
+    const primaryCol = cut.custom_color || preset.primary || "#FFFFFF";
+    if (primaryInput) {
+        primaryInput.value = primaryCol;
+        if (primaryLabel) primaryLabel.innerText = primaryCol.toUpperCase();
     }
+
+    const hlCol = cut.custom_highlight_color || preset.highlight || "#FFE500";
+    if (colorInput) {
+        colorInput.value = hlCol;
+        if (colorLabel) colorLabel.innerText = hlCol.toUpperCase();
+    }
+
+    if (animSelect) animSelect.value = cut.custom_animation || preset.animation || "bounce";
+    if (fontSelect) fontSelect.value = cut.custom_font || preset.font || "Impact";
+    if (sizeSelect) sizeSelect.value = String(cut.custom_font_size || preset.size || 76);
+
+    updateModalLivePreview();
 
     if (modal) modal.style.display = "flex";
 }
+window.openSubtitleEditorModal = openSubtitleEditorModal;
 
 function closeSubtitleEditorModal() {
     const modal = document.getElementById("modal-subtitle-editor");
     if (modal) modal.style.display = "none";
     activeEditingCutId = null;
 }
+window.closeSubtitleEditorModal = closeSubtitleEditorModal;
+
+function onModalPresetChange(presetKey) {
+    const preset = SUBTITLE_PRESETS[presetKey];
+    if (preset) {
+        const primaryInput = document.getElementById("edit-sub-primary-color");
+        const primaryLabel = document.getElementById("edit-sub-primary-label");
+        const colorInput = document.getElementById("edit-sub-color");
+        const colorLabel = document.getElementById("edit-sub-color-label");
+        const animSelect = document.getElementById("edit-sub-anim");
+        const fontSelect = document.getElementById("edit-sub-font");
+        const sizeSelect = document.getElementById("edit-sub-size");
+
+        if (primaryInput) {
+            primaryInput.value = preset.primary;
+            if (primaryLabel) primaryLabel.innerText = preset.primary.toUpperCase();
+        }
+        if (colorInput) {
+            colorInput.value = preset.highlight;
+            if (colorLabel) colorLabel.innerText = preset.highlight.toUpperCase();
+        }
+        if (animSelect) animSelect.value = preset.animation || "bounce";
+        if (fontSelect) fontSelect.value = preset.font || "Impact";
+        if (sizeSelect) sizeSelect.value = String(preset.size || 76);
+    }
+    updateModalLivePreview();
+}
+window.onModalPresetChange = onModalPresetChange;
+
+function updateModalPreviewText() {
+    updateModalLivePreview();
+}
+window.updateModalPreviewText = updateModalPreviewText;
+
+function updateModalLivePreview() {
+    const box = document.getElementById("modal-sub-preview-box");
+    const prefixEl = document.getElementById("modal-preview-prefix");
+    const highlightEl = document.getElementById("modal-preview-highlight");
+    const suffixEl = document.getElementById("modal-preview-suffix");
+    const textArea = document.getElementById("edit-sub-text");
+    if (!box || !prefixEl || !highlightEl || !suffixEl) return;
+
+    const primaryInput = document.getElementById("edit-sub-primary-color");
+    const colorInput = document.getElementById("edit-sub-color");
+    const animSelect = document.getElementById("edit-sub-anim");
+    const fontSelect = document.getElementById("edit-sub-font");
+
+    const primaryCol = primaryInput ? primaryInput.value : "#FFFFFF";
+    const hlCol = colorInput ? colorInput.value : "#FFE500";
+    const anim = animSelect ? animSelect.value : "bounce";
+    const font = fontSelect ? fontSelect.value : "Impact";
+
+    const raw = (textArea ? textArea.value.trim() : "") || "ISSO VAI MUDAR TUDO! 🔥";
+    const words = raw.split(/\s+/).filter(Boolean);
+    if (words.length === 0) {
+        prefixEl.textContent = "";
+        highlightEl.textContent = "";
+        suffixEl.textContent = "";
+    } else if (words.length === 1) {
+        prefixEl.textContent = "";
+        highlightEl.textContent = words[0];
+        suffixEl.textContent = "";
+    } else {
+        const hlIdx = Math.min(1, words.length - 1);
+        prefixEl.textContent = words.slice(0, hlIdx).join(" ") + " ";
+        highlightEl.textContent = words[hlIdx];
+        const rest = words.slice(hlIdx + 1).join(" ");
+        suffixEl.textContent = rest ? " " + rest : "";
+    }
+
+    box.style.fontFamily = `"${font}", sans-serif`;
+    box.style.color = primaryCol;
+    highlightEl.style.color = hlCol;
+
+    highlightEl.className = "anim-word";
+    if (anim === "bounce") highlightEl.classList.add("anim-bounce");
+    else if (anim === "pop_zoom") highlightEl.classList.add("anim-popzoom");
+    else if (anim === "karaoke") highlightEl.classList.add("anim-karaoke");
+    else if (anim === "shake") highlightEl.classList.add("anim-shake");
+    else if (anim === "fade") highlightEl.classList.add("anim-fade");
+
+    const pLbl = document.getElementById("edit-sub-primary-label");
+    if (pLbl && primaryInput) pLbl.innerText = primaryInput.value.toUpperCase();
+    const hLbl = document.getElementById("edit-sub-color-label");
+    if (hLbl && colorInput) hLbl.innerText = colorInput.value.toUpperCase();
+}
+window.updateModalLivePreview = updateModalLivePreview;
 
 async function submitSubtitleCorrection() {
     if (!currentProjectId || !activeEditingCutId) {
@@ -713,12 +1404,20 @@ async function submitSubtitleCorrection() {
     const cutId = activeEditingCutId;
     const textArea = document.getElementById("edit-sub-text");
     const styleSelect = document.getElementById("edit-sub-style");
+    const primaryInput = document.getElementById("edit-sub-primary-color");
     const colorInput = document.getElementById("edit-sub-color");
+    const animSelect = document.getElementById("edit-sub-anim");
+    const fontSelect = document.getElementById("edit-sub-font");
+    const sizeSelect = document.getElementById("edit-sub-size");
     const saveBtn = document.getElementById("btn-save-subtitles");
 
     const editedText = textArea ? textArea.value.trim() : "";
     const subStyle = styleSelect ? styleSelect.value : "hormozi_pop";
-    const subColor = colorInput ? colorInput.value : "#FFE500";
+    const subPrimaryColor = primaryInput ? primaryInput.value : "#FFFFFF";
+    const subHighlightColor = colorInput ? colorInput.value : "#FFE500";
+    const subAnimation = animSelect ? animSelect.value : "bounce";
+    const subFont = fontSelect ? fontSelect.value : "Impact";
+    const subSize = sizeSelect ? parseInt(sizeSelect.value) || 76 : 76;
 
     if (!editedText) {
         showToast("Digite o texto das falas da legenda.", "warning");
@@ -740,7 +1439,11 @@ async function submitSubtitleCorrection() {
                 cut_id: cutId,
                 edited_text: editedText,
                 subtitle_style: subStyle,
-                custom_color: subColor
+                custom_color: subPrimaryColor,
+                custom_highlight_color: subHighlightColor,
+                custom_font: subFont,
+                custom_size: subSize,
+                custom_animation: subAnimation
             })
         });
 
@@ -770,7 +1473,11 @@ async function submitSubtitleCorrection() {
         if (cut) {
             cut.video_url = updatedVideoUrl;
             cut.subtitle_style = subStyle;
-            cut.custom_color = subColor;
+            cut.custom_color = subPrimaryColor;
+            cut.custom_highlight_color = subHighlightColor;
+            cut.custom_font = subFont;
+            cut.custom_font_size = subSize;
+            cut.custom_animation = subAnimation;
             if (data.cut) {
                 cut.edited_subtitles = data.cut.edited_subtitles;
             }
@@ -1173,4 +1880,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (lbl) lbl.innerText = e.target.value.toUpperCase();
         });
     }
+
+    // Inicializa a prévia do mockup de celular com a legenda ativa
+    updateLiveSubtitlePreview();
 });

@@ -22,6 +22,189 @@ def get_bin(name: str) -> str:
         return local_bin2
     return name
 
+def hex_to_ass(hex_str: Optional[str], default_hex: str = "#FFFFFF", alpha: str = "00") -> str:
+    """Converte hexadecimal (#RRGGBB) para o formato ASS (&HAABBGGRR)."""
+    val = (hex_str or default_hex).strip().lstrip("#")
+    if len(val) == 3:
+        val = "".join([c * 2 for c in val])
+    if len(val) != 6:
+        val = "FFFFFF"
+    r, g, b = val[0:2], val[2:4], val[4:6]
+    return f"&H{alpha}{b}{g}{r}".upper()
+
+def get_subtitle_presets_dict() -> Dict[str, Dict[str, Any]]:
+    """Retorna os 24 presets de legendas de alta retenção visual."""
+    return {
+        "hormozi_pop": {
+            "id": "hormozi_pop", "name": "Hormozi Pop", "category": "Viral TikTok", "badge": "🔥 VIRAL",
+            "font": "Impact", "size": 82, "primary": "#FFFFFF", "highlight": "#FFE500",
+            "outline_color": "#000000", "outline_w": 8, "shadow": 4, "shadow_color": "#000000",
+            "border_style": 1, "bg_color": "#000000", "animation": "bounce", "casing": "uppercase",
+            "chunk_size": 2, "margin_v": 420, "alignment": 2
+        },
+        "tiktok_bounce": {
+            "id": "tiktok_bounce", "name": "TikTok Lime Bounce", "category": "Viral TikTok", "badge": "⚡ TIKTOK",
+            "font": "Arial Black", "size": 76, "primary": "#FFFFFF", "highlight": "#00FF66",
+            "outline_color": "#000000", "outline_w": 7, "shadow": 3, "shadow_color": "#000000",
+            "border_style": 1, "bg_color": "#000000", "animation": "bounce", "casing": "uppercase",
+            "chunk_size": 2, "margin_v": 420, "alignment": 2
+        },
+        "beast_impact": {
+            "id": "beast_impact", "name": "MrBeast Explosivo", "category": "Impacto & Drama", "badge": "💥 IMPACTO",
+            "font": "Impact", "size": 86, "primary": "#FFFFFF", "highlight": "#FF3B30",
+            "outline_color": "#000000", "outline_w": 9, "shadow": 5, "shadow_color": "#FF5C00",
+            "border_style": 1, "bg_color": "#000000", "animation": "pop_zoom", "casing": "uppercase",
+            "chunk_size": 2, "margin_v": 440, "alignment": 2
+        },
+        "cyan_electric": {
+            "id": "cyan_electric", "name": "Ciano Cyberpunk", "category": "Gamer / Cyber", "badge": "🎮 CYBER",
+            "font": "Arial Black", "size": 74, "primary": "#FFFFFF", "highlight": "#00FFFF",
+            "outline_color": "#050B14", "outline_w": 7, "shadow": 5, "shadow_color": "#0055FF",
+            "border_style": 1, "bg_color": "#000000", "animation": "bounce", "casing": "uppercase",
+            "chunk_size": 2, "margin_v": 420, "alignment": 2
+        },
+        "purple_viral": {
+            "id": "purple_viral", "name": "Roxo Aesthetic", "category": "Viral TikTok", "badge": "💜 ESTÉTICO",
+            "font": "Arial Black", "size": 74, "primary": "#FFFFFF", "highlight": "#C084FC",
+            "outline_color": "#1E0B2B", "outline_w": 7, "shadow": 4, "shadow_color": "#581C87",
+            "border_style": 1, "bg_color": "#000000", "animation": "bounce", "casing": "uppercase",
+            "chunk_size": 2, "margin_v": 420, "alignment": 2
+        },
+        "clean_minimal": {
+            "id": "clean_minimal", "name": "Clean Minimalist", "category": "Minimalista", "badge": "✨ CLEAN",
+            "font": "Segoe UI", "size": 68, "primary": "#FFFFFF", "highlight": "#38BDF8",
+            "outline_color": "#000000", "outline_w": 4, "shadow": 2, "shadow_color": "#000000",
+            "border_style": 1, "bg_color": "#000000", "animation": "fade", "casing": "original",
+            "chunk_size": 3, "margin_v": 380, "alignment": 2
+        },
+        "gold_karaoke": {
+            "id": "gold_karaoke", "name": "Karaokê Ouro VIP", "category": "YouTube Shorts", "badge": "👑 VIP",
+            "font": "Impact", "size": 78, "primary": "#FFFFFF", "highlight": "#FFD700",
+            "outline_color": "#000000", "outline_w": 8, "shadow": 4, "shadow_color": "#78350F",
+            "border_style": 1, "bg_color": "#000000", "animation": "karaoke", "casing": "uppercase",
+            "chunk_size": 2, "margin_v": 420, "alignment": 2
+        },
+        "fire_sunset": {
+            "id": "fire_sunset", "name": "Fogo Sunset Laranja", "category": "Impacto & Drama", "badge": "🔥 FOGO",
+            "font": "Impact", "size": 82, "primary": "#FFE500", "highlight": "#FF5C00",
+            "outline_color": "#000000", "outline_w": 8, "shadow": 4, "shadow_color": "#7C2D12",
+            "border_style": 1, "bg_color": "#000000", "animation": "pop_zoom", "casing": "uppercase",
+            "chunk_size": 2, "margin_v": 420, "alignment": 2
+        },
+        "emerald_vip": {
+            "id": "emerald_vip", "name": "Esmeralda Finanças", "category": "YouTube Shorts", "badge": "💎 FINANÇAS",
+            "font": "Arial Black", "size": 75, "primary": "#FFFFFF", "highlight": "#10B981",
+            "outline_color": "#064E3B", "outline_w": 7, "shadow": 4, "shadow_color": "#022C22",
+            "border_style": 1, "bg_color": "#000000", "animation": "bounce", "casing": "uppercase",
+            "chunk_size": 2, "margin_v": 420, "alignment": 2
+        },
+        "monochrome_3d": {
+            "id": "monochrome_3d", "name": "Monocromo 3D Heavy", "category": "Impacto & Drama", "badge": "🗿 3D",
+            "font": "Impact", "size": 84, "primary": "#FFFFFF", "highlight": "#E4E4E7",
+            "outline_color": "#000000", "outline_w": 9, "shadow": 6, "shadow_color": "#27272A",
+            "border_style": 1, "bg_color": "#000000", "animation": "shake", "casing": "uppercase",
+            "chunk_size": 2, "margin_v": 420, "alignment": 2
+        },
+        "neobrutalist_black": {
+            "id": "neobrutalist_black", "name": "Neo-Brutalist Tarja Preta", "category": "Neo-Brutalist", "badge": "🖤 EDITIZE",
+            "font": "Impact", "size": 78, "primary": "#FFE500", "highlight": "#FF5C00",
+            "outline_color": "#000000", "outline_w": 10, "shadow": 5, "shadow_color": "#000000",
+            "border_style": 3, "bg_color": "#000000", "animation": "bounce", "casing": "uppercase",
+            "chunk_size": 2, "margin_v": 420, "alignment": 2
+        },
+        "neobrutalist_blue": {
+            "id": "neobrutalist_blue", "name": "Neo-Brutalist Royal Blue", "category": "Neo-Brutalist", "badge": "💙 EDITIZE",
+            "font": "Arial Black", "size": 76, "primary": "#FFFFFF", "highlight": "#FFE500",
+            "outline_color": "#0052FF", "outline_w": 8, "shadow": 5, "shadow_color": "#000000",
+            "border_style": 3, "bg_color": "#0052FF", "animation": "pop_zoom", "casing": "uppercase",
+            "chunk_size": 2, "margin_v": 420, "alignment": 2
+        },
+        "retro_arcade": {
+            "id": "retro_arcade", "name": "Retro Synthwave 80s", "category": "Gamer / Cyber", "badge": "🕹️ RETRO",
+            "font": "Trebuchet MS", "size": 76, "primary": "#FFFFFF", "highlight": "#FF007F",
+            "outline_color": "#200030", "outline_w": 7, "shadow": 5, "shadow_color": "#00F0FF",
+            "border_style": 1, "bg_color": "#000000", "animation": "bounce", "casing": "uppercase",
+            "chunk_size": 2, "margin_v": 420, "alignment": 2
+        },
+        "comic_pop": {
+            "id": "comic_pop", "name": "Quadrinhos Comic Hero", "category": "Viral TikTok", "badge": "💬 COMIC",
+            "font": "Comic Sans MS", "size": 78, "primary": "#FFE500", "highlight": "#FF0000",
+            "outline_color": "#000000", "outline_w": 8, "shadow": 4, "shadow_color": "#000000",
+            "border_style": 1, "bg_color": "#000000", "animation": "bounce", "casing": "uppercase",
+            "chunk_size": 2, "margin_v": 420, "alignment": 2
+        },
+        "glitch_matrix": {
+            "id": "glitch_matrix", "name": "Matrix Hacker Green", "category": "Gamer / Cyber", "badge": "💻 HACKER",
+            "font": "Courier New", "size": 74, "primary": "#FFFFFF", "highlight": "#22C55E",
+            "outline_color": "#052E16", "outline_w": 6, "shadow": 4, "shadow_color": "#15803D",
+            "border_style": 1, "bg_color": "#000000", "animation": "shake", "casing": "uppercase",
+            "chunk_size": 3, "margin_v": 400, "alignment": 2
+        },
+        "cinema_letterbox": {
+            "id": "cinema_letterbox", "name": "Cinema Clássico 2.35", "category": "Minimalista", "badge": "🎬 CINEMA",
+            "font": "Georgia", "size": 66, "primary": "#FFFBEB", "highlight": "#F59E0B",
+            "outline_color": "#1C1917", "outline_w": 3, "shadow": 2, "shadow_color": "#000000",
+            "border_style": 1, "bg_color": "#000000", "animation": "fade", "casing": "original",
+            "chunk_size": 4, "margin_v": 360, "alignment": 2
+        },
+        "breaking_news": {
+            "id": "breaking_news", "name": "Plantão Urgente (News)", "category": "Impacto & Drama", "badge": "🚨 PLANTÃO",
+            "font": "Arial Black", "size": 76, "primary": "#FFFFFF", "highlight": "#FFE500",
+            "outline_color": "#7F1D1D", "outline_w": 8, "shadow": 4, "shadow_color": "#000000",
+            "border_style": 3, "bg_color": "#DC2626", "animation": "pop_zoom", "casing": "uppercase",
+            "chunk_size": 2, "margin_v": 440, "alignment": 2
+        },
+        "red_danger": {
+            "id": "red_danger", "name": "Alerta Vermelho Shock", "category": "Impacto & Drama", "badge": "⚠️ ALERTA",
+            "font": "Impact", "size": 86, "primary": "#FFFFFF", "highlight": "#EF4444",
+            "outline_color": "#450A0A", "outline_w": 9, "shadow": 5, "shadow_color": "#000000",
+            "border_style": 1, "bg_color": "#000000", "animation": "shake", "casing": "uppercase",
+            "chunk_size": 1, "margin_v": 430, "alignment": 2
+        },
+        "sunset_glow": {
+            "id": "sunset_glow", "name": "Sunset Coral Glow", "category": "YouTube Shorts", "badge": "🌅 SUNSET",
+            "font": "Trebuchet MS", "size": 76, "primary": "#FFFFFF", "highlight": "#FB7185",
+            "outline_color": "#4C0519", "outline_w": 7, "shadow": 5, "shadow_color": "#E11D48",
+            "border_style": 1, "bg_color": "#000000", "animation": "bounce", "casing": "uppercase",
+            "chunk_size": 2, "margin_v": 420, "alignment": 2
+        },
+        "midnight_neon": {
+            "id": "midnight_neon", "name": "Midnight Cobalt Neon", "category": "Gamer / Cyber", "badge": "🌌 NEON",
+            "font": "Impact", "size": 80, "primary": "#FFFFFF", "highlight": "#38BDF8",
+            "outline_color": "#0C4A6E", "outline_w": 8, "shadow": 5, "shadow_color": "#0284C7",
+            "border_style": 1, "bg_color": "#000000", "animation": "pop_zoom", "casing": "uppercase",
+            "chunk_size": 2, "margin_v": 420, "alignment": 2
+        },
+        "lemon_lime": {
+            "id": "lemon_lime", "name": "Citrus Lime Punch", "category": "Viral TikTok", "badge": "🍋 CITRUS",
+            "font": "Impact", "size": 82, "primary": "#FFFFFF", "highlight": "#A3E635",
+            "outline_color": "#14532D", "outline_w": 8, "shadow": 4, "shadow_color": "#000000",
+            "border_style": 1, "bg_color": "#000000", "animation": "bounce", "casing": "uppercase",
+            "chunk_size": 2, "margin_v": 420, "alignment": 2
+        },
+        "typewriter_clean": {
+            "id": "typewriter_clean", "name": "Máquina de Escrever", "category": "Minimalista", "badge": "📜 RETRÔ",
+            "font": "Courier New", "size": 70, "primary": "#F3F4F6", "highlight": "#FBBF24",
+            "outline_color": "#111827", "outline_w": 5, "shadow": 2, "shadow_color": "#000000",
+            "border_style": 1, "bg_color": "#000000", "animation": "fade", "casing": "original",
+            "chunk_size": 3, "margin_v": 380, "alignment": 2
+        },
+        "hormozi_single_word": {
+            "id": "hormozi_single_word", "name": "Hormozi 1 Palavra (Ultra Fast)", "category": "Viral TikTok", "badge": "⚡ 1 PALAVRA",
+            "font": "Impact", "size": 94, "primary": "#FFE500", "highlight": "#FFFFFF",
+            "outline_color": "#000000", "outline_w": 10, "shadow": 5, "shadow_color": "#000000",
+            "border_style": 1, "bg_color": "#000000", "animation": "pop_zoom", "casing": "uppercase",
+            "chunk_size": 1, "margin_v": 460, "alignment": 2
+        },
+        "pill_badge_viral": {
+            "id": "pill_badge_viral", "name": "Pílula Moderna (Pill Box)", "category": "YouTube Shorts", "badge": "💊 PÍLULA",
+            "font": "Arial Black", "size": 72, "primary": "#000000", "highlight": "#FF5C00",
+            "outline_color": "#FFFFFF", "outline_w": 2, "shadow": 0, "shadow_color": "#000000",
+            "border_style": 3, "bg_color": "#FFFFFF", "animation": "bounce", "casing": "uppercase",
+            "chunk_size": 2, "margin_v": 420, "alignment": 2
+        }
+    }
+
 class VideoPipeline:
     def __init__(self, output_dir: Optional[str] = None):
         self.output_dir = output_dir or os.path.join(get_base_dir(), "outputs")
@@ -127,86 +310,74 @@ class VideoPipeline:
         output_path: str,
         style_key: str = "hormozi_pop",
         custom_color: Optional[str] = None,
+        custom_highlight_color: Optional[str] = None,
+        custom_font: Optional[str] = None,
         custom_font_size: Optional[int] = None,
+        custom_outline_color: Optional[str] = None,
+        custom_outline_w: Optional[int] = None,
+        custom_shadow: Optional[int] = None,
+        custom_shadow_color: Optional[str] = None,
+        custom_border_style: Optional[int] = None,
+        custom_bg_color: Optional[str] = None,
+        custom_animation: Optional[str] = None,
+        custom_casing: Optional[str] = None,
+        custom_chunk_size: Optional[int] = None,
         custom_margin_v: Optional[int] = None,
+        custom_alignment: Optional[int] = None,
         cut_info: Optional[Dict[str, Any]] = None,
         enable_motion_graphics: bool = True
     ) -> str:
-        """Gera legendas ASS com animação dinâmica estilo CapCut, cores vibrantes e suporte a motion graphics."""
-        styles = {
-            "hormozi_pop": {
-                "name": "Hormozi Pop",
-                "font": "Impact", "size": 80,
-                "primary": "&H0000FFFF",  # Amarelo Neon
-                "outline_color": "&H00000000", "outline_w": 8, "shadow": 4, "margin_v": 420
-            },
-            "tiktok_bounce": {
-                "name": "TikTok Bounce",
-                "font": "Arial Black", "size": 76,
-                "primary": "&H0000FF00",  # Verde Lima
-                "outline_color": "&H00000000", "outline_w": 7, "shadow": 3, "margin_v": 420
-            },
-            "beast_impact": {
-                "name": "MrBeast Impact",
-                "font": "Impact", "size": 84,
-                "primary": "&H000055FF",  # Vermelho / Laranja
-                "outline_color": "&H00000000", "outline_w": 9, "shadow": 5, "margin_v": 420
-            },
-            "cyan_electric": {
-                "name": "Ciano Elétrico",
-                "font": "Arial Black", "size": 74,
-                "primary": "&H00FFFF00",  # Ciano Elétrico
-                "outline_color": "&H000A0A0A", "outline_w": 6, "shadow": 4, "margin_v": 420
-            },
-            "purple_viral": {
-                "name": "Roxo Viral",
-                "font": "Arial Black", "size": 74,
-                "primary": "&H00F755A8",  # Púrpura TikTok
-                "outline_color": "&H00000000", "outline_w": 6, "shadow": 3, "margin_v": 420
-            },
-            "clean_minimal": {
-                "name": "Clean Minimal",
-                "font": "Arial", "size": 66,
-                "primary": "&H00FFFFFF",  # Branco puro
-                "outline_color": "&H001F1F1F", "outline_w": 4, "shadow": 2, "margin_v": 400
-            },
-            "gold_karaoke": {
-                "name": "Karaokê Dourado",
-                "font": "Arial Black", "size": 76,
-                "primary": "&H0020D0FF",  # Dourado Metálico
-                "outline_color": "&H00000000", "outline_w": 7, "shadow": 3, "margin_v": 420
-            },
-            "fire_sunset": {
-                "name": "Fogo Sunset",
-                "font": "Impact", "size": 80,
-                "primary": "&H000066FF",  # Laranja / Fogo
-                "outline_color": "&H00000000", "outline_w": 7, "shadow": 3, "margin_v": 420
-            },
-            "emerald_vip": {
-                "name": "Esmeralda VIP",
-                "font": "Arial Black", "size": 74,
-                "primary": "&H0078C850",  # Verde Esmeralda
-                "outline_color": "&H00050505", "outline_w": 6, "shadow": 3, "margin_v": 420
-            },
-            "monochrome_3d": {
-                "name": "Monocromo 3D",
-                "font": "Impact", "size": 80,
-                "primary": "&H00FFFFFF",  # Branco com sombra profunda
-                "outline_color": "&H00000000", "outline_w": 8, "shadow": 5, "margin_v": 420
-            }
-        }
-        cfg = dict(styles.get(style_key, styles["hormozi_pop"]))
+        """Gera legendas ASS com 24 estilos de alta conversão, animações dinâmicas e controle total de tipografia, cores e efeitos."""
+        
+        # Extrai preferências personalizadas de cut_info se disponíveis
+        if cut_info:
+            custom_color = custom_color or cut_info.get("custom_color")
+            custom_highlight_color = custom_highlight_color or cut_info.get("custom_highlight_color")
+            custom_font = custom_font or cut_info.get("custom_font")
+            custom_font_size = custom_font_size or cut_info.get("custom_font_size")
+            custom_outline_color = custom_outline_color or cut_info.get("custom_outline_color")
+            custom_outline_w = custom_outline_w if custom_outline_w is not None else cut_info.get("custom_outline_w")
+            custom_shadow = custom_shadow if custom_shadow is not None else cut_info.get("custom_shadow")
+            custom_shadow_color = custom_shadow_color or cut_info.get("custom_shadow_color")
+            custom_border_style = custom_border_style if custom_border_style is not None else cut_info.get("custom_border_style")
+            custom_bg_color = custom_bg_color or cut_info.get("custom_bg_color")
+            custom_animation = custom_animation or cut_info.get("custom_animation")
+            custom_casing = custom_casing or cut_info.get("custom_casing")
+            custom_chunk_size = custom_chunk_size or cut_info.get("custom_chunk_size")
+            custom_margin_v = custom_margin_v or cut_info.get("custom_margin_v")
+            custom_alignment = custom_alignment or cut_info.get("custom_alignment")
 
-        # Personalizações do usuário
-        if custom_color:
-            clean_hex = custom_color.lstrip('#')
-            if len(clean_hex) == 6:
-                r, g, b = clean_hex[0:2], clean_hex[2:4], clean_hex[4:6]
-                cfg["primary"] = f"&H00{b}{g}{r}".upper()
-        if custom_font_size and custom_font_size > 30:
-            cfg["size"] = custom_font_size
-        if custom_margin_v and custom_margin_v > 50:
-            cfg["margin_v"] = custom_margin_v
+        # 24 Presets Profissionais de Alta Retenção
+        presets = get_subtitle_presets_dict()
+        cfg = dict(presets.get(style_key, presets["hormozi_pop"]))
+
+        # Aplica customizações manuais sobre o preset selecionado
+        font_name = custom_font or cfg["font"]
+        font_size = custom_font_size or cfg["size"]
+        primary_hex = custom_color or cfg["primary"]
+        highlight_hex = custom_highlight_color or cfg.get("highlight", "#FFE500")
+        outline_hex = custom_outline_color or cfg["outline_color"]
+        outline_w = custom_outline_w if custom_outline_w is not None else cfg["outline_w"]
+        shadow_val = custom_shadow if custom_shadow is not None else cfg["shadow"]
+        shadow_hex = custom_shadow_color or cfg.get("shadow_color", "#000000")
+        border_style = custom_border_style if custom_border_style is not None else cfg.get("border_style", 1)
+        bg_hex = custom_bg_color or cfg.get("bg_color", "#000000")
+        anim_type = custom_animation or cfg.get("animation", "bounce")
+        casing = custom_casing or cfg.get("casing", "uppercase")
+        chunk_size = custom_chunk_size or cfg.get("chunk_size", 2)
+        margin_v = custom_margin_v or cfg.get("margin_v", 420)
+        alignment = custom_alignment or cfg.get("alignment", 2)
+
+        # Conversão para formato nativo de cores ASS (&HAABBGGRR)
+        primary_ass = hex_to_ass(primary_hex)
+        highlight_ass = hex_to_ass(highlight_hex)
+        outline_ass = hex_to_ass(outline_hex)
+        if border_style == 3:
+            # Caixa ou tarja sólida/translúcida
+            back_ass = hex_to_ass(bg_hex, alpha="30")
+        else:
+            # Sombra projetada
+            back_ass = hex_to_ass(shadow_hex, alpha="80")
 
         header = f"""[Script Info]
 ScriptType: v4.00+
@@ -216,8 +387,8 @@ ScaledBorderAndShadow: yes
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,{cfg['font']},{cfg['size']},{cfg['primary']},&H000000FF,{cfg['outline_color']},&H80000000,-1,0,0,0,100,100,1,0,1,{cfg['outline_w']},{cfg['shadow']},2,60,60,{cfg['margin_v']},1
-Style: MotionPop,Arial,95,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,-1,0,0,0,100,100,0,0,1,3,0,2,60,60,{cfg['margin_v'] + 120},1
+Style: Default,{font_name},{font_size},{primary_ass},&H000000FF,{outline_ass},{back_ass},-1,0,0,0,100,100,1,0,{border_style},{outline_w},{shadow_val},{alignment},60,60,{margin_v},1
+Style: MotionPop,Arial,95,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,-1,0,0,0,100,100,0,0,1,3,0,2,60,60,{margin_v + 120},1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -229,15 +400,22 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             cs = int((seconds - int(seconds)) * 100)
             return f"{h:01d}:{m:02d}:{s:02d}.{cs:02d}"
 
+        def apply_case(w: str) -> str:
+            if not w:
+                return ""
+            if casing == "uppercase":
+                return w.upper()
+            elif casing == "titlecase":
+                return w.capitalize()
+            return w
+
         # 1. Verifica se o usuário enviou legendas corrigidas/personalizadas
         edited_subs = cut_info.get("edited_subtitles") if cut_info else None
         if edited_subs and isinstance(edited_subs, list) and len(edited_subs) > 0:
             cut_words = edited_subs
         else:
-            # Filtra palavras do corte com margem suave de 0.2s
             cut_words = [w for w in words if w.get("start", 0) >= (cut_start - 0.2) and w.get("end", 0) <= (cut_end + 0.2)]
 
-        # Caso haja poucas palavras mapeadas, utiliza o gancho/título real para sincronizar as legendas
         if len(cut_words) < 3 and cut_info:
             fallback_text = cut_info.get("hook") or cut_info.get("text") or cut_info.get("title") or ""
             clean_text = re.sub(r'["“”]', '', fallback_text).strip()
@@ -257,27 +435,69 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         if not cut_words:
             cut_words = [{"word": "EDITIZE", "start": cut_start, "end": cut_end}]
 
-        # Emojis para Motion Graphics virais
-        viral_emojis = ["🔥", "⚡", "💥", "😱", "💡", "🎯", "🚀", "👑"]
-
-        # Agrupa em blocos de 2 a 3 palavras com animação de impacto (Bounce / Pop)
+        viral_emojis = ["🔥", "⚡", "💥", "😱", "💡", "🎯", "🚀", "👑", "👀", "✨"]
         dialogue_lines = []
-        chunk_size = 2 if len(cut_words) > 35 else 3
-        for i in range(0, len(cut_words), chunk_size):
-            chunk = cut_words[i:i + chunk_size]
+        step_chunk = max(1, min(6, chunk_size))
+
+        for i in range(0, len(cut_words), step_chunk):
+            chunk = cut_words[i:i + step_chunk]
             s_time = max(0.0, chunk[0]["start"] - cut_start)
             e_time = max(s_time + 0.35, chunk[-1]["end"] - cut_start)
-            words_text = [c.get("word", "").upper() for c in chunk]
-            text_str = " ".join(words_text)
 
-            # Efeito Bounce / Pop ao surgir a palavra
-            anim_text = f"{{\\t(0,70,\\fscx112\\fscy112)\\t(70,140,\\fscx100\\fscy100)}}{text_str}"
-            dialogue_lines.append(f"Dialogue: 0,{fmt_time(s_time)},{fmt_time(e_time)},Default,,0,0,0,,{anim_text}")
+            if anim_type == "karaoke" and len(chunk) > 1:
+                # Efeito Karaokê palavra por palavra
+                for k_idx, active_w in enumerate(chunk):
+                    w_s = max(s_time, active_w.get("start", cut_start) - cut_start)
+                    w_e = max(w_s + 0.25, active_w.get("end", cut_start + 0.4) - cut_start)
+                    parts = []
+                    for j_idx, w_obj in enumerate(chunk):
+                        w_text = apply_case(w_obj.get("word", ""))
+                        if j_idx == k_idx:
+                            parts.append(f"{{\\1c{highlight_ass}\\t(0,60,\\fscx114\\fscy114)\\t(60,120,\\fscx100\\fscy100)}}{w_text}{{\\1c{primary_ass}}}")
+                        else:
+                            parts.append(w_text)
+                    line_str = " ".join(parts)
+                    dialogue_lines.append(f"Dialogue: 0,{fmt_time(w_s)},{fmt_time(w_e)},Default,,0,0,0,,{line_str}")
+            elif anim_type == "bounce":
+                # Salto elástico no surgimento
+                raw_words = [apply_case(c.get("word", "")) for c in chunk]
+                if len(raw_words) > 1:
+                    line_str = " ".join(raw_words[:-1]) + f" {{\\1c{highlight_ass}}}" + raw_words[-1]
+                else:
+                    line_str = f"{{\\1c{highlight_ass}}}" + raw_words[0]
+                anim_tag = r"{\t(0,70,\fscx114\fscy114)\t(70,140,\fscx100\fscy100)}"
+                dialogue_lines.append(f"Dialogue: 0,{fmt_time(s_time)},{fmt_time(e_time)},Default,,0,0,0,,{anim_tag}{line_str}")
+            elif anim_type == "pop_zoom":
+                # Zoom de impacto explosivo
+                raw_words = [apply_case(c.get("word", "")) for c in chunk]
+                if len(raw_words) > 1:
+                    line_str = " ".join(raw_words[:-1]) + f" {{\\1c{highlight_ass}}}" + raw_words[-1]
+                else:
+                    line_str = f"{{\\1c{highlight_ass}}}" + raw_words[0]
+                anim_tag = r"{\fscx85\fscy85\t(0,85,\fscx112\fscy112)\t(85,160,\fscx100\fscy100)}"
+                dialogue_lines.append(f"Dialogue: 0,{fmt_time(s_time)},{fmt_time(e_time)},Default,,0,0,0,,{anim_tag}{line_str}")
+            elif anim_type == "shake":
+                # Tremor de tensão/urgência
+                raw_words = [apply_case(c.get("word", "")) for c in chunk]
+                line_str = " ".join(raw_words)
+                anim_tag = r"{\t(0,40,\frz2.5)\t(40,80,\frz-2.5)\t(80,120,\frz0)}"
+                dialogue_lines.append(f"Dialogue: 0,{fmt_time(s_time)},{fmt_time(e_time)},Default,,0,0,0,,{anim_tag}{line_str}")
+            elif anim_type == "fade":
+                # Surgimento suave elegante
+                raw_words = [apply_case(c.get("word", "")) for c in chunk]
+                line_str = " ".join(raw_words)
+                anim_tag = r"{\fad(100,70)}"
+                dialogue_lines.append(f"Dialogue: 0,{fmt_time(s_time)},{fmt_time(e_time)},Default,,0,0,0,,{anim_tag}{line_str}")
+            else:
+                # Estático com nitidez absoluta
+                raw_words = [apply_case(c.get("word", "")) for c in chunk]
+                line_str = " ".join(raw_words)
+                dialogue_lines.append(f"Dialogue: 0,{fmt_time(s_time)},{fmt_time(e_time)},Default,,0,0,0,,{line_str}")
 
-            # Motion Graphics: insere sticker flutuante a cada ~5-7 segundos
+            # Motion Graphics: emojis a cada ~6 blocos se habilitado
             if enable_motion_graphics and (i % 6 == 0):
                 emoji_choice = viral_emojis[(i // 6) % len(viral_emojis)]
-                anim_emoji = f"{{\\t(0,90,\\fscx130\\fscy130)\\t(90,180,\\fscx100\\fscy100)}}{emoji_choice}"
+                anim_emoji = r"{\t(0,90,\fscx130\fscy130)\t(90,180,\fscx100\fscy100)}" + emoji_choice
                 dialogue_lines.append(f"Dialogue: 1,{fmt_time(s_time)},{fmt_time(min(e_time + 0.3, s_time + 1.2))},MotionPop,,0,0,0,,{anim_emoji}")
 
         content = header + "\n".join(dialogue_lines)
@@ -298,6 +518,18 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         custom_color: Optional[str] = None,
         custom_font_size: Optional[int] = None,
         custom_margin_v: Optional[int] = None,
+        custom_highlight_color: Optional[str] = None,
+        custom_font: Optional[str] = None,
+        custom_outline_color: Optional[str] = None,
+        custom_outline_w: Optional[int] = None,
+        custom_shadow: Optional[int] = None,
+        custom_shadow_color: Optional[str] = None,
+        custom_border_style: Optional[int] = None,
+        custom_bg_color: Optional[str] = None,
+        custom_animation: Optional[str] = None,
+        custom_casing: Optional[str] = None,
+        custom_chunk_size: Optional[int] = None,
+        custom_alignment: Optional[int] = None,
         speed: float = 1.0,
         enable_zoom: bool = True,
         enable_drift: bool = True,
@@ -306,7 +538,8 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         enable_sound_effects: bool = True,
         bgm_name: str = "Cyber Lounge Sem Copyright",
         output_file: Optional[str] = None,
-        progress_cb = None
+        progress_cb = None,
+        **kwargs
     ) -> str:
         """Renderiza o corte viral final com alta retenção em formato 9:16 (1080x1920)."""
         ffmpeg_bin = get_bin("ffmpeg")
@@ -348,6 +581,18 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
                 custom_color=custom_color,
                 custom_font_size=custom_font_size,
                 custom_margin_v=custom_margin_v,
+                custom_highlight_color=custom_highlight_color,
+                custom_font=custom_font,
+                custom_outline_color=custom_outline_color,
+                custom_outline_w=custom_outline_w,
+                custom_shadow=custom_shadow,
+                custom_shadow_color=custom_shadow_color,
+                custom_border_style=custom_border_style,
+                custom_bg_color=custom_bg_color,
+                custom_animation=custom_animation,
+                custom_casing=custom_casing,
+                custom_chunk_size=custom_chunk_size,
+                custom_alignment=custom_alignment,
                 cut_info=cut_info,
                 enable_motion_graphics=enable_motion_graphics
             )

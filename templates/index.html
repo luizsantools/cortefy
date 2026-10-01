@@ -298,181 +298,565 @@
                 </div>
             </div>
 
-            <!-- PASSO 4: Modelo de Legendas (10 Opções CapCut + Personalizador + Template) -->
+            <!-- PASSO 4: Estúdio de Legendas (24 Estilos de Alta Conversão + Preview ao Vivo + Personalizador Profissional) -->
             <div class="space-y-4">
-                <div class="flex items-center justify-between border-b-2 border-black pb-3">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b-2 border-black pb-3">
                     <div class="flex items-center gap-3">
                         <span class="text-[#FF5C00] font-black text-sm uppercase">Passo 4</span>
-                        <h2 class="text-lg font-black text-black font-display">Modelo de Legendas (10 Opções Estilo CapCut)</h2>
+                        <h2 class="text-lg font-black text-black font-display">Estúdio de Legendas (24 Estilos Virais + Personalização Total)</h2>
                     </div>
-                    <button type="button" onclick="toggleCustomizeDrawer()" class="btn-secondary text-xs py-1.5 px-3">
-                        <span>⚙️ Personalizar & Salvar Template</span>
-                    </button>
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="toggleCustomizeDrawer()" id="btn-toggle-customizer" class="btn-secondary text-xs py-1.5 px-3 font-bold flex items-center gap-1.5">
+                            <span>⚙️ Painel de Personalização Avançada</span>
+                        </button>
+                    </div>
                 </div>
 
+                <!-- Input oculto com o estilo selecionado e parâmetros avançados -->
                 <input type="hidden" id="selected-sub-style-input" value="hormozi_pop">
+                <input type="hidden" id="custom-sub-highlight" value="#FFE500">
+                <input type="hidden" id="custom-sub-outline-color" value="#000000">
+                <input type="hidden" id="custom-sub-outline-w" value="8">
+                <input type="hidden" id="custom-sub-shadow-val" value="4">
+                <input type="hidden" id="custom-sub-shadow-color" value="#000000">
+                <input type="hidden" id="custom-sub-bg-style" value="none">
+                <input type="hidden" id="custom-sub-animation" value="bounce">
+                <input type="hidden" id="custom-sub-casing" value="uppercase">
+                <input type="hidden" id="custom-sub-chunk" value="2">
+                <input type="hidden" id="custom-sub-align" value="center">
+                <input type="hidden" id="custom-sub-margin-v" value="420">
 
-                <!-- Grid com os 10 Modelos -->
-                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-                    
-                    <!-- 1. Hormozi Pop -->
-                    <div data-sub-style="hormozi_pop" onclick="setSubStyle('hormozi_pop')" class="sub-card sub-card-active">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-black text-black">Hormozi Pop</span>
-                            <span class="sub-radio text-[#FF5C00] font-black text-xs">●</span>
-                        </div>
-                        <div class="sub-preview-box">
-                            <span class="sub-style-hormozi">PRESTE <span class="anim-word">ATENÇÃO!</span></span>
-                        </div>
-                    </div>
-
-                    <!-- 2. Neon Cyber -->
-                    <div data-sub-style="neon_cyber" onclick="setSubStyle('neon_cyber')" class="sub-card">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-black text-black">Neon Cyber</span>
-                            <span class="sub-radio text-black font-black text-xs">○</span>
-                        </div>
-                        <div class="sub-preview-box">
-                            <span class="sub-style-neon">CORTE <span class="anim-word">VIRAL!</span></span>
-                        </div>
-                    </div>
-
-                    <!-- 3. Beast Bold -->
-                    <div data-sub-style="beast_bold" onclick="setSubStyle('beast_bold')" class="sub-card">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-black text-black">Beast Bold</span>
-                            <span class="sub-radio text-black font-black text-xs">○</span>
-                        </div>
-                        <div class="sub-preview-box">
-                            <span class="sub-style-beast">OLHA O <span class="anim-word">MOMENTO!</span></span>
-                        </div>
-                    </div>
-
-                    <!-- 4. Ciano Elétrico -->
-                    <div data-sub-style="cyan_electric" onclick="setSubStyle('cyan_electric')" class="sub-card">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-black text-black">Ciano Elétrico</span>
-                            <span class="sub-radio text-black font-black text-xs">○</span>
-                        </div>
-                        <div class="sub-preview-box">
-                            <span class="sub-style-cyan">MOMENTO <span class="anim-word">ÉPICO!</span></span>
-                        </div>
-                    </div>
-
-                    <!-- 5. Roxo Viral -->
-                    <div data-sub-style="purple_viral" onclick="setSubStyle('purple_viral')" class="sub-card">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-black text-black">Roxo Viral</span>
-                            <span class="sub-radio text-black font-black text-xs">○</span>
-                        </div>
-                        <div class="sub-preview-box">
-                            <span class="sub-style-purple">VAI <span class="anim-word">EXPLODIR!</span></span>
-                        </div>
-                    </div>
-
-                    <!-- 6. Clean Minimal -->
-                    <div data-sub-style="clean_minimal" onclick="setSubStyle('clean_minimal')" class="sub-card">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-black text-black">Clean Minimal</span>
-                            <span class="sub-radio text-black font-black text-xs">○</span>
-                        </div>
-                        <div class="sub-preview-box">
-                            <span class="sub-style-minimal">DIRETO AO PONTO</span>
-                        </div>
-                    </div>
-
-                    <!-- 7. Karaokê Dourado -->
-                    <div data-sub-style="gold_karaoke" onclick="setSubStyle('gold_karaoke')" class="sub-card">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-black text-black">Karaokê Dourado</span>
-                            <span class="sub-radio text-black font-black text-xs">○</span>
-                        </div>
-                        <div class="sub-preview-box">
-                            <span class="sub-style-gold">DICA DE <span class="anim-word">OURO!</span></span>
-                        </div>
-                    </div>
-
-                    <!-- 8. Fogo Sunset -->
-                    <div data-sub-style="fire_sunset" onclick="setSubStyle('fire_sunset')" class="sub-card">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-black text-black">Fogo Sunset</span>
-                            <span class="sub-radio text-black font-black text-xs">○</span>
-                        </div>
-                        <div class="sub-preview-box">
-                            <span class="sub-style-fire">ALTA <span class="anim-word">ENERGIA!</span></span>
-                        </div>
-                    </div>
-
-                    <!-- 9. Esmeralda VIP -->
-                    <div data-sub-style="emerald_vip" onclick="setSubStyle('emerald_vip')" class="sub-card">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-black text-black">Esmeralda VIP</span>
-                            <span class="sub-radio text-black font-black text-xs">○</span>
-                        </div>
-                        <div class="sub-preview-box">
-                            <span class="sub-style-emerald">VIP <span class="anim-word">PURISTA!</span></span>
-                        </div>
-                    </div>
-
-                    <!-- 10. Monocromo 3D -->
-                    <div data-sub-style="monochrome_3d" onclick="setSubStyle('monochrome_3d')" class="sub-card">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-black text-black">Monocromo 3D</span>
-                            <span class="sub-radio text-black font-black text-xs">○</span>
-                        </div>
-                        <div class="sub-preview-box">
-                            <span class="sub-style-mono3d">CONTRASTE <span class="anim-word">3D</span></span>
-                        </div>
-                    </div>
-
+                <!-- Tabs de Filtros por Categoria -->
+                <div class="flex items-center gap-2 overflow-x-auto pb-1.5 no-scrollbar">
+                    <button type="button" onclick="filterSubPresets('all', this)" class="sub-filter-btn sub-filter-btn-active">Todos (24)</button>
+                    <button type="button" onclick="filterSubPresets('Viral TikTok', this)" class="sub-filter-btn">🔥 Viral TikTok</button>
+                    <button type="button" onclick="filterSubPresets('YouTube Shorts', this)" class="sub-filter-btn">⚡ YouTube Shorts</button>
+                    <button type="button" onclick="filterSubPresets('Neo-Brutalist', this)" class="sub-filter-btn">🖤 Neo-Brutalist</button>
+                    <button type="button" onclick="filterSubPresets('Impacto & Drama', this)" class="sub-filter-btn">💥 Impacto & Drama</button>
+                    <button type="button" onclick="filterSubPresets('Minimalista', this)" class="sub-filter-btn">✨ Minimalista</button>
+                    <button type="button" onclick="filterSubPresets('Gamer / Cyber', this)" class="sub-filter-btn">🎮 Gamer / Cyber</button>
                 </div>
 
-                <!-- Gaveta Expansível de Personalização e Template -->
-                <div id="sub-customizer-drawer" class="preview-card p-5 space-y-4" style="display: none;">
-                    <div class="flex items-center justify-between border-b-2 border-black pb-2">
-                        <span class="text-xs font-black text-black flex items-center gap-2">
-                            <span>🎨 Personalizador de Legenda</span>
-                            <span id="saved-template-badge" class="badge-neon text-[9px]" style="display: none;">Template Ativo</span>
-                        </span>
-                        <span class="text-[11px] text-zinc-600 font-bold">Ajuste fino visual</span>
+                <!-- Layout Principal: Celular 9:16 ao Vivo (Esquerda) + Grade de Presets e Controles (Direita) -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                    
+                    <!-- COLUNA ESQUERDA (4 colunas): Mockup de Celular 9:16 Interativo em Tempo Real -->
+                    <div class="lg:col-span-4 space-y-3">
+                        <div class="flex items-center justify-between border-b-2 border-black pb-1.5">
+                            <span class="text-xs font-black text-black uppercase flex items-center gap-1.5">
+                                <span class="radar-dot"></span>
+                                <span>Preview 9:16 em Tempo Real</span>
+                            </span>
+                            <span id="preview-preset-badge" class="badge-blue text-[10px] font-black uppercase">Hormozi Pop</span>
+                        </div>
+
+                        <!-- Phone Mockup Frame -->
+                        <div class="phone-mockup-frame">
+                            <div class="phone-notch">
+                                <div class="phone-speaker"></div>
+                                <div class="phone-camera"></div>
+                            </div>
+
+                            <!-- Palco do Vídeo 9:16 -->
+                            <div id="mockup-video-stage" class="relative w-full h-full flex flex-col justify-between py-6 overflow-hidden">
+                                <!-- Top status bar simulado -->
+                                <div class="flex items-center justify-between px-2 text-white/50 text-[9px] font-mono">
+                                    <span>9:16 Vertical</span>
+                                    <span>HD • 60 FPS</span>
+                                </div>
+
+                                <!-- Legenda Renderizada Dinamicamente -->
+                                <div id="mockup-sub-container" class="mockup-sub-container" style="bottom: 22%;">
+                                    <div id="mockup-sub-box" class="sub-style-hormozi px-2.5 py-1 rounded inline-block max-w-[95%] break-words transition-all duration-150">
+                                        <span id="mockup-text-prefix">ISSO VAI</span>
+                                        <span id="mockup-text-highlight" class="anim-word">MUDAR</span>
+                                        <span id="mockup-text-suffix">TUDO! 🔥</span>
+                                    </div>
+                                </div>
+
+                                <!-- Rodapé simulado de som / criador -->
+                                <div class="px-2 space-y-0.5 text-white/80">
+                                    <div class="flex items-center gap-1.5">
+                                        <div class="w-4 h-4 rounded-full bg-[#FF5C00] border border-white text-[8px] font-black text-white flex items-center justify-center">E</div>
+                                        <span class="text-[10px] font-bold text-white">@editize.net</span>
+                                    </div>
+                                    <p class="text-[9px] text-zinc-400 truncate">Áudio original viral • Retenção Máxima</p>
+                                </div>
+                            </div>
+
+                            <!-- Barra inferior do celular -->
+                            <div class="w-20 h-1 bg-zinc-600 rounded-full mx-auto my-1"></div>
+                        </div>
+
+                        <!-- Frase de Teste e Controles de Visualização -->
+                        <div class="p-3 bg-[#F4F3EE] rounded-lg border-2 border-black space-y-2 text-xs shadow-[2px_2px_0px_#000]">
+                            <label class="block text-[10px] font-black text-zinc-800 uppercase">TESTAR COM MINHA FRASE:</label>
+                            <div class="flex gap-1.5">
+                                <input type="text" id="preview-sample-input" value="ISSO VAI MUDAR TUDO!" class="tech-input text-xs font-bold w-full py-1" oninput="updateLiveSubtitlePreview()">
+                                <button type="button" onclick="randomizeSampleText()" class="btn-secondary text-xs px-2.5 shrink-0" title="Trocar frase de exemplo">
+                                    🎲
+                                </button>
+                            </div>
+                            <div class="flex items-center justify-between pt-1 border-t border-zinc-300 text-[10px]">
+                                <span class="text-zinc-600 font-bold" id="preview-anim-name">Animação: Salto Elástico</span>
+                                <button type="button" onclick="replaySubtitleAnimation()" class="text-[#0052FF] font-black hover:underline cursor-pointer">
+                                    ▶ Replay
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                        <!-- Cor do Destaque -->
-                        <div class="space-y-1.5">
-                            <label class="block text-[11px] font-black text-zinc-800 uppercase">COR DO DESTAQUE</label>
-                            <div class="flex items-center gap-2">
-                                <input type="color" id="custom-sub-color" value="#FF5C00" class="w-8 h-8 rounded border-2 border-black bg-transparent cursor-pointer">
-                                <span id="custom-sub-color-label" class="text-xs font-mono font-bold text-black">#FF5C00</span>
+                    <!-- COLUNA DIREITA (8 colunas): Seletor dos 24 Estilos + Painel de Ajuste -->
+                    <div class="lg:col-span-8 space-y-4">
+                        
+                        <!-- Grid dos 24 Estilos com Scroll e Categorias -->
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-black text-zinc-800 uppercase tracking-wider">SELEÇÃO DE ESTILO (CLIQUE PARA APLICAR NO PREVIEW):</span>
+                                <span id="preset-count-badge" class="text-[11px] font-bold text-zinc-600 font-mono">24 presets</span>
+                            </div>
+
+                            <div id="sub-presets-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 max-h-[380px] overflow-y-auto p-2 border-2 border-black rounded-lg bg-[#FAF9F5] shadow-[inset_2px_2px_4px_rgba(0,0,0,0.06)]">
+                                
+                                <!-- 1. Hormozi Pop -->
+                                <div data-sub-style="hormozi_pop" data-category="Viral TikTok" onclick="setSubStyle('hormozi_pop')" class="sub-card sub-card-active">
+                                    <div class="flex items-center justify-between gap-1">
+                                        <span class="text-[11px] font-black text-black truncate">Hormozi Pop</span>
+                                        <span class="sub-radio text-[#FF5C00] font-black text-xs">●</span>
+                                    </div>
+                                    <div class="sub-preview-box">
+                                        <span class="sub-style-hormozi">PRESTE <span class="anim-word">ATENÇÃO!</span></span>
+                                    </div>
+                                </div>
+
+                                <!-- 2. TikTok Bounce -->
+                                <div data-sub-style="tiktok_bounce" data-category="Viral TikTok" onclick="setSubStyle('tiktok_bounce')" class="sub-card">
+                                    <div class="flex items-center justify-between gap-1">
+                                        <span class="text-[11px] font-black text-black truncate">TikTok Lime</span>
+                                        <span class="sub-radio text-black font-black text-xs">○</span>
+                                    </div>
+                                    <div class="sub-preview-box">
+                                        <span class="sub-style-neon">CORTE <span class="anim-word">VIRAL!</span></span>
+                                    </div>
+                                </div>
+
+                                <!-- 3. Beast Explosivo -->
+                                <div data-sub-style="beast_impact" data-category="Impacto & Drama" onclick="setSubStyle('beast_impact')" class="sub-card">
+                                    <div class="flex items-center justify-between gap-1">
+                                        <span class="text-[11px] font-black text-black truncate">MrBeast</span>
+                                        <span class="sub-radio text-black font-black text-xs">○</span>
+                                    </div>
+                                    <div class="sub-preview-box">
+                                        <span class="sub-style-beast">OLHA O <span class="anim-word">MOMENTO!</span></span>
+                                    </div>
+                                </div>
+
+                                <!-- 4. Ciano Cyberpunk -->
+                                <div data-sub-style="cyan_electric" data-category="Gamer / Cyber" onclick="setSubStyle('cyan_electric')" class="sub-card">
+                                    <div class="flex items-center justify-between gap-1">
+                                        <span class="text-[11px] font-black text-black truncate">Ciano Cyber</span>
+                                        <span class="sub-radio text-black font-black text-xs">○</span>
+                                    </div>
+                                    <div class="sub-preview-box">
+                                        <span class="sub-style-cyan">MOMENTO <span class="anim-word">ÉPICO!</span></span>
+                                    </div>
+                                </div>
+
+                                <!-- 5. Roxo Aesthetic -->
+                                <div data-sub-style="purple_viral" data-category="Viral TikTok" onclick="setSubStyle('purple_viral')" class="sub-card">
+                                    <div class="flex items-center justify-between gap-1">
+                                        <span class="text-[11px] font-black text-black truncate">Roxo Aesthetic</span>
+                                        <span class="sub-radio text-black font-black text-xs">○</span>
+                                    </div>
+                                    <div class="sub-preview-box">
+                                        <span class="sub-style-purple">VAI <span class="anim-word">EXPLODIR!</span></span>
+                                    </div>
+                                </div>
+
+                                <!-- 6. Clean Minimal -->
+                                <div data-sub-style="clean_minimal" data-category="Minimalista" onclick="setSubStyle('clean_minimal')" class="sub-card">
+                                    <div class="flex items-center justify-between gap-1">
+                                        <span class="text-[11px] font-black text-black truncate">Clean Minimal</span>
+                                        <span class="sub-radio text-black font-black text-xs">○</span>
+                                    </div>
+                                    <div class="sub-preview-box">
+                                        <span class="sub-style-minimal">DIRETO AO PONTO</span>
+                                    </div>
+                                </div>
+
+                                <!-- 7. Karaokê Ouro VIP -->
+                                <div data-sub-style="gold_karaoke" data-category="YouTube Shorts" onclick="setSubStyle('gold_karaoke')" class="sub-card">
+                                    <div class="flex items-center justify-between gap-1">
+                                        <span class="text-[11px] font-black text-black truncate">Karaokê Ouro</span>
+                                        <span class="sub-radio text-black font-black text-xs">○</span>
+                                    </div>
+                                    <div class="sub-preview-box">
+                                        <span class="sub-style-gold">DICA DE <span class="anim-word">OURO!</span></span>
+                                    </div>
+                                </div>
+
+                                <!-- 8. Fogo Sunset -->
+                                <div data-sub-style="fire_sunset" data-category="Impacto & Drama" onclick="setSubStyle('fire_sunset')" class="sub-card">
+                                    <div class="flex items-center justify-between gap-1">
+                                        <span class="text-[11px] font-black text-black truncate">Fogo Sunset</span>
+                                        <span class="sub-radio text-black font-black text-xs">○</span>
+                                    </div>
+                                    <div class="sub-preview-box">
+                                        <span class="sub-style-fire">ALTA <span class="anim-word">ENERGIA!</span></span>
+                                    </div>
+                                </div>
+
+                                <!-- 9. Esmeralda Finanças -->
+                                <div data-sub-style="emerald_vip" data-category="YouTube Shorts" onclick="setSubStyle('emerald_vip')" class="sub-card">
+                                    <div class="flex items-center justify-between gap-1">
+                                        <span class="text-[11px] font-black text-black truncate">Esmeralda VIP</span>
+                                        <span class="sub-radio text-black font-black text-xs">○</span>
+                                    </div>
+                                    <div class="sub-preview-box">
+                                        <span class="sub-style-emerald">VIP <span class="anim-word">PURISTA!</span></span>
+                                    </div>
+                                </div>
+
+                                <!-- 10. Monocromo 3D Heavy -->
+                                <div data-sub-style="monochrome_3d" data-category="Impacto & Drama" onclick="setSubStyle('monochrome_3d')" class="sub-card">
+                                    <div class="flex items-center justify-between gap-1">
+                                        <span class="text-[11px] font-black text-black truncate">Monocromo 3D</span>
+                                        <span class="sub-radio text-black font-black text-xs">○</span>
+                                    </div>
+                                    <div class="sub-preview-box">
+                                        <span class="sub-style-mono3d">CONTRASTE <span class="anim-word">3D</span></span>
+                                    </div>
+                                </div>
+
+                                <!-- 11. Neo-Brutalist Tarja Preta -->
+                                <div data-sub-style="neobrutalist_black" data-category="Neo-Brutalist" onclick="setSubStyle('neobrutalist_black')" class="sub-card">
+                                    <div class="flex items-center justify-between gap-1">
+                                        <span class="text-[11px] font-black text-black truncate">Neo Tarja Preta</span>
+                                        <span class="sub-radio text-black font-black text-xs">○</span>
+                                    </div>
+                                    <div class="sub-preview-box">
+                                        <span class="sub-style-neoblack">TARJA <span class="anim-word">PRETA</span></span>
+                                    </div>
+                                </div>
+
+                                <!-- 12. Neo-Brutalist Royal Blue -->
+                                <div data-sub-style="neobrutalist_blue" data-category="Neo-Brutalist" onclick="setSubStyle('neobrutalist_blue')" class="sub-card">
+                                    <div class="flex items-center justify-between gap-1">
+                                        <span class="text-[11px] font-black text-black truncate">Neo Royal Blue</span>
+                                        <span class="sub-radio text-black font-black text-xs">○</span>
+                                    </div>
+                                    <div class="sub-preview-box">
+                                        <span class="sub-style-neoblue">AZUL <span class="anim-word">ROYAL!</span></span>
+                                    </div>
+                                </div>
+
+                                <!-- 13. Retro Synthwave -->
+                                <div data-sub-style="retro_arcade" data-category="Gamer / Cyber" onclick="setSubStyle('retro_arcade')" class="sub-card">
+                                    <div class="flex items-center justify-between gap-1">
+                                        <span class="text-[11px] font-black text-black truncate">Synthwave 80s</span>
+                                        <span class="sub-radio text-black font-black text-xs">○</span>
+                                    </div>
+                                    <div class="sub-preview-box">
+                                        <span class="sub-style-retro">RETRO <span class="anim-word">ARCADE</span></span>
+                                    </div>
+                                </div>
+
+                                <!-- 14. Comic Book Hero -->
+                                <div data-sub-style="comic_pop" data-category="Viral TikTok" onclick="setSubStyle('comic_pop')" class="sub-card">
+                                    <div class="flex items-center justify-between gap-1">
+                                        <span class="text-[11px] font-black text-black truncate">Comic Book</span>
+                                        <span class="sub-radio text-black font-black text-xs">○</span>
+                                    </div>
+                                    <div class="sub-preview-box">
+                                        <span class="sub-style-comic">POW! <span class="anim-word">HERÓI</span></span>
+                                    </div>
+                                </div>
+
+                                <!-- 15. Matrix Hacker Green -->
+                                <div data-sub-style="glitch_matrix" data-category="Gamer / Cyber" onclick="setSubStyle('glitch_matrix')" class="sub-card">
+                                    <div class="flex items-center justify-between gap-1">
+                                        <span class="text-[11px] font-black text-black truncate">Matrix Hacker</span>
+                                        <span class="sub-radio text-black font-black text-xs">○</span>
+                                    </div>
+                                    <div class="sub-preview-box">
+                                        <span class="sub-style-matrix">MATRIX <span class="anim-word">CODE</span></span>
+                                    </div>
+                                </div>
+
+                                <!-- 16. Cinema Letterbox -->
+                                <div data-sub-style="cinema_letterbox" data-category="Minimalista" onclick="setSubStyle('cinema_letterbox')" class="sub-card">
+                                    <div class="flex items-center justify-between gap-1">
+                                        <span class="text-[11px] font-black text-black truncate">Cinema 2.35</span>
+                                        <span class="sub-radio text-black font-black text-xs">○</span>
+                                    </div>
+                                    <div class="sub-preview-box">
+                                        <span class="sub-style-cinema">CENA <span class="anim-word">CLÁSSICA</span></span>
+                                    </div>
+                                </div>
+
+                                <!-- 17. Breaking News -->
+                                <div data-sub-style="breaking_news" data-category="Impacto & Drama" onclick="setSubStyle('breaking_news')" class="sub-card">
+                                    <div class="flex items-center justify-between gap-1">
+                                        <span class="text-[11px] font-black text-black truncate">Plantão Urgente</span>
+                                        <span class="sub-radio text-black font-black text-xs">○</span>
+                                    </div>
+                                    <div class="sub-preview-box">
+                                        <span class="sub-style-news">PLANTÃO <span class="anim-word">URGENTE</span></span>
+                                    </div>
+                                </div>
+
+                                <!-- 18. Alerta Vermelho Shock -->
+                                <div data-sub-style="red_danger" data-category="Impacto & Drama" onclick="setSubStyle('red_danger')" class="sub-card">
+                                    <div class="flex items-center justify-between gap-1">
+                                        <span class="text-[11px] font-black text-black truncate">Alerta Vermelho</span>
+                                        <span class="sub-radio text-black font-black text-xs">○</span>
+                                    </div>
+                                    <div class="sub-preview-box">
+                                        <span class="sub-style-danger">PERIGO <span class="anim-word">TOTAL!</span></span>
+                                    </div>
+                                </div>
+
+                                <!-- 19. Sunset Glow -->
+                                <div data-sub-style="sunset_glow" data-category="YouTube Shorts" onclick="setSubStyle('sunset_glow')" class="sub-card">
+                                    <div class="flex items-center justify-between gap-1">
+                                        <span class="text-[11px] font-black text-black truncate">Sunset Coral</span>
+                                        <span class="sub-radio text-black font-black text-xs">○</span>
+                                    </div>
+                                    <div class="sub-preview-box">
+                                        <span class="sub-style-sunset">SUNSET <span class="anim-word">GLOW</span></span>
+                                    </div>
+                                </div>
+
+                                <!-- 20. Midnight Cobalt -->
+                                <div data-sub-style="midnight_neon" data-category="Gamer / Cyber" onclick="setSubStyle('midnight_neon')" class="sub-card">
+                                    <div class="flex items-center justify-between gap-1">
+                                        <span class="text-[11px] font-black text-black truncate">Midnight Neon</span>
+                                        <span class="sub-radio text-black font-black text-xs">○</span>
+                                    </div>
+                                    <div class="sub-preview-box">
+                                        <span class="sub-style-midnight">NOITE <span class="anim-word">NEON</span></span>
+                                    </div>
+                                </div>
+
+                                <!-- 21. Lemon Lime Punch -->
+                                <div data-sub-style="lemon_lime" data-category="Viral TikTok" onclick="setSubStyle('lemon_lime')" class="sub-card">
+                                    <div class="flex items-center justify-between gap-1">
+                                        <span class="text-[11px] font-black text-black truncate">Citrus Lime</span>
+                                        <span class="sub-radio text-black font-black text-xs">○</span>
+                                    </div>
+                                    <div class="sub-preview-box">
+                                        <span class="sub-style-lemon">CITRUS <span class="anim-word">PUNCH</span></span>
+                                    </div>
+                                </div>
+
+                                <!-- 22. Máquina de Escrever -->
+                                <div data-sub-style="typewriter_clean" data-category="Minimalista" onclick="setSubStyle('typewriter_clean')" class="sub-card">
+                                    <div class="flex items-center justify-between gap-1">
+                                        <span class="text-[11px] font-black text-black truncate">Typewriter Retrô</span>
+                                        <span class="sub-radio text-black font-black text-xs">○</span>
+                                    </div>
+                                    <div class="sub-preview-box">
+                                        <span class="sub-style-typewriter">RELATO <span class="anim-word">REAL</span></span>
+                                    </div>
+                                </div>
+
+                                <!-- 23. Hormozi 1 Palavra -->
+                                <div data-sub-style="hormozi_single_word" data-category="Viral TikTok" onclick="setSubStyle('hormozi_single_word')" class="sub-card">
+                                    <div class="flex items-center justify-between gap-1">
+                                        <span class="text-[11px] font-black text-black truncate">Hormozi 1 Palavra</span>
+                                        <span class="sub-radio text-black font-black text-xs">○</span>
+                                    </div>
+                                    <div class="sub-preview-box">
+                                        <span class="sub-style-single">IMPACTO!</span>
+                                    </div>
+                                </div>
+
+                                <!-- 24. Pílula Viral -->
+                                <div data-sub-style="pill_badge_viral" data-category="YouTube Shorts" onclick="setSubStyle('pill_badge_viral')" class="sub-card">
+                                    <div class="flex items-center justify-between gap-1">
+                                        <span class="text-[11px] font-black text-black truncate">Pílula Moderna</span>
+                                        <span class="sub-radio text-black font-black text-xs">○</span>
+                                    </div>
+                                    <div class="sub-preview-box">
+                                        <span class="sub-style-pill">PÍLULA <span class="anim-word">VIRAL</span></span>
+                                    </div>
+                                </div>
+
                             </div>
                         </div>
 
-                        <!-- Tamanho da Fonte -->
-                        <div class="space-y-1.5">
-                            <label class="block text-[11px] font-black text-zinc-800 uppercase">TAMANHO DO TEXTO</label>
-                            <select id="custom-sub-size" class="tech-input w-full py-1.5 text-xs">
-                                <option value="64">Pequeno (64px)</option>
-                                <option value="76" selected>Médio (76px - Ideal)</option>
-                                <option value="86">Grande (86px - Impacto)</option>
-                            </select>
+                        <!-- GAVETA EXPANSÍVEL DE PERSONALIZAÇÃO PROFISSIONAL -->
+                        <div id="sub-customizer-drawer" class="preview-card p-5 space-y-4" style="display: none;">
+                            <div class="flex items-center justify-between border-b-2 border-black pb-2.5">
+                                <span class="text-xs font-black text-black flex items-center gap-2">
+                                    <span class="radar-dot"></span>
+                                    <span class="uppercase">Painel de Customização Avançada da Legenda</span>
+                                    <span id="saved-template-badge" class="badge-neon text-[9px]" style="display: none;">Template Ativo</span>
+                                </span>
+                                <span class="text-[11px] text-zinc-600 font-bold">Ajuste fino de todos os atributos</span>
+                            </div>
+
+                            <!-- Grade de Customizações Dividida em 4 Seções Profissionais -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                                
+                                <!-- 1. TIPOGRAFIA & TAMANHO -->
+                                <div class="space-y-2 p-3 bg-[#FAF9F5] border-2 border-black rounded-lg">
+                                    <span class="text-[11px] font-black text-black uppercase block">🔤 TIPOGRAFIA & TEXTO</span>
+                                    
+                                    <div class="space-y-1">
+                                        <label class="block text-[10px] font-bold text-zinc-700">FONTE:</label>
+                                        <select id="custom-sub-font" onchange="updateLiveSubtitlePreview()" class="tech-input w-full py-1 text-xs font-bold">
+                                            <option value="Impact" selected>Impact (Viral Padrão)</option>
+                                            <option value="Arial Black">Arial Black (Bold Moderno)</option>
+                                            <option value="Segoe UI">Segoe UI / Inter (Clean)</option>
+                                            <option value="Trebuchet MS">Trebuchet MS (Dinâmica)</option>
+                                            <option value="Comic Sans MS">Comic Sans (Divertida)</option>
+                                            <option value="Courier New">Courier New (Hacker/Máquina)</option>
+                                            <option value="Georgia">Georgia (Cinematográfica)</option>
+                                            <option value="Tahoma">Tahoma (Legibilidade)</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="space-y-1">
+                                        <div class="flex justify-between items-center text-[10px] font-bold text-zinc-700">
+                                            <span>TAMANHO:</span>
+                                            <span id="custom-sub-size-val" class="font-mono text-[#FF5C00] font-black">78px</span>
+                                        </div>
+                                        <input type="range" id="custom-sub-size-slider" min="44" max="110" value="78" oninput="onSizeSliderChange(this.value)" class="w-full accent-[#FF5C00] cursor-pointer">
+                                    </div>
+
+                                    <div class="space-y-1">
+                                        <label class="block text-[10px] font-bold text-zinc-700">FORMATO DA CAIXA:</label>
+                                        <select id="custom-sub-casing-select" onchange="updateLiveSubtitlePreview()" class="tech-input w-full py-1 text-xs">
+                                            <option value="uppercase" selected>TODAS MAIÚSCULAS</option>
+                                            <option value="titlecase">Primeira Maiúscula</option>
+                                            <option value="original">Como Falado no Áudio</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- 2. CORES & DESTAQUE -->
+                                <div class="space-y-2 p-3 bg-[#FAF9F5] border-2 border-black rounded-lg">
+                                    <span class="text-[11px] font-black text-black uppercase block">🎨 CORES & PALETA</span>
+                                    
+                                    <div class="space-y-1">
+                                        <label class="block text-[10px] font-bold text-zinc-700">COR BASE (TEXTO):</label>
+                                        <div class="flex items-center gap-2">
+                                            <input type="color" id="custom-sub-color" value="#FFFFFF" oninput="updateLiveSubtitlePreview()" class="w-8 h-8 rounded border-2 border-black bg-transparent cursor-pointer">
+                                            <span id="custom-sub-color-label" class="text-xs font-mono font-bold text-black">#FFFFFF</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="space-y-1">
+                                        <label class="block text-[10px] font-bold text-zinc-700">COR DO DESTAQUE ATIVO:</label>
+                                        <div class="flex items-center gap-2">
+                                            <input type="color" id="custom-sub-highlight-picker" value="#FFE500" oninput="updateLiveSubtitlePreview()" class="w-8 h-8 rounded border-2 border-black bg-transparent cursor-pointer">
+                                            <span id="custom-sub-highlight-label" class="text-xs font-mono font-bold text-black">#FFE500</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Paleta Rápida -->
+                                    <div class="pt-1">
+                                        <span class="text-[9px] font-bold text-zinc-500 uppercase block mb-1">Paleta Rápida de Destaque:</span>
+                                        <div class="flex items-center gap-1.5">
+                                            <button type="button" onclick="setQuickHighlight('#FFE500')" class="w-4 h-4 rounded-full border border-black bg-[#FFE500]" title="Amarelo"></button>
+                                            <button type="button" onclick="setQuickHighlight('#00FF66')" class="w-4 h-4 rounded-full border border-black bg-[#00FF66]" title="Verde Lima"></button>
+                                            <button type="button" onclick="setQuickHighlight('#00FFFF')" class="w-4 h-4 rounded-full border border-black bg-[#00FFFF]" title="Ciano"></button>
+                                            <button type="button" onclick="setQuickHighlight('#FF5C00')" class="w-4 h-4 rounded-full border border-black bg-[#FF5C00]" title="Laranja"></button>
+                                            <button type="button" onclick="setQuickHighlight('#FF007F')" class="w-4 h-4 rounded-full border border-black bg-[#FF007F]" title="Rosa"></button>
+                                            <button type="button" onclick="setQuickHighlight('#FFFFFF')" class="w-4 h-4 rounded-full border border-black bg-[#FFFFFF]" title="Branco"></button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 3. CONTORNO, SOMBRA & FUNDO -->
+                                <div class="space-y-2 p-3 bg-[#FAF9F5] border-2 border-black rounded-lg">
+                                    <span class="text-[11px] font-black text-black uppercase block">🖌️ CONTORNO & SOMBRA</span>
+                                    
+                                    <div class="space-y-1">
+                                        <div class="flex justify-between items-center text-[10px] font-bold text-zinc-700">
+                                            <span>ESPESSURA DA BORDA:</span>
+                                            <span id="custom-sub-outline-val" class="font-mono text-[#FF5C00] font-black">8px</span>
+                                        </div>
+                                        <input type="range" id="custom-sub-outline-slider" min="0" max="14" value="8" oninput="onOutlineSliderChange(this.value)" class="w-full accent-[#FF5C00] cursor-pointer">
+                                    </div>
+
+                                    <div class="space-y-1">
+                                        <label class="block text-[10px] font-bold text-zinc-700">ESTILO DE SOMBRA / 3D:</label>
+                                        <select id="custom-sub-shadow-select" onchange="updateLiveSubtitlePreview()" class="tech-input w-full py-1 text-xs">
+                                            <option value="hard_3d" selected>3D Projetada (Neo-Brutalist)</option>
+                                            <option value="soft_shadow">Sombra Suave e Nítida</option>
+                                            <option value="glow_neon">Brilho Neon (Glow)</option>
+                                            <option value="none">Sem Sombra</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="space-y-1">
+                                        <label class="block text-[10px] font-bold text-zinc-700">FUNDO / TARJA (BOX):</label>
+                                        <select id="custom-sub-bg-select" onchange="updateLiveSubtitlePreview()" class="tech-input w-full py-1 text-xs">
+                                            <option value="none" selected>Sem Fundo (Apenas Texto)</option>
+                                            <option value="black_box">Tarja Preta Sólida</option>
+                                            <option value="translucent_box">Tarja Escura Translúcida</option>
+                                            <option value="neobrutalist_orange">Tarja Neo-Brutalist Laranja</option>
+                                            <option value="neobrutalist_blue">Tarja Neo-Brutalist Azul</option>
+                                            <option value="pill">Pílula Arredondada (Pill)</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- 4. ANIMAÇÃO, POSIÇÃO & RITMO -->
+                                <div class="space-y-2 p-3 bg-[#FAF9F5] border-2 border-black rounded-lg flex flex-col justify-between">
+                                    <div class="space-y-2">
+                                        <span class="text-[11px] font-black text-black uppercase block">🎬 ANIMAÇÃO & RITMO</span>
+
+                                        <div class="space-y-1">
+                                            <label class="block text-[10px] font-bold text-zinc-700">TIPO DE ANIMAÇÃO:</label>
+                                            <select id="custom-sub-anim-select" onchange="updateLiveSubtitlePreview()" class="tech-input w-full py-1 text-xs font-bold">
+                                                <option value="bounce" selected>Salto Elástico (Bounce / Pop)</option>
+                                                <option value="pop_zoom">Zoom Explosivo (Punch Zoom)</option>
+                                                <option value="karaoke">Karaokê Palavra por Palavra</option>
+                                                <option value="shake">Tremor de Impacto (Shake)</option>
+                                                <option value="fade">Surgimento Suave (Fade In)</option>
+                                                <option value="none">Estático Clássico (Sem Animação)</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="space-y-1">
+                                            <label class="block text-[10px] font-bold text-zinc-700">RITMO DAS PALAVRAS:</label>
+                                            <select id="custom-sub-chunk-select" onchange="updateLiveSubtitlePreview()" class="tech-input w-full py-1 text-xs">
+                                                <option value="1">1 Palavra por vez (Hormozi Ultra Fast)</option>
+                                                <option value="2" selected>2 a 3 Palavras (Padrão Viral)</option>
+                                                <option value="4">Frase Completa (4 a 6 palavras)</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="space-y-1">
+                                            <div class="flex justify-between items-center text-[10px] font-bold text-zinc-700">
+                                                <span>ALTURA NA TELA:</span>
+                                                <span id="custom-sub-pos-val" class="font-mono text-[#FF5C00] font-black">Inferior (420px)</span>
+                                            </div>
+                                            <select id="custom-sub-pos-select" onchange="onPositionPresetChange(this.value)" class="tech-input w-full py-1 text-xs">
+                                                <option value="420" selected>Inferior (Padrão Reels/Shorts)</option>
+                                                <option value="850">Centro da Tela (Meio)</option>
+                                                <option value="1350">Superior (Topo)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <!-- Botões de Ação de Template -->
+                                    <div class="pt-2 flex flex-col gap-1.5">
+                                        <button type="button" onclick="saveSubtitleTemplate()" class="btn-neon text-xs py-2 justify-center font-black">
+                                            <span>💾 Salvar Meu Template</span>
+                                        </button>
+                                        <button type="button" onclick="resetSubtitleCustomizations()" class="btn-secondary text-[11px] py-1 justify-center">
+                                            <span>🔄 Restaurar Padrões</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                            </div>
                         </div>
 
-                        <!-- Posição da Legenda -->
-                        <div class="space-y-1.5">
-                            <label class="block text-[11px] font-black text-zinc-800 uppercase">POSIÇÃO NA TELA</label>
-                            <select id="custom-sub-position" class="tech-input w-full py-1.5 text-xs">
-                                <option value="360">Inferior (Padrão)</option>
-                                <option value="520" selected>Centro Inferior (Melhor Retenção)</option>
-                                <option value="750">Centro da Tela</option>
-                            </select>
-                        </div>
-
-                        <!-- Ações de Template -->
-                        <div class="space-y-1.5 flex flex-col justify-end">
-                            <button type="button" onclick="saveSubtitleTemplate()" class="btn-neon text-xs py-2 justify-center">
-                                <span>💾 Salvar Como Meu Template</span>
-                            </button>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -659,54 +1043,143 @@
 
     </main>
 
-    <!-- Modal de Correção de Legenda do Vídeo (Subtitles 9:16) -->
+    <!-- Modal de Correção e Customização de Legenda do Vídeo (Subtitles 9:16) -->
     <div id="modal-subtitle-editor" class="modal-overlay" style="display: none;">
-        <div class="tech-card p-6 max-w-lg w-full mx-4 space-y-4 relative">
+        <div class="tech-card p-6 max-w-xl w-full mx-4 space-y-4 relative max-h-[92vh] overflow-y-auto">
             <button onclick="closeSubtitleEditorModal()" class="absolute top-4 right-4 text-black hover:text-[#FF5C00] font-black text-lg">✕</button>
 
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 border-b-2 border-black pb-2">
                 <span class="radar-dot"></span>
-                <span class="text-sm font-black text-black uppercase">Corrigir Legenda do Vídeo 9:16</span>
+                <span class="text-sm font-black text-black uppercase">Editor Completo de Legendas do Vídeo 9:16</span>
             </div>
 
             <p class="text-xs text-zinc-600 font-medium leading-relaxed">
-                Edite os termos, nomes próprios ou frases faladas. Ao salvar, o vídeo 9:16 será renderizado novamente com as legendas corrigidas sincronizadas.
+                Corrija os termos falados, troque o modelo visual (24 presets) ou ajuste fontes, cores e animações. Ao salvar, o vídeo 9:16 é renderizado novamente com as legendas sincronizadas.
             </p>
 
+            <!-- Campo de Texto das Falas -->
             <div class="space-y-1.5">
                 <label class="block text-[11px] font-black text-zinc-800 uppercase">FALAS / TEXTO DA LEGENDA:</label>
-                <textarea id="edit-sub-text" rows="4" class="tech-input text-xs w-full font-medium" placeholder="Digite as frases faladas..."></textarea>
+                <textarea id="edit-sub-text" rows="3" oninput="updateModalPreviewText()" class="tech-input text-xs w-full font-medium" placeholder="Digite as frases faladas..."></textarea>
             </div>
 
-            <!-- Estilo e Cor da Legenda -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                <div class="space-y-1">
-                    <label class="block text-[11px] font-black text-zinc-800 uppercase">ESTILO VISUAL:</label>
-                    <select id="edit-sub-style" class="tech-input text-xs w-full font-bold">
-                        <option value="hormozi_pop">Hormozi Pop (Amarelo Neon)</option>
-                        <option value="tiktok_bounce">TikTok Bounce (Verde Lima)</option>
-                        <option value="beast_impact">MrBeast Impact (Vermelho/Laranja)</option>
-                        <option value="cyan_electric">Ciano Elétrico</option>
-                        <option value="purple_viral">Roxo Viral</option>
-                        <option value="clean_minimal">Clean Minimal (Branco)</option>
-                        <option value="gold_karaoke">Karaokê Dourado</option>
-                        <option value="fire_sunset">Fogo Sunset (Laranja)</option>
-                        <option value="emerald_vip">Esmeralda VIP (Verde)</option>
-                        <option value="monochrome_3d">Monocromo 3D</option>
-                    </select>
-                </div>
-                <div class="space-y-1">
-                    <label class="block text-[11px] font-black text-zinc-800 uppercase">COR DO DESTAQUE:</label>
-                    <div class="flex items-center gap-2">
-                        <input type="color" id="edit-sub-color" value="#FFE500" class="w-9 h-9 rounded border-2 border-black bg-transparent cursor-pointer">
-                        <span id="edit-sub-color-label" class="text-xs font-mono font-bold text-black">#FFE500</span>
+            <!-- Mini Preview da Legenda no Modal -->
+            <div class="space-y-1">
+                <label class="block text-[10px] font-black text-zinc-700 uppercase">PREVIEW AO VIVO:</label>
+                <div class="p-3 bg-zinc-950 border-2 border-black rounded-lg text-center flex items-center justify-center min-h-[52px] shadow-[2px_2px_0px_#000]">
+                    <div id="modal-sub-preview-box" class="sub-style-hormozi px-2.5 py-1 rounded inline-block">
+                        <span id="modal-preview-prefix">ISSO VAI</span>
+                        <span id="modal-preview-highlight" class="anim-word">MUDAR</span>
+                        <span id="modal-preview-suffix">TUDO! 🔥</span>
                     </div>
                 </div>
             </div>
 
-            <div class="pt-3 flex gap-3">
-                <button onclick="closeSubtitleEditorModal()" class="btn-secondary flex-1 justify-center text-xs">Cancelar</button>
-                <button id="btn-save-subtitles" onclick="submitSubtitleCorrection()" class="btn-neon flex-1 justify-center text-xs font-black">
+            <!-- Seletor do Estilo Visual (24 Presets) -->
+            <div class="space-y-1">
+                <label class="block text-[11px] font-black text-zinc-800 uppercase">MODELO DE LEGENDA (24 OPÇÕES):</label>
+                <select id="edit-sub-style" onchange="onModalPresetChange(this.value)" class="tech-input text-xs w-full font-bold">
+                    <optgroup label="🔥 Viral TikTok">
+                        <option value="hormozi_pop">Hormozi Pop (Amarelo Neon)</option>
+                        <option value="tiktok_bounce">TikTok Bounce (Verde Lima)</option>
+                        <option value="purple_viral">Roxo Viral Aesthetic</option>
+                        <option value="comic_pop">Quadrinhos Comic Hero</option>
+                        <option value="lemon_lime">Citrus Lime Punch</option>
+                        <option value="hormozi_single_word">Hormozi 1 Palavra (Ultra Rápido)</option>
+                    </optgroup>
+                    <optgroup label="⚡ YouTube Shorts">
+                        <option value="gold_karaoke">Karaokê Ouro VIP</option>
+                        <option value="emerald_vip">Esmeralda Finanças</option>
+                        <option value="sunset_glow">Sunset Coral Glow</option>
+                        <option value="pill_badge_viral">Pílula Moderna (Pill Box)</option>
+                    </optgroup>
+                    <optgroup label="🖤 Neo-Brutalist">
+                        <option value="neobrutalist_black">Neo-Brutalist Tarja Preta</option>
+                        <option value="neobrutalist_blue">Neo-Brutalist Royal Blue</option>
+                    </optgroup>
+                    <optgroup label="💥 Impacto & Drama">
+                        <option value="beast_impact">MrBeast Impact (Vermelho/Laranja)</option>
+                        <option value="fire_sunset">Fogo Sunset (Laranja)</option>
+                        <option value="monochrome_3d">Monocromo 3D Heavy</option>
+                        <option value="breaking_news">Plantão Urgente (News)</option>
+                        <option value="red_danger">Alerta Vermelho Shock</option>
+                    </optgroup>
+                    <optgroup label="✨ Minimalista">
+                        <option value="clean_minimal">Clean Minimal (Branco)</option>
+                        <option value="cinema_letterbox">Cinema Clássico 2.35</option>
+                        <option value="typewriter_clean">Máquina de Escrever Retrô</option>
+                    </optgroup>
+                    <optgroup label="🎮 Gamer / Cyber">
+                        <option value="cyan_electric">Ciano Cyberpunk</option>
+                        <option value="retro_arcade">Retro Synthwave 80s</option>
+                        <option value="glitch_matrix">Matrix Hacker Green</option>
+                        <option value="midnight_neon">Midnight Cobalt Neon</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <!-- Grade de Ajustes Rápidos -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                <!-- Cor Base -->
+                <div class="space-y-1">
+                    <label class="block text-[10px] font-black text-zinc-700 uppercase">COR BASE:</label>
+                    <div class="flex items-center gap-1.5">
+                        <input type="color" id="edit-sub-primary-color" value="#FFFFFF" oninput="updateModalLivePreview()" class="w-8 h-8 rounded border-2 border-black bg-transparent cursor-pointer">
+                        <span id="edit-sub-primary-label" class="text-xs font-mono font-bold text-black">#FFFFFF</span>
+                    </div>
+                </div>
+
+                <!-- Cor Destaque -->
+                <div class="space-y-1">
+                    <label class="block text-[10px] font-black text-zinc-700 uppercase">COR DESTAQUE:</label>
+                    <div class="flex items-center gap-1.5">
+                        <input type="color" id="edit-sub-color" value="#FFE500" oninput="updateModalLivePreview()" class="w-8 h-8 rounded border-2 border-black bg-transparent cursor-pointer">
+                        <span id="edit-sub-color-label" class="text-xs font-mono font-bold text-black">#FFE500</span>
+                    </div>
+                </div>
+
+                <!-- Animação -->
+                <div class="space-y-1">
+                    <label class="block text-[10px] font-black text-zinc-700 uppercase">ANIMAÇÃO:</label>
+                    <select id="edit-sub-anim" onchange="updateModalLivePreview()" class="tech-input text-xs w-full py-1.5 font-bold">
+                        <option value="bounce">Salto Elástico (Bounce)</option>
+                        <option value="pop_zoom">Zoom Explosivo (Pop Zoom)</option>
+                        <option value="karaoke">Karaokê Palavra por Palavra</option>
+                        <option value="shake">Tremor de Impacto</option>
+                        <option value="fade">Fade In Suave</option>
+                        <option value="none">Estático Clássico</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Mais Ajustes: Fonte e Tamanho -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <div class="space-y-1">
+                    <label class="block text-[10px] font-black text-zinc-700 uppercase">FONTE:</label>
+                    <select id="edit-sub-font" onchange="updateModalLivePreview()" class="tech-input text-xs w-full py-1">
+                        <option value="Impact">Impact</option>
+                        <option value="Arial Black">Arial Black</option>
+                        <option value="Segoe UI">Segoe UI / Inter</option>
+                        <option value="Trebuchet MS">Trebuchet MS</option>
+                        <option value="Comic Sans MS">Comic Sans MS</option>
+                        <option value="Courier New">Courier New</option>
+                        <option value="Georgia">Georgia</option>
+                    </select>
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-[10px] font-black text-zinc-700 uppercase">TAMANHO DA FONTE:</label>
+                    <select id="edit-sub-size" onchange="updateModalLivePreview()" class="tech-input text-xs w-full py-1">
+                        <option value="64">Pequeno (64px)</option>
+                        <option value="76" selected>Médio (76px - Ideal)</option>
+                        <option value="86">Grande (86px - Impacto)</option>
+                        <option value="96">Extra Grande (96px)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="pt-3 border-t-2 border-black flex gap-3">
+                <button type="button" onclick="closeSubtitleEditorModal()" class="btn-secondary flex-1 justify-center text-xs">Cancelar</button>
+                <button type="button" id="btn-save-subtitles" onclick="submitSubtitleCorrection()" class="btn-neon flex-1 justify-center text-xs font-black">
                     <span>⚡ Regerar Vídeo com Novas Legendas</span>
                 </button>
             </div>

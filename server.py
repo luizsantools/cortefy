@@ -373,6 +373,18 @@ async def start_analysis(payload: Dict[str, Any], background_tasks: BackgroundTa
     custom_color = payload.get("custom_color")
     custom_size = payload.get("custom_size")
     custom_margin = payload.get("custom_margin")
+    custom_highlight_color = payload.get("custom_highlight_color")
+    custom_font = payload.get("custom_font")
+    custom_outline_color = payload.get("custom_outline_color")
+    custom_outline_w = payload.get("custom_outline_w")
+    custom_shadow = payload.get("custom_shadow")
+    custom_shadow_color = payload.get("custom_shadow_color")
+    custom_border_style = payload.get("custom_border_style")
+    custom_bg_color = payload.get("custom_bg_color")
+    custom_animation = payload.get("custom_animation")
+    custom_casing = payload.get("custom_casing")
+    custom_chunk_size = payload.get("custom_chunk_size")
+    custom_alignment = payload.get("custom_alignment")
     layout = payload.get("layout", "portrait")
     speed = float(payload.get("speed", 1.0))
     enable_zoom = bool(payload.get("enable_zoom", True))
@@ -518,6 +530,18 @@ async def start_analysis(payload: Dict[str, Any], background_tasks: BackgroundTa
                         custom_color=custom_color,
                         custom_font_size=custom_size,
                         custom_margin_v=custom_margin,
+                        custom_highlight_color=custom_highlight_color,
+                        custom_font=custom_font,
+                        custom_outline_color=custom_outline_color,
+                        custom_outline_w=custom_outline_w,
+                        custom_shadow=custom_shadow,
+                        custom_shadow_color=custom_shadow_color,
+                        custom_border_style=custom_border_style,
+                        custom_bg_color=custom_bg_color,
+                        custom_animation=custom_animation,
+                        custom_casing=custom_casing,
+                        custom_chunk_size=custom_chunk_size,
+                        custom_alignment=custom_alignment,
                         speed=speed,
                         enable_zoom=enable_zoom,
                         enable_drift=enable_drift,
@@ -555,6 +579,18 @@ async def start_analysis(payload: Dict[str, Any], background_tasks: BackgroundTa
                 "custom_color": custom_color,
                 "custom_size": custom_size,
                 "custom_margin": custom_margin,
+                "custom_highlight_color": custom_highlight_color,
+                "custom_font": custom_font,
+                "custom_outline_color": custom_outline_color,
+                "custom_outline_w": custom_outline_w,
+                "custom_shadow": custom_shadow,
+                "custom_shadow_color": custom_shadow_color,
+                "custom_border_style": custom_border_style,
+                "custom_bg_color": custom_bg_color,
+                "custom_animation": custom_animation,
+                "custom_casing": custom_casing,
+                "custom_chunk_size": custom_chunk_size,
+                "custom_alignment": custom_alignment,
                 "layout": layout,
                 "speed": speed,
                 "enable_zoom": enable_zoom,
@@ -780,6 +816,19 @@ async def update_cut_subtitles(payload: Dict[str, Any]):
     subtitle_style = payload.get("subtitle_style")
     custom_color = payload.get("custom_color")
     custom_size = payload.get("custom_size")
+    custom_margin_v = payload.get("custom_margin_v")
+    custom_highlight_color = payload.get("custom_highlight_color")
+    custom_font = payload.get("custom_font")
+    custom_outline_color = payload.get("custom_outline_color")
+    custom_outline_w = payload.get("custom_outline_w")
+    custom_shadow = payload.get("custom_shadow")
+    custom_shadow_color = payload.get("custom_shadow_color")
+    custom_border_style = payload.get("custom_border_style")
+    custom_bg_color = payload.get("custom_bg_color")
+    custom_animation = payload.get("custom_animation")
+    custom_casing = payload.get("custom_casing")
+    custom_chunk_size = payload.get("custom_chunk_size")
+    custom_alignment = payload.get("custom_alignment")
 
     project = ACTIVE_PROJECTS.get(project_id)
     if not project:
@@ -793,6 +842,23 @@ async def update_cut_subtitles(payload: Dict[str, Any]):
         target_cut["subtitle_style"] = subtitle_style
     else:
         subtitle_style = target_cut.get("subtitle_style", project.get("subtitle_style", "hormozi_pop"))
+
+    # Salva atributos personalizados no corte
+    if custom_color: target_cut["custom_color"] = custom_color
+    if custom_highlight_color: target_cut["custom_highlight_color"] = custom_highlight_color
+    if custom_font: target_cut["custom_font"] = custom_font
+    if custom_size: target_cut["custom_font_size"] = custom_size
+    if custom_outline_color: target_cut["custom_outline_color"] = custom_outline_color
+    if custom_outline_w is not None: target_cut["custom_outline_w"] = custom_outline_w
+    if custom_shadow is not None: target_cut["custom_shadow"] = custom_shadow
+    if custom_shadow_color: target_cut["custom_shadow_color"] = custom_shadow_color
+    if custom_border_style is not None: target_cut["custom_border_style"] = custom_border_style
+    if custom_bg_color: target_cut["custom_bg_color"] = custom_bg_color
+    if custom_animation: target_cut["custom_animation"] = custom_animation
+    if custom_casing: target_cut["custom_casing"] = custom_casing
+    if custom_chunk_size is not None: target_cut["custom_chunk_size"] = custom_chunk_size
+    if custom_margin_v is not None: target_cut["custom_margin_v"] = custom_margin_v
+    if custom_alignment is not None: target_cut["custom_alignment"] = custom_alignment
 
     # Converte o texto editado em palavras sincronizadas
     if edited_text:
@@ -822,9 +888,21 @@ async def update_cut_subtitles(payload: Dict[str, Any]):
             broll_mode=project.get("broll_mode", "auto_extract"),
             broll_source=project.get("broll_url"),
             subtitle_style=subtitle_style,
-            custom_color=custom_color or project.get("custom_color"),
-            custom_font_size=custom_size or project.get("custom_size"),
-            custom_margin_v=project.get("custom_margin"),
+            custom_color=custom_color or target_cut.get("custom_color") or project.get("custom_color"),
+            custom_font_size=custom_size or target_cut.get("custom_font_size") or project.get("custom_size"),
+            custom_margin_v=custom_margin_v or target_cut.get("custom_margin_v") or project.get("custom_margin"),
+            custom_highlight_color=custom_highlight_color or target_cut.get("custom_highlight_color") or project.get("custom_highlight_color"),
+            custom_font=custom_font or target_cut.get("custom_font") or project.get("custom_font"),
+            custom_outline_color=custom_outline_color or target_cut.get("custom_outline_color") or project.get("custom_outline_color"),
+            custom_outline_w=custom_outline_w if custom_outline_w is not None else (target_cut.get("custom_outline_w") if target_cut.get("custom_outline_w") is not None else project.get("custom_outline_w")),
+            custom_shadow=custom_shadow if custom_shadow is not None else (target_cut.get("custom_shadow") if target_cut.get("custom_shadow") is not None else project.get("custom_shadow")),
+            custom_shadow_color=custom_shadow_color or target_cut.get("custom_shadow_color") or project.get("custom_shadow_color"),
+            custom_border_style=custom_border_style if custom_border_style is not None else (target_cut.get("custom_border_style") if target_cut.get("custom_border_style") is not None else project.get("custom_border_style")),
+            custom_bg_color=custom_bg_color or target_cut.get("custom_bg_color") or project.get("custom_bg_color"),
+            custom_animation=custom_animation or target_cut.get("custom_animation") or project.get("custom_animation"),
+            custom_casing=custom_casing or target_cut.get("custom_casing") or project.get("custom_casing"),
+            custom_chunk_size=custom_chunk_size or target_cut.get("custom_chunk_size") or project.get("custom_chunk_size"),
+            custom_alignment=custom_alignment or target_cut.get("custom_alignment") or project.get("custom_alignment"),
             speed=project.get("speed", 1.0),
             enable_zoom=project.get("enable_zoom", True),
             enable_drift=project.get("enable_drift", True),
@@ -839,6 +917,12 @@ async def update_cut_subtitles(payload: Dict[str, Any]):
     except Exception as e:
         print(f"[Server] Erro ao regerar corte com legendas corrigidas: {e}")
         raise HTTPException(status_code=500, detail="Não foi possível regerar o vídeo com a nova legenda.")
+
+@app.get("/api/subtitles/presets")
+async def get_all_subtitle_presets():
+    """Retorna os 24 presets de legendas profissionais com metadados para a interface."""
+    from video_pipeline import get_subtitle_presets_dict
+    return {"success": True, "presets": get_subtitle_presets_dict()}
 
 @app.post("/api/project/thumbnails")
 async def generate_project_thumbnails(payload: Dict[str, Any]):
