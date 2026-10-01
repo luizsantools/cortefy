@@ -692,28 +692,33 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
                     )
                 curr_v = "[vsplit]"
             else:
-                # 1. Centralização Inteligente de Rostos diretamente do ponto do corte
+                # 1. Centralização Inteligente e Estabilização de Rosto
                 if center_face:
                     base_x = self.detect_speaker_x_center(local_source, start, end)
                 else:
                     base_x = 656
 
-                # 2. Movimento Lateral (Drift) com Pan Suave
-                if enable_drift:
-                    crop_expr = f"crop=608:1080:x='clip({base_x}+24*sin(2*PI*t/6.5),0,in_w-608)':y=0"
+                # Garante limites válidos dentro do quadro 1920x1080
+                base_x = max(0, min(1920 - 608, int(base_x)))
+
+                # 2. Zoom Dinâmico Profissional com Cortes de Câmera (Punch-in Zoom estilo CapCut / OpusClip)
+                # Elimina completamente zoompan e oscilações contínuas que causam micro-tremedeiras
+                if enable_zoom:
+                    zoom_x = max(0, min(1920 - 532, base_x + 38))
+                    crop_expr = (
+                        f"crop=w='if(between(mod(t,7.5),3.5,6.5),532,608)':"
+                        f"h='if(between(mod(t,7.5),3.5,6.5),946,1080)':"
+                        f"x='if(between(mod(t,7.5),3.5,6.5),{zoom_x},{base_x})':"
+                        f"y='if(between(mod(t,7.5),3.5,6.5),67,0)'"
+                    )
                 else:
                     crop_expr = f"crop=608:1080:{base_x}:0"
 
-                # Modo Portrait 9:16 vertical direto normalizado
+                # Modo Portrait 9:16 vertical direto estabilizado em alta definição
                 filter_chains.append(
                     f"[0:v]scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,{crop_expr},scale=1080:1920:flags=lanczos,setsar=1[vport]"
                 )
                 curr_v = "[vport]"
-
-            # 3. Zoom Dinâmico Focal (Pulse sutil a cada ciclo)
-            if enable_zoom:
-                filter_chains.append(f"{curr_v}zoompan=z='1.0+0.05*sin(2*PI*in/100)':d=1:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=1080x1920:fps=30[vzoom]")
-                curr_v = "[vzoom]"
 
             # Velocidade acelerada para retenção (ex: 1.05x)
             if abs(speed - 1.0) > 0.01:
