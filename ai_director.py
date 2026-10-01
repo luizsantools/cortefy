@@ -17,6 +17,19 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+def sanitize_instagram_caption(text: str) -> str:
+    """Garante estritamente que a legenda tenha no máximo 5 hashtags, respeitando o limite do Instagram."""
+    if not text:
+        return text
+    tags = re.findall(r'#[\w\d_]+', text)
+    if len(tags) > 5:
+        keep = tags[:5]
+        clean = re.sub(r'#[\w\d_]+', '', text)
+        clean = re.sub(r'[ \t]+', ' ', clean)
+        clean = re.sub(r'\n{3,}', '\n\n', clean).strip()
+        return f"{clean}\n\n{' '.join(keep)}"
+    return text
+
 class AIDirector:
     def __init__(self):
         self.api_key = os.getenv("GEMINI_API_KEY", "")
@@ -87,7 +100,7 @@ MISSÃO DE CURADORIA E CONTEXTO:
 5. Crie 'caption_seo' TOTALMENTE CONTEXTUALIZADA com a discussão do vídeo:
    - Um gancho inicial instigante de 1-2 linhas sobre a obra/tema.
    - Chamada para ação (CTA) provocativa para debate nos comentários (ex: "Qual versão você prefere: o livro ou o filme?").
-   - 8 a 12 HASHTAGS ESPECÍFICAS DO ASSUNTO E DA OBRA (ex: se for A Hipótese do Amor: #hipotesedoamor #thelovehypothesis #booktokbrasil #livros #primevideo #adaptacaoliteraria #oliveeadam #filmes #resenha). NUNCA use apenas hashtags genéricas!
+   - EXATAMENTE DE 3 A 5 HASHTAGS (LIMITE MÁXIMO DE 5 HASHTAGS, pois o Instagram só permite até 5 hashtags na legenda do post). Ex: se for A Hipótese do Amor: #ahipotesedoamor #booktokbrasil #livros #primevideo #thelovehypothesis. NUNCA coloque 6 ou mais hashtags!
 
 Responda ESTRITAMENTE em formato JSON (uma lista com 5 objetos):
 [
@@ -124,6 +137,8 @@ Responda ESTRITAMENTE em formato JSON (uma lista com 5 objetos):
                         start_id = (batch_index - 1) * 5 + 1
                         for idx, c in enumerate(cuts, start_id):
                             c["id"] = f"corte_{idx:02d}"
+                            if "caption_seo" in c:
+                                c["caption_seo"] = sanitize_instagram_caption(c["caption_seo"])
                         return cuts[:5]
                 except Exception as e:
                     print(f"[AIDirector] Candidato {candidate_model} falhou: {str(e)[:100]}")
@@ -249,16 +264,17 @@ Responda ESTRITAMENTE em formato JSON (uma lista com 5 objetos):
         title_tags = [f"#{w.lower()}" for w in raw_words if w.lower() not in ["para", "como", "sobre", "entre", "onde", "porque", "esse", "esta", "deste"]][:4]
 
         if is_book_or_movie:
-            niche_hashtags = "#hipotesedoamor #booktokbrasil #livros #primevideo #adaptacaoliteraria #oliveeadam #thelovehypothesis #filmes"
+            niche_hashtags = "#ahipotesedoamor #booktokbrasil #livros #primevideo #thelovehypothesis"
             context_cta = "Qual versão você prefere: o livro ou a adaptação da Prime Video? 👀 Comente aqui embaixo sua maior revolta!"
         elif is_tech:
-            niche_hashtags = "#programacao #tecnologia #desenvolvimento #inteligenciaartificial #devbrasil #tech"
+            niche_hashtags = "#programacao #tecnologia #ia #devbrasil #tech"
             context_cta = "Você concorda com essa visão técnica? Deixe sua experiência aqui embaixo!"
         elif is_finance:
-            niche_hashtags = "#investimentos #financas #educacaofinanceira #dinheiro #rendapassiva #bolsadevalores"
+            niche_hashtags = "#investimentos #financas #educacaofinanceira #dinheiro #bolsadevalores"
             context_cta = "Você teria essa mesma estratégia financeira? Comente aqui embaixo!"
         else:
-            niche_hashtags = " ".join(title_tags) + " #cortes #viral #podcast #shorts #reels"
+            base_tags = [t for t in title_tags if t][:2]
+            niche_hashtags = " ".join((base_tags + ["#cortes", "#viral", "#shorts"])[:5])
             context_cta = "Você concorda com o que foi dito? Deixe sua opinião sincera nos comentários!"
 
         for idx, item in enumerate(selected):
@@ -290,6 +306,8 @@ Responda ESTRITAMENTE em formato JSON (uma lista com 5 objetos):
                 if len(clean_title) < 15 or clean_title[0].islower():
                     clean_title = f"{video_title or 'Momento Viral'} — Destaque #{idx+1}"
 
+            raw_caption = f"{clean_title} 👀\n\n\"{hook}\"\n\n{context_cta}\n\nSalva esse vídeo para não esquecer!\n\n{niche_hashtags}"
+
             cuts.append({
                 "id": cid,
                 "title": clean_title,
@@ -298,7 +316,7 @@ Responda ESTRITAMENTE em formato JSON (uma lista com 5 objetos):
                 "end": item["end"],
                 "virality_score": item["score"],
                 "tag": tags[idx % len(tags)],
-                "caption_seo": f"{clean_title} 👀\n\n\"{hook}\"\n\n{context_cta}\n\nSalva esse vídeo para não esquecer!\n\n{niche_hashtags}",
+                "caption_seo": sanitize_instagram_caption(raw_caption),
                 "rationale": f"Momento de alto debate com {int(item['duration'])}s de duração e gancho forte."
             })
 

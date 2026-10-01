@@ -12,6 +12,10 @@ import json
 import time
 import uuid
 import threading
+import re
+import hashlib
+import subprocess
+import concurrent.futures
 from typing import Dict, Any, Optional
 
 from fastapi import FastAPI, Request, BackgroundTasks, UploadFile, File, Form, HTTPException, Response
@@ -28,9 +32,9 @@ sys.path.insert(0, BASE_DIR)
 import db
 from ai_director import AIDirector
 from audio_ingest import AudioIngestEngine
-from video_pipeline import VideoPipeline
+from video_pipeline import VideoPipeline, get_bin, CREATE_NO_WINDOW
 
-app = FastAPI(title="Cortefy", version="3.0.0")
+app = FastAPI(title="Editize", version="3.1.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -63,8 +67,8 @@ MONTHLY_USAGE: Dict[str, int] = {"used": 18, "limit": 100}
 async def serve_root(request: Request):
     """
     Roteador de Host:
-    - Se o acesso for feito por app.cortefy.com.br (ou subdomínio app), entrega o Estúdio (Painel Logado).
-    - Se for cortefy.com.br ou acesso padrão, entrega a Landing Page com recursos e planos.
+    - Se o acesso for feito por app.editize.net (ou subdomínio app), entrega o Estúdio (Painel Logado).
+    - Se for editize.net ou acesso padrão, entrega a Landing Page com recursos e planos.
     """
     host = request.headers.get("host", "").lower()
     if host.startswith("app."):
@@ -83,7 +87,7 @@ async def serve_root(request: Request):
 
 @app.get("/app", response_class=HTMLResponse)
 async def serve_app(request: Request):
-    """Painel do Estúdio Logado (app.cortefy.com.br)"""
+    """Painel do Estúdio Logado (app.editize.net)"""
     index_path = os.path.join(BASE_DIR, "templates", "index.html")
     with open(index_path, "r", encoding="utf-8") as f:
         content = f.read()
@@ -93,7 +97,7 @@ async def serve_app(request: Request):
 
 @app.get("/landing", response_class=HTMLResponse)
 async def serve_landing():
-    """Landing Page Oficial de cortefy.com.br"""
+    """Landing Page Oficial de editize.net"""
     index_path = os.path.join(BASE_DIR, "templates", "landing.html")
     with open(index_path, "r", encoding="utf-8") as f:
         content = f.read()
@@ -135,11 +139,36 @@ async def api_register(payload: Dict[str, Any]):
     if existing:
         raise HTTPException(status_code=400, detail="Este e-mail já está cadastrado. Faça login.")
 
+def set_auth_cookie(response: Response, token: str):
+    response.set_cookie(key="editize_session", value=token, max_age=86400 * 30, httponly=True)
+    response.set_cookie(key="cortefy_session", value=token, max_age=86400 * 30, httponly=True)
+
+def clear_auth_cookie(response: Response):
+    response.delete_cookie("editize_session")
+    response.delete_cookie("cortefy_session")
+
+def get_session_token(request: Request) -> Optional[str]:
+    return request.cookies.get("editize_session") or request.cookies.get("cortefy_session")
+
+@app.post("/api/auth/register")
+async def api_register(payload: Dict[str, Any]):
+    email = payload.get("email", "").strip()
+    password = payload.get("password", "").strip()
+    name = payload.get("name", "").strip()
+    plan = payload.get("plan", "free").strip()
+
+    if not email or "@" not in email:
+        raise HTTPException(status_code=400, detail="Por favor, informe um e-mail válido.")
+
+    existing = db.get_user_by_email(email)
+    if existing:
+        raise HTTPException(status_code=400, detail="Este e-mail já está cadastrado. Faça login.")
+
     user = db.create_user(email=email, password=password, name=name, plan=plan)
     token = db.create_session(user["id"])
 
     res = JSONResponse(content={"success": True, "user": user})
-    res.set_cookie(key="cortefy_session", value=token, max_age=86400 * 30, httponly=True)
+    set_auth_cookie(res, token)
     return res
 
 @app.post("/api/auth/login")
@@ -156,7 +185,7 @@ async def api_login(payload: Dict[str, Any]):
 
     token = db.create_session(user["id"])
     res = JSONResponse(content={"success": True, "user": user})
-    res.set_cookie(key="cortefy_session", value=token, max_age=86400 * 30, httponly=True)
+    set_auth_cookie(res, token)
     return res
 
 @app.post("/api/auth/magic-link")
@@ -190,19 +219,19 @@ async def auth_magic_verify(token: str):
 
     session_token = db.create_session(user["id"])
     res = RedirectResponse(url="/app", status_code=302)
-    res.set_cookie(key="cortefy_session", value=session_token, max_age=86400 * 30, httponly=True)
+    set_auth_cookie(res, session_token)
     return res
 
 @app.get("/api/auth/me")
 async def api_auth_me(request: Request):
-    session_token = request.cookies.get("cortefy_session")
+    session_token = get_session_token(request)
     user = db.get_user_from_session(session_token)
     if not user:
-        demo = db.get_user_by_email("demo@cortefy.com.br")
+        demo = db.get_user_by_email("demo@editize.net") or db.get_user_by_email("demo@cortefy.com.br")
         user = demo or {
             "id": "user_demo",
-            "name": "Criador Cortefy",
-            "email": "demo@cortefy.com.br",
+            "name": "Criador Editize",
+            "email": "demo@editize.net",
             "plan": "creator",
             "monthly_credits": 100,
             "credits_used": MONTHLY_USAGE["used"]
@@ -211,11 +240,11 @@ async def api_auth_me(request: Request):
 
 @app.post("/api/auth/logout")
 async def api_logout(request: Request):
-    token = request.cookies.get("cortefy_session")
+    token = get_session_token(request)
     if token:
         db.delete_session(token)
     res = JSONResponse(content={"success": True})
-    res.delete_cookie("cortefy_session")
+    clear_auth_cookie(res)
     return res
 
 # ==============================================================================
@@ -227,14 +256,14 @@ async def api_create_pix(payload: Dict[str, Any], request: Request):
     plan = payload.get("plan", "creator")
     amount_cents = payload.get("amount_cents", 3990)
 
-    session_token = request.cookies.get("cortefy_session")
-    user = db.get_user_from_session(session_token) or db.get_user_by_email("demo@cortefy.com.br")
-    user_id = user["id"] if user else "user_demo_01"
+    session_token = get_session_token(request)
+    user = db.get_user_from_session(session_token) or db.get_user_by_email("demo@editize.net") or db.get_user_by_email("demo@cortefy.com.br")
+    user_id = user["id"] if user else "user_demo_editize"
 
     payment_id = f"pay_{uuid.uuid4().hex[:8]}"
 
     # Gera payload Pix no formato padrão
-    pix_code = f"00020126580014br.gov.bcb.pix0136cortefy-pay-{payment_id}5204000053039865405{amount_cents/100:.2f}5802BR5915CORTEFY SAAS6009SAO PAULO62070503***6304ABCD"
+    pix_code = f"00020126580014br.gov.bcb.pix0136editize-pay-{payment_id}5204000053039865405{amount_cents/100:.2f}5802BR5915EDITIZE SAAS6009SAO PAULO62070503***6304ABCD"
     qr_code_url = f"https://api.qrserver.com/v1/create-qr-code/?size=250x250&data={pix_code}"
 
     conn = db.get_db()
@@ -295,15 +324,15 @@ async def health_check():
     ai_ready = bool(os.getenv("GEMINI_API_KEY"))
     return {
         "status": "online",
-        "service": "Cortefy",
+        "service": "Editize.net",
         "ready": ai_ready,
-        "version": "3.0.0",
+        "version": "3.1.0",
         "timestamp": time.time()
     }
 
 @app.get("/api/monthly-stats")
 async def get_monthly_stats(request: Request):
-    session_token = request.cookies.get("cortefy_session")
+    session_token = get_session_token(request)
     user = db.get_user_from_session(session_token)
     if user:
         return {
@@ -316,7 +345,7 @@ async def get_monthly_stats(request: Request):
 
 @app.post("/api/monthly-stats/increment")
 async def increment_monthly_stats(request: Request):
-    session_token = request.cookies.get("cortefy_session")
+    session_token = get_session_token(request)
     user = db.get_user_from_session(session_token)
     if user:
         new_val = db.increment_user_credits_used(user["id"])
@@ -338,6 +367,17 @@ async def start_analysis(payload: Dict[str, Any], background_tasks: BackgroundTa
     broll_mode = payload.get("broll_mode", "auto_extract")
     broll_url = payload.get("broll_url", "").strip()
     genre = payload.get("genre", "auto").strip()
+    subtitle_style = payload.get("subtitle_style", "hormozi_pop")
+    custom_color = payload.get("custom_color")
+    custom_size = payload.get("custom_size")
+    custom_margin = payload.get("custom_margin")
+    layout = payload.get("layout", "portrait")
+    speed = float(payload.get("speed", 1.0))
+    enable_zoom = bool(payload.get("enable_zoom", True))
+    enable_drift = bool(payload.get("enable_drift", True))
+
+    if broll_mode == "external" and broll_url:
+        layout = "split_screen"
 
     if not source_url:
         sample_path = os.path.join(os.path.dirname(BASE_DIR), "video_source.mp4")
@@ -361,9 +401,9 @@ async def start_analysis(payload: Dict[str, Any], background_tasks: BackgroundTa
         def heartbeat():
             messages = [
                 (45, "Investigando o tema e contexto real do vídeo..."),
-                (65, "Calculando o potencial de retenção e ganchos virais..."),
-                (80, "Criando títulos magnéticos e legendas com SEO específico..."),
-                (92, "Preparando os players dos cortes para download imediato...")
+                (60, "Calculando o potencial de retenção e ganchos virais..."),
+                (72, "Criando títulos magnéticos e legendas com SEO..."),
+                (85, "Editando os vídeos dos cortes em 9:16 com legendas animadas...")
             ]
             idx = 0
             while heartbeat_running and idx < len(messages):
@@ -426,29 +466,91 @@ async def start_analysis(payload: Dict[str, Any], background_tasks: BackgroundTa
                     cuts = ai_director.analyze_virality(ingest_res["segments"], video_title=video_title, genre=genre)
                     words = ingest_res.get("words", [])
 
-            # 3. GERA OS VÍDEOS DOS CORTES IMEDIATAMENTE (Player pronto na tela para assistir e baixar)
-            update_progress(92, "Preparando vídeos dos cortes com player embutido...")
-            for idx, c in enumerate(cuts):
+            # 3. GERA OS VÍDEOS DOS CORTES 100% EDITADOS (Player 9:16 com legendas animadas pronto)
+            update_progress(65, "Renderizando os cortes virais em 9:16 com legendas animadas...")
+
+            # 3.1 Garante que o vídeo fonte foi baixado localmente para aceleração máxima
+            actual_source = source_url
+            if source_url.startswith("http://") or source_url.startswith("https://"):
+                url_hash = hashlib.md5(source_url.encode("utf-8")).hexdigest()[:12]
+                source_cache_file = os.path.join(video_pipeline.temp_dir, f"source_{url_hash}.mp4")
+                if not os.path.exists(source_cache_file) or os.path.getsize(source_cache_file) < 10000:
+                    update_progress(68, "Baixando vídeo fonte em alta qualidade...")
+                    ytdlp_bin = get_bin("yt-dlp")
+                    ffmpeg_bin = get_bin("ffmpeg")
+                    ffmpeg_dir = os.path.dirname(ffmpeg_bin) if os.path.exists(ffmpeg_bin) else ""
+                    cmd_down = [
+                        ytdlp_bin,
+                        "--no-playlist",
+                        "--force-overwrites",
+                        "-f", "bestvideo[height<=1080]+bestaudio/best[height<=1080]/best",
+                        "--merge-output-format", "mp4",
+                        "-o", source_cache_file
+                    ]
+                    if ffmpeg_dir:
+                        cmd_down.extend(["--ffmpeg-location", ffmpeg_dir])
+                    cmd_down.append(source_url)
+                    subprocess.run(cmd_down, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True, creationflags=CREATE_NO_WINDOW)
+                if os.path.exists(source_cache_file) and os.path.getsize(source_cache_file) > 10000:
+                    actual_source = source_cache_file
+
+            update_progress(78, "Aplicando legendas dinâmicas e enquadramento 9:16...")
+
+            def render_one_cut(item):
+                idx, c = item
+                c_id = c.get("id", f"corte_{idx+1:02d}")
+                out_filename = f"{c_id}_{uuid.uuid4().hex[:6]}.mp4"
+                out_path = os.path.join(video_pipeline.output_dir, out_filename)
                 try:
-                    c_id = c.get("id", f"corte_{idx+1:02d}")
-                    out_filename = f"{c_id}_{uuid.uuid4().hex[:6]}.mp4"
-                    out_path = os.path.join(video_pipeline.output_dir, out_filename)
-                    # Slicing instantâneo (0.05s por corte)
-                    video_pipeline.extract_or_download_segment(source_url, c["start"], c["end"], out_path)
+                    video_pipeline.render_viral_cut(
+                        source_video=actual_source,
+                        cut_info=c,
+                        words=words,
+                        layout=layout,
+                        broll_mode=broll_mode,
+                        broll_source=broll_url,
+                        subtitle_style=subtitle_style,
+                        custom_color=custom_color,
+                        custom_font_size=custom_size,
+                        custom_margin_v=custom_margin,
+                        speed=speed,
+                        enable_zoom=enable_zoom,
+                        enable_drift=enable_drift,
+                        output_file=out_path
+                    )
                     c["video_url"] = f"/outputs/{out_filename}"
                     c["filename"] = out_filename
                 except Exception as ex:
-                    print(f"[Server] Aviso ao preparar corte {c.get('id')}: {ex}")
+                    print(f"[Server] Aviso ao renderizar {c_id}: {ex}")
+                    try:
+                        video_pipeline.extract_or_download_segment(actual_source, c["start"], c["end"], out_path)
+                        c["video_url"] = f"/outputs/{out_filename}"
+                        c["filename"] = out_filename
+                    except Exception:
+                        pass
+                return c
+
+            with concurrent.futures.ThreadPoolExecutor(max_workers=3) as pool:
+                rendered_cuts = list(pool.map(render_one_cut, enumerate(cuts)))
+            cuts = rendered_cuts
 
             heartbeat_running = False
 
-            # Salva o projeto
+            # Salva o projeto com todas as opções de estilo
             project_id = f"proj_{uuid.uuid4().hex[:6]}"
             ACTIVE_PROJECTS[project_id] = {
-                "source_url": source_url,
+                "source_url": actual_source,
                 "broll_mode": broll_mode,
                 "broll_url": broll_url,
                 "genre": genre,
+                "subtitle_style": subtitle_style,
+                "custom_color": custom_color,
+                "custom_size": custom_size,
+                "custom_margin": custom_margin,
+                "layout": layout,
+                "speed": speed,
+                "enable_zoom": enable_zoom,
+                "enable_drift": enable_drift,
                 "title": video_title,
                 "duration": 0,
                 "words": words,
@@ -500,17 +602,43 @@ async def generate_more_cuts(payload: Dict[str, Any]):
     else:
         new_cuts = ai_director._heuristic_fallback([{"end": 600.0}], video_title=video_title, batch_index=batch_idx)
 
-    # Prepara os arquivos de vídeo para cada novo corte
-    for idx, c in enumerate(new_cuts):
+    # Renderiza os novos cortes em 9:16 com legendas animadas em paralelo
+    def render_one_new(item):
+        idx, c = item
+        c_id = c.get("id", f"corte_{len(existing_cuts)+idx+1:02d}")
+        out_filename = f"{c_id}_{uuid.uuid4().hex[:6]}.mp4"
+        out_path = os.path.join(video_pipeline.output_dir, out_filename)
         try:
-            c_id = c.get("id", f"corte_{len(existing_cuts)+idx+1:02d}")
-            out_filename = f"{c_id}_{uuid.uuid4().hex[:6]}.mp4"
-            out_path = os.path.join(video_pipeline.output_dir, out_filename)
-            video_pipeline.extract_or_download_segment(source_url, c["start"], c["end"], out_path)
+            video_pipeline.render_viral_cut(
+                source_video=source_url,
+                cut_info=c,
+                words=project.get("words", []),
+                layout=project.get("layout", "portrait"),
+                broll_mode=project.get("broll_mode", "auto_extract"),
+                broll_source=project.get("broll_url"),
+                subtitle_style=project.get("subtitle_style", "hormozi_pop"),
+                custom_color=project.get("custom_color"),
+                custom_font_size=project.get("custom_size"),
+                custom_margin_v=project.get("custom_margin"),
+                speed=project.get("speed", 1.0),
+                enable_zoom=project.get("enable_zoom", True),
+                enable_drift=project.get("enable_drift", True),
+                output_file=out_path
+            )
             c["video_url"] = f"/outputs/{out_filename}"
             c["filename"] = out_filename
         except Exception as ex:
-            print(f"[Server] Aviso ao preparar novo corte: {ex}")
+            print(f"[Server] Aviso ao preparar novo corte {c_id}: {ex}")
+            try:
+                video_pipeline.extract_or_download_segment(source_url, c["start"], c["end"], out_path)
+                c["video_url"] = f"/outputs/{out_filename}"
+                c["filename"] = out_filename
+            except Exception:
+                pass
+        return c
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as pool:
+        new_cuts = list(pool.map(render_one_new, enumerate(new_cuts)))
 
     project["cuts"].extend(new_cuts)
     return {
@@ -611,5 +739,5 @@ if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("PORT", 8000))
     host = os.getenv("HOST", "127.0.0.1")
-    print(f"\n⚡ [CORTEFY] Servidor iniciado em http://{host}:{port}\n")
+    print(f"\n⚡ [EDITIZE.NET] Servidor iniciado em http://{host}:{port}\n")
     uvicorn.run(app, host=host, port=port)

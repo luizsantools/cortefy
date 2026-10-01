@@ -92,7 +92,8 @@ class VideoPipeline:
         style_key: str = "hormozi_pop",
         custom_color: Optional[str] = None,
         custom_font_size: Optional[int] = None,
-        custom_margin_v: Optional[int] = None
+        custom_margin_v: Optional[int] = None,
+        cut_info: Optional[Dict[str, Any]] = None
     ) -> str:
         """Gera legendas animadas em formato Advanced SubStation Alpha (.ass) com 10 estilos estilo CapCut."""
         # 10 Modelos de Legendas Inspirados em Ferramentas Populares (CapCut/Hormozi/MrBeast)
@@ -191,10 +192,28 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             cs = int((seconds - int(seconds)) * 100)
             return f"{h:01d}:{m:02d}:{s:02d}.{cs:02d}"
 
-        # Filtra palavras do corte
-        cut_words = [w for w in words if w.get("start", 0) >= cut_start and w.get("end", 0) <= cut_end]
+        # Filtra palavras do corte com margem suave de 0.2s
+        cut_words = [w for w in words if w.get("start", 0) >= (cut_start - 0.2) and w.get("end", 0) <= (cut_end + 0.2)]
+        
+        # Caso haja poucas palavras mapeadas, utiliza o gancho/título real para sincronizar as legendas
+        if len(cut_words) < 3 and cut_info:
+            fallback_text = cut_info.get("hook") or cut_info.get("text") or cut_info.get("title") or ""
+            clean_text = re.sub(r'["“”]', '', fallback_text).strip()
+            raw_w = [w for w in clean_text.split() if w]
+            if raw_w:
+                dur = max(3.0, cut_end - cut_start)
+                step = dur / max(1, len(raw_w))
+                cut_words = []
+                for i, w in enumerate(raw_w):
+                    s = cut_start + i * step
+                    cut_words.append({
+                        "word": w,
+                        "start": round(s, 2),
+                        "end": round(s + min(step, 0.4), 2)
+                    })
+
         if not cut_words:
-            cut_words = [{"word": "Cortefy", "start": cut_start, "end": cut_end}]
+            cut_words = [{"word": "Editize", "start": cut_start, "end": cut_end}]
 
         # Agrupa em blocos de 2 a 3 palavras para ritmo viral estilo CapCut
         dialogue_lines = []
@@ -217,17 +236,18 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         source_video: str,
         cut_info: Dict[str, Any],
         words: List[Dict[str, Any]],
-        layout: str = "split_screen", # "split_screen" ou "portrait"
+        layout: str = "portrait", # "portrait" ou "split_screen"
         broll_mode: str = "auto_extract", # "external" ou "auto_extract"
         broll_source: Optional[str] = None, # Link ou arquivo do trailer
         subtitle_style: str = "hormozi_pop",
         custom_color: Optional[str] = None,
         custom_font_size: Optional[int] = None,
         custom_margin_v: Optional[int] = None,
-        speed: float = 1.05,
+        speed: float = 1.0,
         enable_zoom: bool = True,
         enable_drift: bool = True,
         bgm_name: str = "Cyber Lounge Sem Copyright",
+        output_file: Optional[str] = None,
         progress_cb = None
     ) -> str:
         """Renderiza o corte viral final com alta retenção em formato 9:16 (1080x1920)."""
@@ -241,8 +261,11 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         if progress_cb:
             progress_cb(10, f"Obtendo trecho em alta resolução ({int(duration)}s)...")
 
-        safe_name = re.sub(r'[^a-zA-Z0-9_\-]', '_', f"{cid}_{title}") + ".mp4"
-        final_file = os.path.join(self.output_dir, safe_name)
+        if output_file:
+            final_file = output_file
+        else:
+            safe_name = re.sub(r'[^a-zA-Z0-9_\-]', '_', f"{cid}_{title}") + ".mp4"
+            final_file = os.path.join(self.output_dir, safe_name)
 
         timestamp_id = int(time.time() * 1000)
         temp_segment = os.path.join(self.temp_dir, f"raw_{cid}_{timestamp_id}.mp4")
@@ -266,7 +289,8 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
                 style_key=subtitle_style,
                 custom_color=custom_color,
                 custom_font_size=custom_font_size,
-                custom_margin_v=custom_margin_v
+                custom_margin_v=custom_margin_v,
+                cut_info=cut_info
             )
 
             # 3. Monta filtros de vídeo
@@ -338,7 +362,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
                 ffmpeg_bin, *inputs,
                 '-filter_complex', filter_complex_str,
                 '-map', '[vfinal]', '-map', audio_map,
-                '-c:v', 'libx264', '-preset', 'veryfast', '-tune', 'fastdecode', '-threads', '0', '-crf', '22',
+                '-c:v', 'libx264', '-preset', 'ultrafast', '-tune', 'fastdecode', '-threads', '0', '-crf', '22',
                 '-c:a', 'aac', '-b:a', '192k',
                 final_file, '-y'
             ]

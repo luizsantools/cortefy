@@ -66,16 +66,18 @@ def init_db():
     conn.commit()
 
     # Cria usuário de demonstração se não existir
-    demo_email = "demo@cortefy.com.br"
-    cursor.execute("SELECT id FROM users WHERE email = ?", (demo_email,))
-    if not cursor.fetchone():
-        demo_id = "user_demo_01"
-        pwd_hash = hash_password("cortefy123")
-        cursor.execute("""
-        INSERT INTO users (id, email, password_hash, name, plan, monthly_credits, credits_used)
-        VALUES (?, ?, ?, ?, 'creator', 100, 18)
-        """, (demo_id, demo_email, pwd_hash, "Criador Cortefy"))
-        conn.commit()
+    for demo_email, demo_pwd, demo_name, demo_id in [
+        ("demo@editize.net", "editize123", "Criador Editize", "user_demo_editize"),
+        ("demo@cortefy.com.br", "cortefy123", "Criador Editize", "user_demo_01")
+    ]:
+        cursor.execute("SELECT id FROM users WHERE email = ?", (demo_email,))
+        if not cursor.fetchone():
+            pwd_hash = hash_password(demo_pwd)
+            cursor.execute("""
+            INSERT INTO users (id, email, password_hash, name, plan, monthly_credits, credits_used)
+            VALUES (?, ?, ?, ?, 'creator', 100, 18)
+            """, (demo_id, demo_email, pwd_hash, demo_name))
+            conn.commit()
 
     conn.close()
 

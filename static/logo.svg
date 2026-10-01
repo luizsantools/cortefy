@@ -1,22 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 250 50" width="250" height="50" fill="none">
-  <!-- Neo-Brutalist Icon Box with hard shadow -->
+  <!-- Neo-Brutalist Icon Box with hard offset shadow -->
   <g transform="translate(4, 4)">
     <!-- Hard black shadow -->
-    <rect x="3" y="3" width="40" height="40" rx="8" fill="#000000"/>
+    <rect x="3.5" y="3.5" width="40" height="40" rx="8" fill="#000000"/>
     <!-- Orange box with 2.5px black border -->
     <rect width="40" height="40" rx="8" fill="#FF5C00" stroke="#000000" stroke-width="2.5"/>
-    <!-- Play cut icon inside -->
-    <path d="M 16 12 L 30 20 L 16 28 Z" fill="#FFFFFF" stroke="#000000" stroke-width="1.5" stroke-linejoin="round"/>
-    <path d="M 28 11 L 32 7" stroke="#000000" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- Stylized Cut / Edit symbol inside -->
+    <path d="M 14 13 L 28 24 L 14 35 Z" fill="#FFFFFF" stroke="#000000" stroke-width="1.8" stroke-linejoin="round"/>
+    <circle cx="28" cy="15" r="3" fill="#0052FF" stroke="#000000" stroke-width="1.5"/>
+    <path d="M 23 8 L 30 15 L 34 11" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
   </g>
   
-  <!-- Typography "CORTEFY" in bold neo-brutalist black -->
-  <text x="56" y="33" font-family="'Space Grotesk', 'Plus Jakarta Sans', -apple-system, sans-serif" font-size="24" font-weight="900" fill="#000000" letter-spacing="-0.8">CORTEFY</text>
+  <!-- Typography "EDITIZE" in bold neo-brutalist black -->
+  <text x="56" y="33" font-family="'Space Grotesk', 'Plus Jakarta Sans', -apple-system, sans-serif" font-size="25" font-weight="900" fill="#000000" letter-spacing="-0.8">EDITIZE</text>
   
-  <!-- Neo-Brutalist Cobalt Blue Pill Sticker -->
-  <g transform="translate(178, 14)">
-    <rect x="2" y="2" width="46" height="22" rx="6" fill="#000000"/>
-    <rect width="46" height="22" rx="6" fill="#0052FF" stroke="#000000" stroke-width="2"/>
-    <text x="10" y="15" font-family="'JetBrains Mono', 'Space Grotesk', monospace" font-size="11" font-weight="900" fill="#FFFFFF" letter-spacing="0.5">VIRAL</text>
+  <!-- Neo-Brutalist Cobalt Blue ".NET" Pill Sticker -->
+  <g transform="translate(170, 13)">
+    <rect x="2.5" y="2.5" width="56" height="23" rx="6" fill="#000000"/>
+    <rect width="56" height="23" rx="6" fill="#0052FF" stroke="#000000" stroke-width="2"/>
+    <text x="8" y="16" font-family="'JetBrains Mono', 'Space Grotesk', monospace" font-size="12" font-weight="900" fill="#FFFFFF" letter-spacing="0.5">.NET</text>
   </g>
 </svg>

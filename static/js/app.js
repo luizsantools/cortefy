@@ -39,15 +39,15 @@ async function initMonthlyStats() {
         if (res.ok) {
             const data = await res.json();
             updateMonthlyUI(data.used, data.limit);
-            localStorage.setItem("cortefy_monthly_used", data.used);
-            localStorage.setItem("cortefy_monthly_limit", data.limit);
+            localStorage.setItem("editize_monthly_used", data.used);
+            localStorage.setItem("editize_monthly_limit", data.limit);
             return;
         }
     } catch (e) {
         // Fallback local
     }
-    const used = parseInt(localStorage.getItem("cortefy_monthly_used") || "18");
-    const limit = parseInt(localStorage.getItem("cortefy_monthly_limit") || "100");
+    const used = parseInt(localStorage.getItem("editize_monthly_used") || localStorage.getItem("cortefy_monthly_used") || "18");
+    const limit = parseInt(localStorage.getItem("editize_monthly_limit") || localStorage.getItem("cortefy_monthly_limit") || "100");
     updateMonthlyUI(used, limit);
 }
 
@@ -70,7 +70,7 @@ function incrementMonthlyCounter() {
     const limit = elLimit ? parseInt(elLimit.innerText) || 100 : 100;
     const next = Math.min(limit, current + 1);
     updateMonthlyUI(next, limit);
-    localStorage.setItem("cortefy_monthly_used", next);
+    localStorage.setItem("editize_monthly_used", next);
 
     fetch("/api/monthly-stats/increment", { method: "POST" }).catch(() => {});
 }
@@ -183,7 +183,7 @@ function saveSubtitleTemplate() {
         timestamp: Date.now()
     };
 
-    localStorage.setItem("cortefy_sub_template", JSON.stringify(templateData));
+    localStorage.setItem("editize_sub_template", JSON.stringify(templateData));
     
     const badge = document.getElementById("saved-template-badge");
     if (badge) badge.style.display = "inline-flex";
@@ -193,7 +193,7 @@ function saveSubtitleTemplate() {
 
 function loadSavedTemplate() {
     try {
-        const raw = localStorage.getItem("cortefy_sub_template");
+        const raw = localStorage.getItem("editize_sub_template") || localStorage.getItem("cortefy_sub_template");
         if (raw) {
             const tpl = JSON.parse(raw);
             if (tpl.styleKey) setSubStyle(tpl.styleKey);
@@ -314,6 +314,13 @@ async function startAnalysis() {
     const isAutoBroll = document.getElementById("btn-broll-auto")?.classList.contains("tech-card-active") ?? true;
     const brollUrl = document.getElementById("input-broll-url")?.value.trim() || "";
     const activeGenre = window.selectedGenre || document.getElementById("selected-genre-input")?.value || selectedGenre || "auto";
+    const activeSubStyle = window.selectedSubStyle || selectedSubStyle || "hormozi_pop";
+    const customColor = document.getElementById("custom-sub-color")?.value || "";
+    const customSize = parseInt(document.getElementById("custom-sub-size")?.value) || 75;
+    const customMargin = parseInt(document.getElementById("custom-sub-position")?.value) || 420;
+    const toggleZoom = document.getElementById("toggle-zoom")?.checked ?? true;
+    const toggleDrift = document.getElementById("toggle-drift")?.checked ?? true;
+    const toggleCenterFace = document.getElementById("toggle-center-face")?.checked ?? true;
 
     if (!url) {
         showToast("Por favor, cole um link do YouTube para começar.", "error");
@@ -323,7 +330,7 @@ async function startAnalysis() {
 
     const btn = document.getElementById("btn-advance");
     btn.disabled = true;
-    btn.innerHTML = `<span class="radar-dot"></span><span>Analisando vídeo em alta velocidade...</span>`;
+    btn.innerHTML = `<span class="radar-dot"></span><span>Analisando e editando os cortes virais...</span>`;
 
     const progSection = document.getElementById("progress-section");
     if (progSection) progSection.style.display = "block";
@@ -337,7 +344,15 @@ async function startAnalysis() {
                 source_url: url,
                 broll_mode: isAutoBroll ? "auto_extract" : "external",
                 broll_url: brollUrl,
-                genre: activeGenre
+                genre: activeGenre,
+                subtitle_style: activeSubStyle,
+                custom_color: customColor,
+                custom_size: customSize,
+                custom_margin: customMargin,
+                enable_zoom: toggleZoom,
+                enable_drift: toggleDrift,
+                center_face: toggleCenterFace,
+                layout: (brollUrl && !isAutoBroll) ? "split_screen" : "portrait"
             })
         });
 
