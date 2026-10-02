@@ -272,39 +272,50 @@ class VideoPipeline:
         return output_path
 
     def detect_speaker_x_center(self, video_path: str, start: float = 0.0, end: float = 10.0) -> int:
-        """Detecta o centro horizontal do interlocutor no corte para enquadramento 9:16 preciso."""
+        """Detecta o centro horizontal do interlocutor no corte usando amostragem multi-ponto e mediana para enquadramento 9:16 impecável."""
         try:
-            mid = (start + end) / 2.0
             ffmpeg_bin = get_bin("ffmpeg")
-            sample_img = os.path.join(self.temp_dir, f"face_detect_{int(time.time()*1000)}.jpg")
-            cmd = [
-                ffmpeg_bin, "-y", "-ss", f"{mid:.2f}", "-i", video_path,
-                "-vframes", "1", "-q:v", "3", sample_img
-            ]
-            subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=CREATE_NO_WINDOW)
-            if os.path.exists(sample_img) and os.path.getsize(sample_img) > 3000:
-                import rembg
-                import numpy as np
-                from PIL import Image
-                im = Image.open(sample_img)
-                orig_w, orig_h = im.size
-                small = im.copy()
-                small.thumbnail((320, 180))
-                session = rembg.new_session("u2netp")
-                mask = rembg.remove(small, session=session, only_mask=True)
-                arr = np.array(mask)
-                col_sums = np.sum(arr > 40, axis=0)
-                try:
-                    os.remove(sample_img)
-                except Exception:
-                    pass
-                if np.sum(col_sums) > 0:
-                    x_ratio = np.average(np.arange(len(col_sums)), weights=col_sums) / len(col_sums)
-                    x_center = int(x_ratio * orig_w)
-                    crop_w = int(orig_h * (9 / 16))
-                    return max(0, min(orig_w - crop_w, x_center - (crop_w // 2)))
+            dur = max(2.0, end - start)
+            detected_x = []
+
+            import rembg
+            import numpy as np
+            from PIL import Image
+            session = rembg.new_session("u2netp")
+
+            # Amostra 5 pontos ao longo do corte (15%, 35%, 50%, 65%, 85%)
+            for frac in [0.15, 0.35, 0.50, 0.65, 0.85]:
+                t = start + frac * dur
+                sample_img = os.path.join(self.temp_dir, f"face_detect_{int(time.time()*1000)}_{int(frac*100)}.jpg")
+                cmd = [
+                    ffmpeg_bin, "-y", "-ss", f"{t:.2f}", "-i", video_path,
+                    "-vframes", "1", "-q:v", "3", sample_img
+                ]
+                subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=CREATE_NO_WINDOW)
+                if os.path.exists(sample_img) and os.path.getsize(sample_img) > 3000:
+                    try:
+                        im = Image.open(sample_img)
+                        orig_w, orig_h = im.size
+                        small = im.copy()
+                        small.thumbnail((320, 180))
+                        mask = rembg.remove(small, session=session, only_mask=True)
+                        arr = np.array(mask)
+                        col_sums = np.sum(arr > 40, axis=0)
+                        if np.sum(col_sums) > 0:
+                            x_ratio = np.average(np.arange(len(col_sums)), weights=col_sums) / len(col_sums)
+                            detected_x.append(int(x_ratio * orig_w))
+                    finally:
+                        try:
+                            os.remove(sample_img)
+                        except Exception:
+                            pass
+
+            if detected_x:
+                med_center = int(np.median(detected_x))
+                crop_w = int(1080 * (9 / 16))
+                return max(0, min(1920 - crop_w, med_center - (crop_w // 2)))
         except Exception as e:
-            print(f"[VideoPipeline] Detecção de centro de rosto: {e}")
+            print(f"[VideoPipeline] Detecção de centro de rosto multi-ponto: {e}")
         return 656  # Centro padrão em 1920x1080: (1920 - 608) / 2
 
     def generate_ass_subtitles(
@@ -405,7 +416,19 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             cs = int((seconds - int(seconds)) * 100)
             return f"{h:01d}:{m:02d}:{s:02d}.{cs:02d}"
 
+        def clean_word(w: str) -> str:
+            if not w:
+                return ""
+            # Remove qualquer tag HTML como <br>, <br/>, <br class="...">, <span>, etc.
+            w = re.sub(r'<[^>]+>', '', str(w))
+            # Remove quebras de linha e caracteres de controle
+            w = re.sub(r'[\r\n\t]+', ' ', w)
+            # Remove chaves ASS para evitar injeção de tags acidentais
+            w = w.replace('{', '').replace('}', '').strip()
+            return w
+
         def apply_case(w: str) -> str:
+            w = clean_word(w)
             if not w:
                 return ""
             if casing == "uppercase":
@@ -423,19 +446,30 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 
         if len(cut_words) < 3 and cut_info:
             fallback_text = cut_info.get("hook") or cut_info.get("text") or cut_info.get("title") or ""
-            clean_text = re.sub(r'["“”]', '', fallback_text).strip()
-            raw_w = [w for w in clean_text.split() if w]
+            clean_text = re.sub(r'<[^>]+>', ' ', fallback_text)
+            clean_text = re.sub(r'["“”]', '', clean_text).strip()
+            raw_w = [w for w in clean_text.split() if clean_word(w)]
             if raw_w:
                 dur = max(3.0, cut_end - cut_start)
                 step = dur / max(1, len(raw_w))
                 cut_words = []
                 for i, w in enumerate(raw_w):
-                    s = cut_start + i * step
-                    cut_words.append({
-                        "word": w,
-                        "start": round(s, 2),
-                        "end": round(s + min(step, 0.4), 2)
-                    })
+                    cw = clean_word(w)
+                    if cw:
+                        s = cut_start + i * step
+                        cut_words.append({
+                            "word": cw,
+                            "start": round(s, 2),
+                            "end": round(s + min(step, 0.4), 2)
+                        })
+
+        # Sanitiza rigorosamente cut_words para eliminar qualquer resíduo de <br> ou tags HTML
+        sanitized_words = []
+        for w_item in cut_words:
+            w_str = clean_word(w_item.get("word", ""))
+            if w_str:
+                sanitized_words.append({**w_item, "word": w_str})
+        cut_words = sanitized_words
 
         if not cut_words:
             cut_words = [{"word": "EDITIZE", "start": cut_start, "end": cut_end}]
@@ -701,16 +735,47 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
                 # Garante limites válidos dentro do quadro 1920x1080
                 base_x = max(0, min(1920 - 608, int(base_x)))
 
-                # 2. Zoom Dinâmico Profissional com Cortes de Câmera (Punch-in Zoom estilo CapCut / OpusClip)
-                # Elimina completamente zoompan e oscilações contínuas que causam micro-tremedeiras
+                # 2. Zoom Dinâmico Inteligente em Início de Fala (Punch-in Zoom estilo CapCut / OpusClip)
                 if enable_zoom:
-                    zoom_x = max(0, min(1920 - 532, base_x + 38))
-                    crop_expr = (
-                        f"crop=w='if(between(mod(t,7.5),3.5,6.5),532,608)':"
-                        f"h='if(between(mod(t,7.5),3.5,6.5),946,1080)':"
-                        f"x='if(between(mod(t,7.5),3.5,6.5),{zoom_x},{base_x})':"
-                        f"y='if(between(mod(t,7.5),3.5,6.5),67,0)'"
-                    )
+                    zoom_w = 520
+                    zoom_h = 924
+                    zoom_x = max(0, min(1920 - zoom_w, base_x + 44))
+
+                    zoom_intervals = []
+                    words_src = cut_words_to_use or []
+                    if words_src:
+                        last_end_time = 0.0
+                        next_allowed_zoom = 5.5
+                        for idx_w, w_item in enumerate(words_src):
+                            w_s = max(0.0, w_item.get("start", 0) - start)
+                            w_e = max(w_s, w_item.get("end", 0) - start)
+                            is_pause = (w_s - last_end_time) > 0.35
+                            prev_w = str(words_src[idx_w - 1].get("word", "")) if idx_w > 0 else ""
+                            is_sentence = idx_w == 0 or is_pause or prev_w.endswith(('.', '!', '?'))
+
+                            if is_sentence and w_s >= next_allowed_zoom and (w_s + 3.5) < (end - start - 2.5):
+                                z_dur = min(3.8, (end - start) - w_s - 1.0)
+                                zoom_intervals.append((round(w_s, 2), round(w_s + z_dur, 2)))
+                                next_allowed_zoom = w_s + 14.0
+                            last_end_time = w_e
+
+                    if not zoom_intervals:
+                        total_d = end - start
+                        if total_d >= 35.0:
+                            zoom_intervals = [(round(total_d * 0.22, 2), round(total_d * 0.22 + 3.5, 2)), (round(total_d * 0.62, 2), round(total_d * 0.62 + 3.5, 2))]
+                        elif total_d >= 15.0:
+                            zoom_intervals = [(round(total_d * 0.35, 2), round(total_d * 0.35 + 3.0, 2))]
+
+                    if zoom_intervals:
+                        zoom_cond = "+".join([f"between(t,{zs:.2f},{ze:.2f})" for zs, ze in zoom_intervals])
+                        crop_expr = (
+                            f"crop=w='if({zoom_cond},{zoom_w},608)':"
+                            f"h='if({zoom_cond},{zoom_h},1080)':"
+                            f"x='if({zoom_cond},{zoom_x},{base_x})':"
+                            f"y=0"
+                        )
+                    else:
+                        crop_expr = f"crop=608:1080:{base_x}:0"
                 else:
                     crop_expr = f"crop=608:1080:{base_x}:0"
 

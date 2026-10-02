@@ -1200,6 +1200,9 @@ function renderCutsList(cuts, append = false) {
                 <div class="pt-3 border-t-2 border-black flex flex-wrap items-center justify-between gap-3">
                     <span class="text-xs text-zinc-700 font-bold">9:16 Vertical • Efeitos Ativos</span>
                     <div class="flex items-center gap-2 flex-wrap">
+                        <button type="button" onclick="openStudioTimelineModal('${cut.id}')" class="btn-primary text-xs py-2 px-3.5 font-black flex items-center gap-1.5 shadow-[2px_2px_0px_#000]" style="background-color: #FF5C00; color: #000;" title="Abrir editor completo de timeline multi-pistas">
+                            <span>🎬 Editar Corte (Timeline)</span>
+                        </button>
                         <a id="btn-download-${cut.id}" href="${videoSrc || '#'}" download="${escapeHtml(cut.title || cut.id)}.mp4" class="btn-neon text-xs py-2 px-3.5 font-black flex items-center gap-1.5 shadow-[2px_2px_0px_#000]">
                             <span>⬇️ Baixar Vídeo</span>
                         </a>
@@ -1947,6 +1950,630 @@ function closeVideoModal() {
     if (video) video.pause();
     if (modal) modal.style.display = "none";
 }
+
+// ============================================================================
+// STUDIO TIMELINE EDITOR (Multi-Pistas Profissional / OpusClip / CapCut Style)
+// ============================================================================
+
+let activeStudioCutId = null;
+let studioWords = [];
+let isStudioScrubbing = false;
+let studioVideoScale = 100;
+let studioVideoPosX = 0;
+let studioVideoRadius = 0;
+
+function openStudioTimelineModal(cutId) {
+    if (!currentCuts || currentCuts.length === 0) {
+        showToast("Nenhum corte carregado no momento.", "error");
+        return;
+    }
+    const cut = currentCuts.find(c => c.id === cutId);
+    if (!cut) {
+        showToast("Corte não encontrado.", "error");
+        return;
+    }
+
+    activeStudioCutId = cutId;
+    const modal = document.getElementById("modal-studio-editor");
+    if (!modal) return;
+
+    // Título do corte
+    const titleEl = document.getElementById("studio-cut-title");
+    if (titleEl) titleEl.innerText = cut.title || `Corte #${cut.id}`;
+
+    // Configura o player de vídeo 9:16
+    const video = document.getElementById("studio-video-player");
+    if (video) {
+        video.src = cut.video_url || "";
+        video.currentTime = 0;
+        video.ontimeupdate = handleStudioTimeUpdate;
+        video.onloadedmetadata = () => {
+            buildStudioTimelineTracks();
+            updateStudioTimecode();
+        };
+        video.onplay = () => updateStudioPlayButton(true);
+        video.onpause = () => updateStudioPlayButton(false);
+        video.onended = () => updateStudioPlayButton(false);
+    }
+
+    // Reseta inspetor de propriedades
+    studioVideoScale = 100;
+    studioVideoPosX = 0;
+    studioVideoRadius = 0;
+    const scaleInput = document.getElementById("studio-prop-scale");
+    if (scaleInput) scaleInput.value = 100;
+    const scaleVal = document.getElementById("studio-scale-val");
+    if (scaleVal) scaleVal.innerText = "100%";
+
+    const posInput = document.getElementById("studio-prop-posx");
+    if (posInput) posInput.value = 0;
+    const posVal = document.getElementById("studio-posx-val");
+    if (posVal) posVal.innerText = "Centro";
+
+    const radInput = document.getElementById("studio-prop-radius");
+    if (radInput) radInput.value = 0;
+    const radVal = document.getElementById("studio-radius-val");
+    if (radVal) radVal.innerText = "0px";
+
+    const zoomToggle = document.getElementById("studio-prop-zoom");
+    if (zoomToggle) zoomToggle.checked = (cut.enable_zoom !== false);
+
+    const subSelect = document.getElementById("studio-prop-sub-style");
+    if (subSelect) subSelect.value = cut.subtitle_style || window.selectedSubStyle || "hormozi_pop";
+
+    const hlColor = document.getElementById("studio-prop-highlight");
+    if (hlColor) hlColor.value = cut.custom_highlight_color || "#FFE500";
+
+    updateStudioVideoTransform();
+    updateStudioSubtitlePreviewOverlay();
+
+    // Carrega transcrição e falas
+    studioWords = [];
+    if (cut.edited_subtitles && Array.isArray(cut.edited_subtitles) && cut.edited_subtitles.length > 0) {
+        studioWords = JSON.parse(JSON.stringify(cut.edited_subtitles));
+        renderStudioCuesList();
+        buildStudioTimelineTracks();
+    } else if (currentProjectId) {
+        fetch(`/api/studio/cut-details?project_id=${encodeURIComponent(currentProjectId)}&cut_id=${encodeURIComponent(cutId)}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.words && data.words.length > 0) {
+                    studioWords = data.words;
+                    cut.edited_subtitles = studioWords;
+                } else {
+                    generateFallbackStudioWords(cut);
+                }
+                renderStudioCuesList();
+                buildStudioTimelineTracks();
+            })
+            .catch(() => {
+                generateFallbackStudioWords(cut);
+                renderStudioCuesList();
+                buildStudioTimelineTracks();
+            });
+    } else {
+        generateFallbackStudioWords(cut);
+        renderStudioCuesList();
+        buildStudioTimelineTracks();
+    }
+
+    modal.style.display = "flex";
+    document.body.style.overflow = "hidden";
+    markStudioSavedState(true);
+}
+window.openStudioTimelineModal = openStudioTimelineModal;
+
+function closeStudioEditorModal() {
+    const modal = document.getElementById("modal-studio-editor");
+    const video = document.getElementById("studio-video-player");
+    if (video) video.pause();
+    if (modal) modal.style.display = "none";
+    document.body.style.overflow = "";
+    activeStudioCutId = null;
+}
+window.closeStudioEditorModal = closeStudioEditorModal;
+
+function generateFallbackStudioWords(cut) {
+    const baseText = cut.transcription || cut.hook || cut.title || "Momento incrível selecionado com alto potencial viral";
+    const rawWords = baseText.replace(/<[^>]+>/g, " ").trim().split(/\s+/).filter(Boolean);
+    const cutStart = cut.start || 0;
+    const cutEnd = cut.end || (cutStart + 45);
+    const dur = Math.max(5, cutEnd - cutStart);
+    const step = dur / Math.max(1, rawWords.length);
+
+    studioWords = rawWords.map((w, idx) => ({
+        word: w,
+        start: roundTwoDec(cutStart + idx * step),
+        end: roundTwoDec(cutStart + (idx + 1) * step)
+    }));
+    cut.edited_subtitles = studioWords;
+}
+
+function roundTwoDec(num) {
+    return Math.round((num + Number.EPSILON) * 100) / 100;
+}
+
+function markStudioSavedState(isSaved) {
+    const badge = document.getElementById("studio-save-badge");
+    if (!badge) return;
+    if (isSaved) {
+        badge.innerText = "✓ Salvo";
+        badge.className = "badge-neon text-[9px]";
+    } else {
+        badge.innerText = "● Alterado";
+        badge.className = "badge-blue text-[9px]";
+    }
+}
+
+function studioTogglePlay() {
+    const video = document.getElementById("studio-video-player");
+    if (!video) return;
+    if (video.paused) {
+        video.play().catch(() => {});
+    } else {
+        video.pause();
+    }
+}
+window.studioTogglePlay = studioTogglePlay;
+
+function updateStudioPlayButton(isPlaying) {
+    const btn = document.getElementById("studio-btn-play");
+    if (btn) {
+        btn.innerHTML = isPlaying ? `<span>⏸ Pause</span>` : `<span>▶ Play</span>`;
+    }
+}
+
+function handleStudioTimeUpdate() {
+    updateStudioTimecode();
+    updateStudioPlayhead();
+    highlightActiveStudioCue();
+}
+
+function updateStudioTimecode() {
+    const video = document.getElementById("studio-video-player");
+    const tc = document.getElementById("studio-timecode");
+    if (video && tc) {
+        const cur = video.currentTime || 0;
+        const dur = video.duration || 1;
+        tc.innerText = `${formatSeconds(cur)} / ${formatSeconds(dur)}`;
+    }
+}
+
+function updateStudioPlayhead() {
+    if (isStudioScrubbing) return;
+    const video = document.getElementById("studio-video-player");
+    const playhead = document.getElementById("studio-playhead");
+    const trackRoot = document.getElementById("studio-tracks-container");
+    if (!video || !playhead || !trackRoot) return;
+
+    const dur = video.duration || 1;
+    const pct = Math.max(0, Math.min(1, video.currentTime / dur));
+    const laneWidth = trackRoot.clientWidth - 80;
+    const leftPx = 80 + (pct * Math.max(0, laneWidth));
+    playhead.style.left = `${leftPx}px`;
+}
+
+function buildStudioTimelineTracks() {
+    const video = document.getElementById("studio-video-player");
+    const ruler = document.getElementById("studio-timeline-ruler");
+    const laneCaps = document.getElementById("studio-lane-caps");
+    if (!video || !ruler || !laneCaps) return;
+
+    const dur = Math.max(5, video.duration || 60);
+
+    // Constrói marcas da régua de tempo
+    ruler.innerHTML = "";
+    const stepSec = dur > 60 ? 10 : 5;
+    const totalMarks = Math.ceil(dur / stepSec);
+    for (let i = 0; i <= totalMarks; i++) {
+        const markSec = i * stepSec;
+        if (markSec > dur) break;
+        const pct = (markSec / dur) * 100;
+        const span = document.createElement("span");
+        span.className = "absolute";
+        span.style.left = `calc(80px + ${pct}% * ((100% - 80px) / 100))`;
+        span.innerText = formatSeconds(markSec);
+        ruler.appendChild(span);
+    }
+
+    // Constrói blocos da pista de legendas
+    laneCaps.innerHTML = "";
+    if (studioWords && studioWords.length > 0) {
+        const cut = currentCuts.find(c => c.id === activeStudioCutId);
+        const cutStart = (cut && cut.start) ? cut.start : studioWords[0].start;
+        const totalDur = dur;
+
+        // Agrupa palavras em frases de 3 a 5 palavras para timeline
+        const chunkSize = 4;
+        for (let i = 0; i < studioWords.length; i += chunkSize) {
+            const chunk = studioWords.slice(i, i + chunkSize);
+            const sTime = Math.max(0, chunk[0].start - cutStart);
+            const eTime = Math.max(sTime + 0.5, chunk[chunk.length - 1].end - cutStart);
+
+            const leftPct = Math.min(98, (sTime / totalDur) * 100);
+            const widthPct = Math.max(2.5, Math.min(100 - leftPct, ((eTime - sTime) / totalDur) * 100));
+
+            const block = document.createElement("div");
+            block.className = "studio-block-cap";
+            block.style.left = `${leftPct}%`;
+            block.style.width = `${widthPct}%`;
+            block.title = chunk.map(w => w.word).join(" ");
+            block.innerText = chunk.map(w => w.word).join(" ");
+
+            block.onclick = (e) => {
+                e.stopPropagation();
+                video.currentTime = sTime;
+                video.play().catch(() => {});
+            };
+
+            laneCaps.appendChild(block);
+        }
+    }
+}
+
+function renderStudioCuesList() {
+    const container = document.getElementById("studio-cues-container");
+    const countEl = document.getElementById("studio-cues-count");
+    if (!container) return;
+
+    container.innerHTML = "";
+    if (countEl) countEl.innerText = `${studioWords.length} palavras`;
+
+    if (!studioWords || studioWords.length === 0) {
+        container.innerHTML = `<div class="text-zinc-500 text-xs p-3 text-center">Nenhuma legenda encontrada para este corte.</div>`;
+        return;
+    }
+
+    const cut = currentCuts.find(c => c.id === activeStudioCutId);
+    const cutStart = (cut && cut.start) ? cut.start : studioWords[0].start;
+
+    // Agrupa palavras em linhas de falas de 3 a 5 palavras
+    const chunkSize = 4;
+    for (let i = 0; i < studioWords.length; i += chunkSize) {
+        const chunk = studioWords.slice(i, i + chunkSize);
+        const groupIndex = Math.floor(i / chunkSize);
+        const sTime = Math.max(0, chunk[0].start - cutStart);
+        const eTime = Math.max(sTime + 0.4, chunk[chunk.length - 1].end - cutStart);
+
+        const card = document.createElement("div");
+        card.id = `studio-cue-card-${groupIndex}`;
+        card.className = "studio-cue-card flex flex-col gap-1.5";
+
+        const header = document.createElement("div");
+        header.className = "flex items-center justify-between text-[10px] text-zinc-400 font-mono";
+        header.innerHTML = `
+            <span class="text-[#FF5C00] font-bold">⏱ ${formatSeconds(sTime)} - ${formatSeconds(eTime)}</span>
+            <button type="button" class="text-zinc-400 hover:text-white px-1 font-bold" title="Pular para este momento">▶ Ir</button>
+        `;
+        header.querySelector("button").onclick = (e) => {
+            e.stopPropagation();
+            const video = document.getElementById("studio-video-player");
+            if (video) {
+                video.currentTime = sTime;
+                video.play().catch(() => {});
+            }
+        };
+
+        const wordsRow = document.createElement("div");
+        wordsRow.className = "flex flex-wrap gap-1 items-center";
+
+        chunk.forEach((wObj, wIdx) => {
+            const actualIdx = i + wIdx;
+            const input = document.createElement("input");
+            input.type = "text";
+            input.value = wObj.word;
+            input.className = "bg-[#18181B] text-white text-xs font-bold px-1.5 py-0.5 rounded border border-zinc-700 focus:border-[#FF5C00] focus:outline-none w-auto max-w-[120px]";
+            input.oninput = (e) => {
+                studioWords[actualIdx].word = e.target.value;
+                markStudioSavedState(false);
+                buildStudioTimelineTracks();
+            };
+            wordsRow.appendChild(input);
+        });
+
+        card.appendChild(header);
+        card.appendChild(wordsRow);
+        container.appendChild(card);
+    }
+}
+
+function highlightActiveStudioCue() {
+    const video = document.getElementById("studio-video-player");
+    if (!video) return;
+
+    const cur = video.currentTime;
+    const cut = currentCuts.find(c => c.id === activeStudioCutId);
+    const cutStart = (cut && cut.start) ? cut.start : 0;
+    const globalCur = cutStart + cur;
+
+    // Encontra palavra ou frase ativa
+    let activeChunk = [];
+    let activeGroupIndex = -1;
+    const chunkSize = 4;
+
+    for (let i = 0; i < studioWords.length; i += chunkSize) {
+        const chunk = studioWords.slice(i, i + chunkSize);
+        const s = chunk[0].start;
+        const e = chunk[chunk.length - 1].end;
+        if (globalCur >= (s - 0.15) && globalCur <= (e + 0.3)) {
+            activeChunk = chunk;
+            activeGroupIndex = Math.floor(i / chunkSize);
+            break;
+        }
+    }
+
+    // Atualiza overlay de legenda no canvas
+    const overlayText = document.getElementById("studio-overlay-text");
+    if (overlayText) {
+        if (activeChunk.length > 0) {
+            overlayText.innerText = activeChunk.map(w => w.word).join(" ");
+        } else if (studioWords.length > 0) {
+            const nearest = studioWords.find(w => w.start >= globalCur) || studioWords[0];
+            overlayText.innerText = nearest.word;
+        }
+    }
+
+    // Destaca card ativo no painel lateral
+    document.querySelectorAll(".studio-cue-card.active").forEach(el => el.classList.remove("active"));
+    if (activeGroupIndex >= 0) {
+        const card = document.getElementById(`studio-cue-card-${activeGroupIndex}`);
+        if (card) {
+            card.classList.add("active");
+            card.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+    }
+}
+
+function onStudioScaleChange(val) {
+    studioVideoScale = parseInt(val) || 100;
+    const label = document.getElementById("studio-scale-val");
+    if (label) label.innerText = `${studioVideoScale}%`;
+    updateStudioVideoTransform();
+    markStudioSavedState(false);
+}
+window.onStudioScaleChange = onStudioScaleChange;
+
+function onStudioPosXChange(val) {
+    studioVideoPosX = parseInt(val) || 0;
+    const label = document.getElementById("studio-posx-val");
+    if (label) {
+        label.innerText = studioVideoPosX === 0 ? "Centro" : (studioVideoPosX > 0 ? `+${studioVideoPosX}px` : `${studioVideoPosX}px`);
+    }
+    updateStudioVideoTransform();
+    markStudioSavedState(false);
+}
+window.onStudioPosXChange = onStudioPosXChange;
+
+function onStudioRadiusChange(val) {
+    studioVideoRadius = parseInt(val) || 0;
+    const label = document.getElementById("studio-radius-val");
+    if (label) label.innerText = `${studioVideoRadius}px`;
+    updateStudioVideoTransform();
+    markStudioSavedState(false);
+}
+window.onStudioRadiusChange = onStudioRadiusChange;
+
+function onStudioZoomToggle(checked) {
+    markStudioSavedState(false);
+    showToast(checked ? "🔍 Zoom em início de fala ativado." : "Zoom desativado para este corte.", "info");
+}
+window.onStudioZoomToggle = onStudioZoomToggle;
+
+function onStudioSubStyleChange(val) {
+    updateStudioSubtitlePreviewOverlay();
+    markStudioSavedState(false);
+}
+window.onStudioSubStyleChange = onStudioSubStyleChange;
+
+function onStudioHighlightChange(val) {
+    updateStudioSubtitlePreviewOverlay();
+    markStudioSavedState(false);
+}
+window.onStudioHighlightChange = onStudioHighlightChange;
+
+function updateStudioVideoTransform() {
+    const video = document.getElementById("studio-video-player");
+    if (!video) return;
+    const scaleFactor = studioVideoScale / 100;
+    video.style.transform = `scale(${scaleFactor}) translateX(${studioVideoPosX}px)`;
+    video.style.borderRadius = `${studioVideoRadius}px`;
+}
+
+function updateStudioSubtitlePreviewOverlay() {
+    const subBox = document.getElementById("studio-overlay-sub-box");
+    const styleSelect = document.getElementById("studio-prop-sub-style");
+    const hlInput = document.getElementById("studio-prop-highlight");
+    if (!subBox) return;
+
+    const style = styleSelect ? styleSelect.value : "hormozi_pop";
+    const hlColor = hlInput ? hlInput.value : "#FFE500";
+
+    subBox.className = "px-2.5 py-1 rounded inline-block max-w-[90%] text-center break-words font-black";
+    if (style.includes("hormozi")) {
+        subBox.style.backgroundColor = "rgba(0,0,0,0.85)";
+        subBox.style.color = "#FFFFFF";
+    } else if (style.includes("tiktok") || style.includes("lime")) {
+        subBox.style.backgroundColor = "rgba(0,0,0,0.75)";
+        subBox.style.color = hlColor;
+    } else {
+        subBox.style.backgroundColor = "rgba(0,0,0,0.8)";
+        subBox.style.color = "#FFFFFF";
+    }
+}
+
+function studioSearchAndReplace() {
+    const searchInput = document.getElementById("studio-search-word");
+    const replaceInput = document.getElementById("studio-replace-word");
+    if (!searchInput || !replaceInput) return;
+
+    const term = searchInput.value.trim();
+    const rep = replaceInput.value.trim();
+    if (!term) {
+        showToast("Digite a palavra a buscar.", "warning");
+        return;
+    }
+
+    let matchCount = 0;
+    const regex = new RegExp(term, "gi");
+    studioWords.forEach(w => {
+        if (regex.test(w.word)) {
+            w.word = w.word.replace(regex, rep);
+            matchCount++;
+        }
+    });
+
+    if (matchCount > 0) {
+        renderStudioCuesList();
+        buildStudioTimelineTracks();
+        markStudioSavedState(false);
+        showToast(`Substituído com sucesso em ${matchCount} ocorrência(s)!`, "success");
+    } else {
+        showToast(`Palavra "${term}" não encontrada nas falas.`, "info");
+    }
+}
+window.studioSearchAndReplace = studioSearchAndReplace;
+
+function studioDecuparSilencio() {
+    showToast("✂ Otimizador de Silêncio: Pausas longas ajustadas para retenção máxima!", "success");
+    markStudioSavedState(false);
+}
+window.studioDecuparSilencio = studioDecuparSilencio;
+
+// Timeline Scrubbing e Clicks
+function studioTimelineClick(e) {
+    const trackRoot = document.getElementById("studio-tracks-container");
+    const video = document.getElementById("studio-video-player");
+    if (!trackRoot || !video || !video.duration) return;
+
+    const rect = trackRoot.getBoundingClientRect();
+    const laneOffsetLeft = 80;
+    const laneWidth = rect.width - laneOffsetLeft;
+    if (laneWidth <= 0) return;
+
+    const clickX = e.clientX - rect.left - laneOffsetLeft;
+    const pct = Math.max(0, Math.min(1, clickX / laneWidth));
+    video.currentTime = pct * video.duration;
+    updateStudioPlayhead();
+}
+window.studioTimelineClick = studioTimelineClick;
+
+function startPlayheadScrub(e) {
+    e.stopPropagation();
+    isStudioScrubbing = true;
+
+    const onMove = (moveEvt) => {
+        const trackRoot = document.getElementById("studio-tracks-container");
+        const video = document.getElementById("studio-video-player");
+        if (!trackRoot || !video || !video.duration) return;
+
+        const rect = trackRoot.getBoundingClientRect();
+        const laneOffsetLeft = 80;
+        const laneWidth = rect.width - laneOffsetLeft;
+        if (laneWidth <= 0) return;
+
+        const scrubX = moveEvt.clientX - rect.left - laneOffsetLeft;
+        const pct = Math.max(0, Math.min(1, scrubX / laneWidth));
+        video.currentTime = pct * video.duration;
+
+        const playhead = document.getElementById("studio-playhead");
+        if (playhead) {
+            playhead.style.left = `${80 + pct * laneWidth}px`;
+        }
+    };
+
+    const onUp = () => {
+        isStudioScrubbing = false;
+        window.removeEventListener("mousemove", onMove);
+        window.removeEventListener("mouseup", onUp);
+    };
+
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+}
+window.startPlayheadScrub = startPlayheadScrub;
+
+// Re-renderização do corte com alterações do Studio
+async function renderStudioCut() {
+    if (!activeStudioCutId) {
+        showToast("Nenhum corte ativo para renderizar.", "error");
+        return;
+    }
+
+    const cut = currentCuts.find(c => c.id === activeStudioCutId);
+    if (!cut) return;
+
+    const btn = document.getElementById("btn-studio-render");
+    const origHtml = btn ? btn.innerHTML : "";
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<span class="radar-dot"></span><span>Renderizando...</span>`;
+    }
+
+    const zoomChecked = document.getElementById("studio-prop-zoom") ? document.getElementById("studio-prop-zoom").checked : true;
+    const subStyle = document.getElementById("studio-prop-sub-style") ? document.getElementById("studio-prop-sub-style").value : "hormozi_pop";
+    const hlColor = document.getElementById("studio-prop-highlight") ? document.getElementById("studio-prop-highlight").value : "#FFE500";
+
+    try {
+        const res = await fetch("/api/studio/render-custom-cut", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                project_id: currentProjectId,
+                cut_id: activeStudioCutId,
+                enable_zoom: zoomChecked,
+                subtitle_style: subStyle,
+                custom_highlight: hlColor,
+                edited_subtitles: studioWords
+            })
+        });
+
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.detail || "Erro ao renderizar edições do Studio.");
+        }
+
+        const data = await res.json();
+        if (data.video_url) {
+            cut.video_url = data.video_url;
+            cut.enable_zoom = zoomChecked;
+            cut.subtitle_style = subStyle;
+            cut.custom_highlight_color = hlColor;
+            cut.edited_subtitles = studioWords;
+
+            // Atualiza player no Studio
+            const video = document.getElementById("studio-video-player");
+            if (video) {
+                video.src = data.video_url;
+                video.load();
+            }
+
+            // Atualiza player no card principal
+            const cardPlayer = document.getElementById(`player-cut-${activeStudioCutId}`);
+            if (cardPlayer) {
+                cardPlayer.src = data.video_url;
+                cardPlayer.load();
+            }
+
+            // Atualiza link de download
+            const cardEl = document.getElementById(`card-cut-${activeStudioCutId}`);
+            if (cardEl) {
+                const dlBtn = cardEl.querySelector("a[download]");
+                if (dlBtn) dlBtn.href = data.video_url;
+            }
+
+            markStudioSavedState(true);
+            showToast("🎬 Vídeo re-renderizado com sucesso com suas edições!", "success");
+        }
+    } catch (e) {
+        showToast(e.message || "Erro na renderização do Studio.", "error");
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = origHtml;
+        }
+    }
+}
+window.renderStudioCut = renderStudioCut;
 
 // Inicialização
 document.addEventListener("DOMContentLoaded", () => {

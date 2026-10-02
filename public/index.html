@@ -873,13 +873,13 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                     
-                    <!-- Toggle 1: Zoom Dinâmico -->
+                    <!-- Toggle 1: Zoom Dinâmico em Início de Fala -->
                     <div class="tech-card p-3.5 flex items-center justify-between gap-3">
                         <div class="space-y-0.5">
                             <div class="text-xs font-black text-black flex items-center gap-1.5">
-                                <span>🔍 Zoom Dinâmico</span>
+                                <span>🔍 Zoom em Início de Fala</span>
                             </div>
-                            <p class="text-[11px] text-zinc-600 font-medium">Aproximação suave a cada 4s para reter atenção.</p>
+                            <p class="text-[11px] text-zinc-600 font-medium">Punch-in zoom inteligente aplicado no início de falas de impacto (sem cortes mecânicos a cada 4s).</p>
                         </div>
                         <label class="toggle-switch">
                             <input type="checkbox" id="toggle-zoom" checked>
@@ -1182,6 +1182,232 @@
                 <button type="button" id="btn-save-subtitles" onclick="submitSubtitleCorrection()" class="btn-neon flex-1 justify-center text-xs font-black">
                     <span>⚡ Regerar Vídeo com Novas Legendas</span>
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================================================
+         MODAL STUDIO TIMELINE EDITOR (Estilo NLE Profissional / OpusClip / CapCut)
+         ========================================================================== -->
+    <div id="modal-studio-editor" class="studio-modal-wrapper" style="display: none;">
+        <div class="studio-modal-body">
+            <!-- Barra Superior / Header de Controle -->
+            <div class="studio-header">
+                <div class="flex items-center gap-3">
+                    <button type="button" onclick="closeStudioEditorModal()" class="btn-secondary py-1 px-3 text-xs font-black flex items-center gap-1.5" title="Voltar para a lista de cortes">
+                        <span>← Voltar</span>
+                    </button>
+                    <span class="text-xs font-black text-white flex items-center gap-1.5">
+                        <span class="radar-dot"></span>
+                        <span id="studio-cut-title" class="truncate max-w-xs sm:max-w-md">Editando Corte</span>
+                    </span>
+                    <span id="studio-save-badge" class="badge-neon text-[9px]">✓ Salvo</span>
+                </div>
+
+                <div class="flex items-center gap-2.5">
+                    <span class="hidden sm:inline text-xs font-mono text-zinc-400 font-bold">⚡ 168.500 cr</span>
+                    <span class="bg-[#27272A] border border-black text-[#FF5C00] font-mono text-[10px] font-black px-2 py-0.5 rounded">
+                        📱 9:16 Vertical
+                    </span>
+                    <button type="button" id="btn-studio-render" onclick="renderStudioCut()" class="btn-neon py-1.5 px-4 text-xs font-black flex items-center gap-1.5 shadow-[2px_2px_0px_#000]">
+                        <span>⬇ Gerar Vídeo</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Workspace Central: 3 Colunas (Inspetor | Canvas 9:16 | Legendas) -->
+            <div class="studio-workspace-grid">
+                
+                <!-- Coluna 1: Inspetor de Propriedades da Camada -->
+                <div class="studio-left-panel">
+                    <div class="flex items-center justify-between border-b border-zinc-700 pb-2">
+                        <span class="text-xs font-black text-white uppercase flex items-center gap-1.5">
+                            <span>⚙️ Propriedades</span>
+                        </span>
+                        <span class="text-[10px] text-zinc-400 font-mono">Vídeo 9:16</span>
+                    </div>
+
+                    <!-- Transformação & Enquadramento -->
+                    <div class="space-y-3">
+                        <span class="text-[11px] font-black text-[#FF5C00] uppercase block">📐 ENQUADRAMENTO & POSIÇÃO</span>
+                        
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-[10px] font-bold text-zinc-300">
+                                <span>ESCALA / ZOOM:</span>
+                                <span id="studio-scale-val" class="font-mono text-[#FF5C00]">100%</span>
+                            </div>
+                            <input type="range" id="studio-prop-scale" min="100" max="160" value="100" oninput="onStudioScaleChange(this.value)" class="w-full accent-[#FF5C00] cursor-pointer">
+                        </div>
+
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-[10px] font-bold text-zinc-300">
+                                <span>POSIÇÃO HORIZONTAL (X):</span>
+                                <span id="studio-posx-val" class="font-mono text-[#FF5C00]">Centro</span>
+                            </div>
+                            <input type="range" id="studio-prop-posx" min="-150" max="150" value="0" oninput="onStudioPosXChange(this.value)" class="w-full accent-[#FF5C00] cursor-pointer">
+                        </div>
+
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-[10px] font-bold text-zinc-300">
+                                <span>ARREDONDAMENTO (RAIO):</span>
+                                <span id="studio-radius-val" class="font-mono text-[#FF5C00]">0px</span>
+                            </div>
+                            <input type="range" id="studio-prop-radius" min="0" max="40" value="0" oninput="onStudioRadiusChange(this.value)" class="w-full accent-[#FF5C00] cursor-pointer">
+                        </div>
+
+                        <!-- Toggle de Zoom Dinâmico do Corte -->
+                        <div class="p-2.5 bg-[#27272A] border border-zinc-700 rounded-lg flex items-center justify-between gap-2 mt-2">
+                            <div>
+                                <span class="text-[11px] font-black text-white block">🔍 Zoom em Início de Fala</span>
+                                <span class="text-[9px] text-zinc-400 block">Punch-in zoom em momentos de ênfase</span>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="studio-prop-zoom" checked onchange="onStudioZoomToggle(this.checked)">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Estilo Rápido da Legenda -->
+                    <div class="space-y-3 pt-3 border-t border-zinc-700">
+                        <span class="text-[11px] font-black text-[#FF5C00] uppercase block">💬 ESTILO DA LEGENDA</span>
+                        
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-bold text-zinc-300 block">MODELO VIRAL:</label>
+                            <select id="studio-prop-sub-style" onchange="onStudioSubStyleChange(this.value)" class="tech-input w-full py-1 text-xs font-bold bg-[#27272A] text-white border-zinc-700">
+                                <option value="hormozi_pop">Hormozi Pop (Viral Amarelo)</option>
+                                <option value="tiktok_bounce">TikTok Lime (Verde Neon)</option>
+                                <option value="beast_impact">MrBeast (Vermelho Intenso)</option>
+                                <option value="cyan_electric">Ciano Cyberpunk (Azul Neon)</option>
+                                <option value="purple_viral">Roxo Aesthetic (TikTok)</option>
+                                <option value="clean_minimal">Clean Minimal (Elegante)</option>
+                                <option value="gold_karaoke">Karaokê Ouro (Dourado)</option>
+                                <option value="neobrutalist_black">Neo Tarja Preta</option>
+                                <option value="neobrutalist_blue">Neo Royal Blue</option>
+                                <option value="breaking_news">Plantão Urgente (Vermelho)</option>
+                                <option value="pill_badge_viral">Pílula Moderna (Branco)</option>
+                            </select>
+                        </div>
+
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-[10px] font-bold text-zinc-300">COR DO DESTAQUE:</span>
+                            <input type="color" id="studio-prop-highlight" value="#FFE500" oninput="onStudioHighlightChange(this.value)" class="w-8 h-8 rounded border-2 border-black bg-transparent cursor-pointer">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Coluna 2: Canvas Central do Vídeo 9:16 com Bounding Box -->
+                <div class="studio-center-stage">
+                    <div id="studio-viewport-container" class="studio-video-viewport">
+                        <video id="studio-video-player" playsinline preload="auto" class="w-full h-full object-cover"></video>
+                        <div id="studio-bounding-box" class="studio-bounding-box">
+                            <div class="studio-handle studio-handle-tl"></div>
+                            <div class="studio-handle studio-handle-tr"></div>
+                            <div class="studio-handle studio-handle-bl"></div>
+                            <div class="studio-handle studio-handle-br"></div>
+                        </div>
+                        <!-- Legenda Dinâmica Sobreposta no Vídeo -->
+                        <div id="studio-overlay-subtitle" class="absolute bottom-[20%] left-4 right-4 text-center pointer-events-none z-20">
+                            <div id="studio-overlay-sub-box" class="sub-style-hormozi px-2.5 py-1 rounded inline-block max-w-[90%] text-center break-words">
+                                <span id="studio-overlay-text">ISSO VAI MUDAR TUDO!</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Barra de Transporte e Controles de Play -->
+                    <div class="studio-transport-bar">
+                        <button type="button" onclick="studioTogglePlay()" id="studio-btn-play" class="btn-primary py-1 px-4 text-xs font-black flex items-center gap-1.5" style="background:#FF5C00; color:#000;">
+                            <span>▶ Play</span>
+                        </button>
+                        <span id="studio-timecode" class="text-xs font-mono text-zinc-300 font-extrabold bg-[#18181B] px-3 py-1 rounded border border-zinc-700">
+                            00:00 / 00:00
+                        </span>
+                        <button type="button" onclick="studioDecuparSilencio()" class="btn-secondary py-1 px-2.5 text-xs font-black flex items-center gap-1" title="Ajustar pausas automaticamente">
+                            <span>✂ Decupar Silêncio</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Coluna 3: Lista Interativa de Legendas e Palavras -->
+                <div class="studio-right-panel">
+                    <div class="p-3 border-b border-zinc-700 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-black text-white uppercase flex items-center gap-1.5">
+                                <span>💬 Falas & Legendas</span>
+                            </span>
+                            <span id="studio-cues-count" class="text-[10px] font-mono text-[#FF5C00] font-bold">0 falas</span>
+                        </div>
+
+                        <!-- Busca e Substituição em Massa -->
+                        <div class="flex gap-1.5 text-xs">
+                            <input type="text" id="studio-search-word" placeholder="Buscar palavra..." class="tech-input text-[11px] py-1 px-2 w-1/2 bg-[#27272A] text-white border-zinc-700">
+                            <input type="text" id="studio-replace-word" placeholder="Substituir..." class="tech-input text-[11px] py-1 px-2 w-1/2 bg-[#27272A] text-white border-zinc-700">
+                            <button type="button" onclick="studioSearchAndReplace()" class="btn-secondary text-[11px] px-2 py-1 shrink-0 font-bold" title="Substituir em todas as legendas">
+                                OK
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Lista Rolável de Falas -->
+                    <div id="studio-cues-container" class="studio-cues-list">
+                        <!-- Itens gerados dinamicamente via JavaScript -->
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Timeline Multi-Pistas (Inferior) -->
+            <div class="studio-timeline-section" id="studio-timeline-root">
+                <!-- Régua de Tempo -->
+                <div id="studio-timeline-ruler" class="studio-timeline-ruler">
+                    <span class="absolute left-[80px]">00:00</span>
+                    <span class="absolute left-[200px]">00:05</span>
+                    <span class="absolute left-[320px]">00:10</span>
+                    <span class="absolute left-[440px]">00:15</span>
+                    <span class="absolute left-[560px]">00:20</span>
+                    <span class="absolute left-[680px]">00:25</span>
+                    <span class="absolute left-[800px]">00:30</span>
+                    <span class="absolute left-[920px]">00:35</span>
+                    <span class="absolute left-[1040px]">00:40</span>
+                    <span class="absolute left-[1160px]">00:45</span>
+                    <span class="absolute left-[1280px]">00:50</span>
+                </div>
+
+                <!-- Pistas Multi-Track -->
+                <div class="studio-timeline-tracks" id="studio-tracks-container" onclick="studioTimelineClick(event)">
+                    <!-- Agulha de Scrubbing (Playhead) -->
+                    <div id="studio-playhead" class="studio-playhead-line" style="left: 80px;">
+                        <div class="studio-playhead-handle" onmousedown="startPlayheadScrub(event)"></div>
+                    </div>
+
+                    <!-- Pista 1: Legendas -->
+                    <div class="studio-track-row">
+                        <div class="studio-track-header text-[#F59E0B]">💬 Caps</div>
+                        <div class="studio-track-lane" id="studio-lane-caps">
+                            <!-- Blocos de falas inseridos dinamicamente -->
+                        </div>
+                    </div>
+
+                    <!-- Pista 2: Vídeo Principal -->
+                    <div class="studio-track-row">
+                        <div class="studio-track-header text-[#0052FF]">🎬 Vídeo</div>
+                        <div class="studio-track-lane" id="studio-lane-video">
+                            <div id="studio-video-track-block" class="studio-block-video" style="left: 0; width: 95%;">
+                                <span>🎞️ Vídeo Principal (9:16)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pista 3: Áudio e Onda Sonora -->
+                    <div class="studio-track-row">
+                        <div class="studio-track-header text-[#10B981]">🔊 Áudio</div>
+                        <div class="studio-track-lane" id="studio-lane-audio">
+                            <div class="studio-block-audio" style="left: 0; width: 95%;">
+                                <span> ▂▃▅▆▇▆▅▃▂ ▂▃▅▆▇▆▅▃▂ ▂▃▅▆▇▆▅▃▂ ▂▃▅▆▇▆▅▃▂ ▂▃▅▆▇▆▅▃▂ (Áudio Original)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

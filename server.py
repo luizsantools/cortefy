@@ -935,6 +935,95 @@ async def get_all_subtitle_presets():
     from video_pipeline import get_subtitle_presets_dict
     return {"success": True, "presets": get_subtitle_presets_dict()}
 
+@app.get("/api/studio/cut-details")
+async def get_studio_cut_details(project_id: str, cut_id: str):
+    """Retorna os dados detalhados e as palavras sincronizadas de um corte para o Studio Timeline Editor."""
+    project = ACTIVE_PROJECTS.get(project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Projeto não encontrado.")
+    target_cut = next((c for c in project.get("cuts", []) if c["id"] == cut_id), None)
+    if not target_cut:
+        raise HTTPException(status_code=404, detail="Corte não encontrado.")
+
+    c_start = float(target_cut.get("start", 0))
+    c_end = float(target_cut.get("end", 0))
+
+    words = target_cut.get("edited_subtitles")
+    if not words or not isinstance(words, list) or len(words) == 0:
+        all_words = project.get("words", [])
+        words = [w for w in all_words if w.get("start", 0) >= (c_start - 0.5) and w.get("end", 0) <= (c_end + 0.5)]
+
+    if not words and (target_cut.get("hook") or target_cut.get("title")):
+        raw_text = target_cut.get("hook") or target_cut.get("title") or ""
+        raw_w = [w for w in raw_text.split() if w.strip()]
+        if raw_w:
+            dur = max(3.0, c_end - c_start)
+            step = dur / max(1, len(raw_w))
+            words = [{"word": w, "start": round(c_start + i * step, 2), "end": round(c_start + (i + 1) * step, 2)} for i, w in enumerate(raw_w)]
+
+    return {
+        "success": True,
+        "cut": target_cut,
+        "words": words or [],
+        "source_url": project.get("source_url")
+    }
+
+@app.post("/api/studio/render-custom-cut")
+async def render_studio_custom_cut(payload: Dict[str, Any]):
+    """
+    Re-renderiza o corte no Studio Timeline Editor com:
+    - Escala e enquadramento visual customizado
+    - Toggle de Zoom dinâmico no corte (ativado ou desativado)
+    - Estilo e cores de legendas
+    - Falas corrigidas e sincronizadas
+    """
+    project_id = payload.get("project_id")
+    cut_id = payload.get("cut_id")
+    enable_zoom = bool(payload.get("enable_zoom", True))
+    subtitle_style = payload.get("subtitle_style", "hormozi_pop")
+    custom_highlight = payload.get("custom_highlight")
+    edited_subtitles = payload.get("edited_subtitles")
+
+    if not project_id or not cut_id:
+        raise HTTPException(status_code=400, detail="project_id e cut_id são obrigatórios.")
+
+    project = ACTIVE_PROJECTS.get(project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Projeto não encontrado.")
+
+    target_cut = next((c for c in project.get("cuts", []) if c["id"] == cut_id), None)
+    if not target_cut:
+        raise HTTPException(status_code=404, detail="Corte não encontrado.")
+
+    target_cut["enable_zoom"] = enable_zoom
+    target_cut["subtitle_style"] = subtitle_style
+    if custom_highlight:
+        target_cut["custom_highlight_color"] = custom_highlight
+
+    if edited_subtitles and isinstance(edited_subtitles, list):
+        target_cut["edited_subtitles"] = edited_subtitles
+
+    out_filename = f"{cut_id}_studio_{uuid.uuid4().hex[:6]}.mp4"
+    out_path = os.path.join(video_pipeline.output_dir, out_filename)
+
+    try:
+        video_pipeline.render_viral_cut(
+            source_video=project["source_url"],
+            cut_info=target_cut,
+            words=target_cut.get("edited_subtitles") or project.get("words", []),
+            layout="portrait",
+            subtitle_style=subtitle_style,
+            custom_highlight_color=custom_highlight or target_cut.get("custom_highlight_color"),
+            enable_zoom=enable_zoom,
+            output_file=out_path
+        )
+        target_cut["video_url"] = f"/outputs/{out_filename}"
+        target_cut["filename"] = out_filename
+        return {"success": True, "video_url": target_cut["video_url"], "cut": target_cut}
+    except Exception as e:
+        print(f"[Server] Erro no Studio render: {e}")
+        raise HTTPException(status_code=500, detail="Falha ao renderizar edições do Studio.")
+
 @app.post("/api/project/thumbnails")
 async def generate_project_thumbnails(payload: Dict[str, Any]):
     """

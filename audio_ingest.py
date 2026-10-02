@@ -98,7 +98,7 @@ class AudioIngestEngine:
                             current_time = parse_ts(tm.group(1))
                         else:
                             clean_p = tag_re.sub('', p).strip()
-                            raw_words = [w for w in clean_p.split() if w]
+                            raw_words = [w.strip() for w in clean_p.split() if w.strip() and not w.strip().startswith('<') and w.strip().lower() not in ('br', 'br/', '<br>', '<br/>')]
                             for w in raw_words:
                                 words.append({
                                     "word": w,
@@ -110,7 +110,7 @@ class AudioIngestEngine:
 
         if not words and segments:
             for seg in segments:
-                raw_words = [w for w in seg["text"].split() if w]
+                raw_words = [w.strip() for w in seg["text"].split() if w.strip() and not w.strip().startswith('<') and w.strip().lower() not in ('br', 'br/', '<br>', '<br/>')]
                 if raw_words:
                     step = max(0.2, (seg["end"] - seg["start"]) / len(raw_words))
                     for idx, w in enumerate(raw_words):
@@ -466,7 +466,7 @@ Identifique outros termos errados foneticamente ou palavras descontextualizadas 
 }}
 """
                 res_llm = client.models.generate_content(
-                    model="gemini-3.1-flash-lite",
+                    model="gemini-3.1-flash-lite-preview",
                     contents=prompt
                 )
                 raw = res_llm.text.strip()
@@ -476,8 +476,11 @@ Identifique outros termos errados foneticamente ou palavras descontextualizadas 
                 data = json.loads(raw)
                 for c in data.get("corrections", []):
                     f_toks = norm(c.get("from", "")).split()
-                    t_phrase = c.get("to", "").strip()
+                    t_phrase = re.sub(r'<[^>]+>', ' ', c.get("to", "")).strip()
                     if not f_toks or not t_phrase:
+                        continue
+                    rep_tokens = [w.strip() for w in t_phrase.split() if w.strip() and not w.strip().startswith('<')]
+                    if not rep_tokens:
                         continue
                     n_find = len(f_toks)
                     idx = 0
@@ -486,7 +489,6 @@ Identifique outros termos errados foneticamente ou palavras descontextualizadas 
                         if window == f_toks:
                             st = current_words[idx]["start"]
                             et = current_words[idx + n_find - 1]["end"]
-                            rep_tokens = t_phrase.split()
                             step = (et - st) / max(1, len(rep_tokens))
                             new_tokens = []
                             for k, rw in enumerate(rep_tokens):

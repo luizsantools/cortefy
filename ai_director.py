@@ -80,9 +80,9 @@ class AIDirector:
             return self._heuristic_fallback(transcript_segments, batch_index=batch_index)
 
         prompt = f"""
-Você é um Diretor de Criação e Especialista em Vídeos Virais para TikTok, Instagram Reels e YouTube Shorts.
+Você é um AI Video Agent Analyzer e Diretor de Cortes Virais de Elite (estilo OpusClip Pro / CapCut Viral).
 
-FASE 1: INVESTIGAÇÃO CONTEXTUAL PROFUNDA DO VÍDEO
+FASE 1: INVESTIGAÇÃO CONTEXTUAL E ARCO NARRATIVO COMPLETO
 Título do Vídeo: "{video_title or 'Vídeo Selecionado'}"
 {genre_instructions}
 {exclude_instructions}
@@ -90,34 +90,40 @@ Título do Vídeo: "{video_title or 'Vídeo Selecionado'}"
 TRANSCRIÇÃO COMPLETA:
 {transcript_text}
 
-MISSÃO DE CURADORIA E CONTEXTO:
-1. Compreenda a fundo o tema central, a obra, livro/filme/série em debate e a comunidade de interesse (ex: BookTok, resenha de cinema, adaptação Prime Video/Netflix, podcast, etc.).
-2. Identifique os PERSONAGENS REAIS e NOMES PRÓPRIOS mencionados e CORRIJA ERROS FONÉTICOS da transcrição de áudio:
-   - Exemplo em "A Hipótese do Amor": transforme 'malco'/'malko' em 'Malcolm', 'oliver'/'oliva' em 'Olive' ou 'Olive Smith', 'adam' em 'Adam Carlsen', 'ali' em 'Ali Hazelwood'.
-   - Corrija termos do nicho (ex: 'dark romance', 'fake dating', 'adaptação literária').
-3. Crie TÍTULOS MAGNÉTICOS que façam sentido temático e despertem curiosidade genuína (ex: "O que mudaram no Malcolm em A Hipótese do Amor?", "A maior diferença entre o livro e o filme!").
-4. Crie GANCHOS (hook) diretos, sem gaguejos e com os nomes corretos.
-5. Crie 'caption_seo' TOTALMENTE CONTEXTUALIZADA com a discussão do vídeo:
-   - Um gancho inicial instigante de 1-2 linhas sobre a obra/tema.
-   - Chamada para ação (CTA) provocativa para debate nos comentários (ex: "Qual versão você prefere: o livro ou o filme?").
-   - EXATAMENTE DE 3 A 5 HASHTAGS (LIMITE MÁXIMO DE 5 HASHTAGS, pois o Instagram só permite até 5 hashtags na legenda do post). Ex: se for A Hipótese do Amor: #ahipotesedoamor #booktokbrasil #livros #primevideo #thelovehypothesis. NUNCA coloque 6 ou mais hashtags!
+DIRETRIZES CRÍTICAS DE CURADORIA E ARCO NARRATIVO:
+1. DURAÇÃO DOS CORTES: Entre 45 e 90 segundos (NÃO faça cortes curtinhos de 15-30s! Os cortes devem ter tempo suficiente para desenvolver a ideia por completo).
+2. CONTEXTO COMPLETO COM INÍCIO, MEIO E CONCLUSÃO:
+   - INÍCIO (0-5s): Um gancho magnético com uma pergunta intrigante, conflito ou afirmação forte que apresente o tema.
+   - MEIO: O desenvolvimento completo da história, debate ou explicação, mantendo a retenção sem pular partes essenciais.
+   - CONCLUSÃO / PAYOFF: O fechamento com a resposta, conclusão do pensamento, lição ou desfecho satisfatório do assunto.
+   - PONTO DE CORTE FINAL: O corte DEVE terminar exatamente no fim de uma frase, seguido de uma pausa natural (NUNCA corte no meio de uma frase!).
+3. CORREÇÃO DE NOMES PRÓPRIOS E TERMOS DO NICHO:
+   - Identifique os personagens reais, autores e termos da obra (ex: em 'A Hipótese do Amor', 'Malcolm', 'Olive', 'Adam Carlsen', 'Ali Hazelwood').
+   - NUNCA inclua tags HTML como <br> ou quebras de linha artificiais no JSON gerado!
+4. SEO E LEGENDA VIRAL:
+   - 'caption_seo' contextualizada com gancho, chamada para ação e EXATAMENTE entre 3 e 5 hashtags relevantes (limite máximo de 5 hashtags).
 
 Responda ESTRITAMENTE em formato JSON (uma lista com 5 objetos):
 [
   {{
     "id": "corte_01",
-    "title": "...",
-    "hook": "...",
+    "title": "Título Magnético e Curioso sobre o Assunto",
+    "hook": "Gancho inicial instigante dos primeiros segundos",
     "start": 12.0,
-    "end": 52.0,
+    "end": 72.0,
     "virality_score": 98,
-    "tag": "⚡ Livro vs Filme",
-    "caption_seo": "...",
-    "rationale": "..."
+    "tag": "⚡ Debate Completo",
+    "caption_seo": "Legenda instigante para redes sociais com CTA e até 5 hashtags",
+    "rationale": "Explicação de por que este corte tem início, meio e conclusão perfeitos e alto potencial viral"
   }}
 ]
 """
-        models_to_try = ["gemini-3-flash-preview", "gemini-3.5-flash", "gemini-3.6-flash"]
+        models_to_try = ["gemini-3.1-flash-lite-preview", "gemini-flash-lite-latest", "gemini-3-flash-preview"]
+
+        def _clean_no_html(txt: str) -> str:
+            if not txt:
+                return ""
+            return re.sub(r'<[^>]+>', ' ', str(txt)).strip()
 
         def _call_model():
             for candidate_model in models_to_try:
@@ -137,24 +143,28 @@ Responda ESTRITAMENTE em formato JSON (uma lista com 5 objetos):
                         start_id = (batch_index - 1) * 5 + 1
                         for idx, c in enumerate(cuts, start_id):
                             c["id"] = f"corte_{idx:02d}"
+                            if "title" in c:
+                                c["title"] = _clean_no_html(c["title"])
+                            if "hook" in c:
+                                c["hook"] = _clean_no_html(c["hook"])
                             if "caption_seo" in c:
-                                c["caption_seo"] = sanitize_instagram_caption(c["caption_seo"])
+                                c["caption_seo"] = sanitize_instagram_caption(_clean_no_html(c["caption_seo"]))
                         return cuts[:5]
                 except Exception as e:
                     print(f"[AIDirector] Candidato {candidate_model} falhou: {str(e)[:100]}")
             return None
 
-        # Executa chamada com timeout de 15 segundos
+        # Executa chamada com timeout de 25 segundos
         import concurrent.futures
         executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
         future = executor.submit(_call_model)
         try:
-            result = future.result(timeout=15.0)
+            result = future.result(timeout=25.0)
             if result:
                 executor.shutdown(wait=False)
                 return result
         except concurrent.futures.TimeoutError:
-            print("[AIDirector] API demorou mais de 15s, ativando inteligência de cortes relâmpago.")
+            print("[AIDirector] API demorou mais de 25s, ativando inteligência de cortes relâmpago.")
         except Exception as e:
             print(f"[AIDirector] Erro geral na chamada: {e}")
         finally:
@@ -183,19 +193,19 @@ Responda ESTRITAMENTE em formato JSON (uma lista com 5 objetos):
             start_seg = segments[i]
             start_time = start_seg.get("start", 0)
 
-            # Acumula até 45s à frente
+            # Acumula de 45s a 80s à frente garantindo contexto e narrativa completa
             j = i
             accumulated_text = []
-            while j < len(segments) and (segments[j].get("end", 0) - start_time) < 45.0:
-                txt = segments[j].get("text", segments[j].get("word", "")).strip()
+            while j < len(segments) and (segments[j].get("end", 0) - start_time) < 60.0:
+                txt = re.sub(r'<[^>]+>', ' ', segments[j].get("text", segments[j].get("word", ""))).strip()
                 if txt:
                     accumulated_text.append(txt)
                 j += 1
 
             if j < len(segments):
-                end_time = segments[j].get("end", start_time + 40.0)
+                end_time = segments[j].get("end", start_time + 55.0)
                 duration = end_time - start_time
-                if 30.0 <= duration <= 75.0:
+                if 42.0 <= duration <= 90.0:
                     full_text = " ".join(accumulated_text)
 
                     # Verifica se colide com cortes anteriores
