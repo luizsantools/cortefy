@@ -42,10 +42,84 @@ class AIDirector:
             self._client = genai.Client(api_key=self.api_key)
         return self._client
 
+    def snap_cut_to_speech_boundaries(self, start_cand: float, end_cand: float, segments: List[Dict[str, Any]], min_duration: float = 45.0, max_duration: float = 90.0) -> tuple[float, float]:
+        """
+        Ajusta cirurgicamente o início e o fim de um corte para fronteiras naturais de frase e pausas de respiração.
+        Elimina cortes abruptos no meio de frases e inícios com pontas soltas de frases anteriores.
+        """
+        if not segments:
+            return round(start_cand, 2), round(end_cand, 2)
+
+        # 1. Encontra o início perfeito de frase (com maiúscula ou após pausa limpa)
+        candidate_starts = []
+        for idx, s in enumerate(segments):
+            st = s.get("start", 0)
+            txt = s.get("text", "").strip()
+            if abs(st - start_cand) <= 6.5:
+                prev_seg = segments[idx - 1] if idx > 0 else None
+                pause = (st - prev_seg.get("end", 0)) if prev_seg else 1.0
+                prev_txt = prev_seg.get("text", "").strip() if prev_seg else ""
+
+                score = 0
+                if pause >= 0.30:
+                    score += 4
+                if prev_txt.endswith(('.', '!', '?', ':')):
+                    score += 5
+                if txt and txt[0].isupper():
+                    score += 3
+                first_w = txt.split()[0].lower() if txt else ""
+                if first_w in ("que", "e", "porque", "mas", "ou", "de", "do", "da", "né", "tipo", "aí", "tá", "então"):
+                    score -= 3
+
+                candidate_starts.append((score, -abs(st - start_cand), st))
+
+        if candidate_starts:
+            candidate_starts.sort(reverse=True)
+            best_start = candidate_starts[0][2]
+        else:
+            closest = min(segments, key=lambda s: abs(s.get("start", 0) - start_cand))
+            best_start = closest.get("start", start_cand)
+
+        # 2. Encontra o desfecho perfeito de frase (com pontuação final e pausa, nunca no meio de raciocínio)
+        target_end = max(best_start + min_duration, end_cand)
+        candidate_ends = []
+        for idx, s in enumerate(segments):
+            st = s.get("start", 0)
+            et = s.get("end", 0)
+            dur = et - best_start
+            if min_duration <= dur <= max_duration:
+                txt = s.get("text", "").strip()
+                next_seg = segments[idx + 1] if idx < len(segments) - 1 else None
+                pause = (next_seg.get("start", et) - et) if next_seg else 1.0
+                score = 0
+                if txt.endswith(('.', '!', '?')):
+                    score += 6
+                elif txt.endswith((',', '...', ';', ':')):
+                    score += 1
+                if pause >= 0.30:
+                    score += 3
+                last_w = txt.split()[-1].lower() if txt else ""
+                if last_w in ("que", "e", "porque", "mas", "ou", "de", "do", "da", "se", "tipo", "tô", "tá", "a", "o", "não", "para", "pra"):
+                    score -= 8
+                candidate_ends.append((score, -abs(et - target_end), et))
+
+        if candidate_ends:
+            candidate_ends.sort(reverse=True)
+            best_end = candidate_ends[0][2]
+        else:
+            # Fallback seguro para manter duração válida
+            valid_segs = [s for s in segments if (s.get("end", 0) - best_start) >= min_duration]
+            if valid_segs:
+                best_end = min(valid_segs[0].get("end", best_start + 50.0), best_start + max_duration)
+            else:
+                best_end = min(segments[-1].get("end", end_cand), best_start + 65.0)
+
+        return round(best_start, 2), round(best_end, 2)
+
     def analyze_virality(self, transcript_segments: List[Dict[str, Any]], video_title: str = "", genre: str = "", batch_index: int = 1, exclude_cuts: Optional[List[Dict[str, Any]]] = None) -> List[Dict[str, Any]]:
         """
         Analisa a transcrição com IA para identificar ganchos psicológicos, calcular o Virality Score (0-100),
-        gerar legendas de alta conversão com SEO e sugerir cortes ranqueados.
+        gerar legendas de alta conversão com SEO e sugerir cortes ranqueados com início, meio e conclusão perfeitos.
         """
         if not transcript_segments:
             return []
@@ -93,21 +167,24 @@ TRANSCRIÇÃO COMPLETA:
 DIRETRIZES CRÍTICAS DE CURADORIA E ARCO NARRATIVO:
 1. DURAÇÃO DOS CORTES: Entre 45 e 90 segundos (NÃO faça cortes curtinhos de 15-30s! Os cortes devem ter tempo suficiente para desenvolver a ideia por completo).
 2. CONTEXTO COMPLETO COM INÍCIO, MEIO E CONCLUSÃO:
-   - INÍCIO (0-5s): Um gancho magnético com uma pergunta intrigante, conflito ou afirmação forte que apresente o tema.
+   - INÍCIO (0-5s): Um gancho magnético com uma pergunta intrigante, conflito ou afirmação forte que apresente o tema. O início deve ser na primeira palavra de uma frase.
    - MEIO: O desenvolvimento completo da história, debate ou explicação, mantendo a retenção sem pular partes essenciais.
    - CONCLUSÃO / PAYOFF: O fechamento com a resposta, conclusão do pensamento, lição ou desfecho satisfatório do assunto.
-   - PONTO DE CORTE FINAL: O corte DEVE terminar exatamente no fim de uma frase, seguido de uma pausa natural (NUNCA corte no meio de uma frase!).
-3. CORREÇÃO DE NOMES PRÓPRIOS E TERMOS DO NICHO:
-   - Identifique os personagens reais, autores e termos da obra (ex: em 'A Hipótese do Amor', 'Malcolm', 'Olive', 'Adam Carlsen', 'Ali Hazelwood').
+   - PONTO DE CORTE FINAL: O corte DEVE terminar exatamente no fim de uma frase com ponto final, seguido de uma pausa natural (NUNCA corte no meio de uma frase ou pensamento!).
+3. FIDELIDADE ABSOLUTA ENTRE O TÍTULO E O CONTEÚDO DO CORTE:
+   - O título DEVE descrever com precisão cirúrgica o tema específico debatido NESTE trecho exato (ex: se o trecho discute 'a remoção da irmã gêmea no filme', o título deve ser 'Por que cortaram uma das gêmeas no filme de Verity?' e NUNCA um título genérico de outro assunto).
+   - Quem assiste ao corte deve ver a promessa do título ser 100% cumprida e respondida dentro dos 45-90 segundos.
+4. CORREÇÃO DE NOMES PRÓPRIOS E TERMOS DO NICHO:
+   - Identifique os personagens reais, autores e termos da obra (ex: em 'Verity', 'Lowen', 'Jeremy', 'Crew', 'Chastin', 'Harper', 'Colleen Hoover').
    - NUNCA inclua tags HTML como <br> ou quebras de linha artificiais no JSON gerado!
-4. SEO E LEGENDA VIRAL:
+5. SEO E LEGENDA VIRAL:
    - 'caption_seo' contextualizada com gancho, chamada para ação e EXATAMENTE entre 3 e 5 hashtags relevantes (limite máximo de 5 hashtags).
 
 Responda ESTRITAMENTE em formato JSON (uma lista com 5 objetos):
 [
   {{
     "id": "corte_01",
-    "title": "Título Magnético e Curioso sobre o Assunto",
+    "title": "Título Magnético e Específico sobre o Assunto Deste Trecho",
     "hook": "Gancho inicial instigante dos primeiros segundos",
     "start": 12.0,
     "end": 72.0,
@@ -143,6 +220,16 @@ Responda ESTRITAMENTE em formato JSON (uma lista com 5 objetos):
                         start_id = (batch_index - 1) * 5 + 1
                         for idx, c in enumerate(cuts, start_id):
                             c["id"] = f"corte_{idx:02d}"
+
+                            # Ajuste cirúrgico das fronteiras do corte para frases completas (45s a 90s)
+                            c_start = float(c.get("start", 0))
+                            c_end = float(c.get("end", c_start + 60.0))
+                            adj_start, adj_end = self.snap_cut_to_speech_boundaries(
+                                c_start, c_end, transcript_segments, min_duration=45.0, max_duration=90.0
+                            )
+                            c["start"] = adj_start
+                            c["end"] = adj_end
+
                             if "title" in c:
                                 c["title"] = _clean_no_html(c["title"])
                             if "hook" in c:

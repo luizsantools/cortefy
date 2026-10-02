@@ -81,7 +81,7 @@
     <!-- Cabeçalho Principal -->
     <header class="header-glass py-4 px-6 md:px-12 flex justify-between items-center sticky top-0 z-50">
         <div class="flex items-center gap-4">
-            <img src="/static/logo.svg" alt="Editize.net" class="h-8">
+            <img src="/static/logo.png" alt="Editize" class="h-8 md:h-9 object-contain">
             <span class="badge-neon hidden sm:inline-flex">
                 <span class="radar-dot"></span>
                 <span>Cortes em Segundos</span>
@@ -1207,10 +1207,10 @@
                             <div class="text-xs font-black text-black flex items-center gap-1.5">
                                 <span>🔊 Efeitos Sonoros</span>
                             </div>
-                            <p class="text-[11px] text-zinc-600 font-medium">Whooshes e pops sincronizados com cortes.</p>
+                            <p class="text-[11px] text-zinc-600 font-medium">Transições sutis de ênfase (sem sobrepor a voz inicial).</p>
                         </div>
                         <label class="toggle-switch">
-                            <input type="checkbox" id="toggle-sound-effects" checked>
+                            <input type="checkbox" id="toggle-sound-effects">
                             <span class="toggle-slider"></span>
                         </label>
                     </div>
@@ -1480,8 +1480,12 @@
 
             <!-- Campo de Texto das Falas -->
             <div class="space-y-1.5">
-                <label class="block text-[11px] font-black text-zinc-800 uppercase">FALAS / TEXTO DA LEGENDA:</label>
-                <textarea id="edit-sub-text" rows="3" oninput="updateModalPreviewText()" class="tech-input text-xs w-full font-medium" placeholder="Digite as frases faladas..."></textarea>
+                <div class="flex justify-between items-center">
+                    <label class="block text-[11px] font-black text-zinc-800 uppercase">Falas e Palavras da Legenda:</label>
+                    <span class="text-[10px] text-zinc-500 font-bold">Edição Direta do Texto Falado</span>
+                </div>
+                <textarea id="edit-sub-text" rows="5" oninput="updateModalPreviewText()" class="tech-input text-xs w-full font-medium leading-relaxed" placeholder="Digite ou corrija as falas deste corte..."></textarea>
+                <p class="text-[10px] text-zinc-500 font-medium">Dica: Corrija palavras com som trocado ou nomes próprios. A sincronização de áudio será preservada automaticamente ao salvar.</p>
             </div>
 
             <!-- Mini Preview da Legenda no Modal -->

@@ -1145,7 +1145,7 @@ async function startAnalysis() {
     const toggleDrift = document.getElementById("toggle-drift")?.checked ?? true;
     const toggleCenterFace = document.getElementById("toggle-center-face")?.checked ?? true;
     const toggleMotionGraphics = document.getElementById("toggle-motion-graphics")?.checked ?? true;
-    const toggleSoundEffects = document.getElementById("toggle-sound-effects")?.checked ?? true;
+    const toggleSoundEffects = document.getElementById("toggle-sound-effects")?.checked ?? false;
 
     if (!url) {
         showToast("Por favor, cole um link do YouTube para começar.", "error");
@@ -1532,12 +1532,14 @@ function openSubtitleEditorModal(cutId) {
 
     // Preenche com o texto falado (transcrição do corte ou hook)
     let initialText = "";
-    if (cut.edited_subtitles && Array.isArray(cut.edited_subtitles)) {
-        initialText = cut.edited_subtitles.map(w => w.word).join(" ");
+    if (cut.edited_text) {
+        initialText = cut.edited_text;
+    } else if (cut.edited_subtitles && Array.isArray(cut.edited_subtitles)) {
+        initialText = cut.edited_subtitles.map(w => w.word || w.text || "").join(" ");
     } else if (cut.transcription) {
         initialText = cut.transcription;
     } else if (cut.subtitles && Array.isArray(cut.subtitles)) {
-        initialText = cut.subtitles.map(s => s.text).join(" ");
+        initialText = cut.subtitles.map(s => s.word || s.text || "").join(" ");
     } else {
         initialText = cut.hook || "";
     }
@@ -1747,8 +1749,11 @@ async function submitSubtitleCorrection() {
             cut.custom_font = subFont;
             cut.custom_font_size = subSize;
             cut.custom_animation = subAnimation;
+            cut.edited_text = editedText;
+            cut.transcription = editedText;
             if (data.cut) {
                 cut.edited_subtitles = data.cut.edited_subtitles;
+                cut.subtitles = data.cut.subtitles || data.cut.edited_subtitles;
             }
         }
 

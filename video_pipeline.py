@@ -861,6 +861,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             # Busca direta com precisão de milissegundos e áudio 100% em sincronia
             inputs = ['-ss', f"{start:.3f}", '-to', f"{end:.3f}", '-i', local_source]
             filter_chains = []
+            zoom_intervals = []
 
             # Tratamento de Layout
             if layout == "tweet_post":
@@ -1003,13 +1004,30 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
                 audio_chains.append(f"[0:a]atempo={speed:.2f}[aspeed]")
                 main_audio = "[aspeed]"
 
-            if enable_sound_effects:
-                sfx_whoosh = os.path.join(self.base_dir, "static", "sfx", "whoosh.wav")
-                if os.path.exists(sfx_whoosh):
-                    sfx_idx = inputs.count('-i')
-                    inputs.extend(['-i', sfx_whoosh])
-                    audio_chains.append(f"[{sfx_idx}:a]adelay=150|150,volume=0.55[sfx_w]")
-                    audio_chains.append(f"{main_audio}[sfx_w]amix=inputs=2:duration=first:dropout_transition=2[afinal]")
+            if enable_sound_effects and zoom_intervals:
+                # Efeitos sonoros sutis sincronizados com transições de corte e zoom (sem ruído no início da fala)
+                sfx_files = [
+                    os.path.join(self.base_dir, "static", "sfx", "whoosh.wav"),
+                    os.path.join(self.base_dir, "static", "sfx", "pop.wav")
+                ]
+                sfx_to_mix = []
+                for s_i, (z_start, _) in enumerate(zoom_intervals[:2]):
+                    # Nunca insere nos primeiros 2.5s para não mascarar a fala do hook
+                    if z_start < 2.5:
+                        continue
+                    sfx_path = sfx_files[s_i % len(sfx_files)]
+                    if os.path.exists(sfx_path):
+                        delay_ms = int(z_start * 1000)
+                        sfx_idx = inputs.count('-i')
+                        inputs.extend(['-i', sfx_path])
+                        label = f"sfx_{s_i}"
+                        audio_chains.append(f"[{sfx_idx}:a]adelay={delay_ms}|{delay_ms},volume=0.20[{label}]")
+                        sfx_to_mix.append(f"[{label}]")
+
+                if sfx_to_mix:
+                    mix_inputs = main_audio + "".join(sfx_to_mix)
+                    total_inputs = 1 + len(sfx_to_mix)
+                    audio_chains.append(f"{mix_inputs}amix=inputs={total_inputs}:duration=first:dropout_transition=2[afinal]")
                     audio_map = "[afinal]"
                 else:
                     audio_map = main_audio

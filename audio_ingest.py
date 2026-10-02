@@ -172,7 +172,15 @@ class AudioIngestEngine:
             segments, words = self.parse_vtt_file(vtt_file)
             if segments:
                 if progress_callback:
-                    progress_callback(35, f"Transcrição obtida em segundos ({len(segments)} falas identificadas)!")
+                    progress_callback(30, "Refinando termos, nomes e fonética com IA contextual...")
+                words = self.refine_transcript_with_llm(words, video_title=title)
+                # Sincroniza o texto dos segmentos com as palavras corrigidas pela IA
+                for seg in segments:
+                    sw = [w["word"] for w in words if w.get("start", 0) >= (seg["start"] - 0.1) and w.get("end", 0) <= (seg["end"] + 0.1)]
+                    if sw:
+                        seg["text"] = " ".join(sw)
+                if progress_callback:
+                    progress_callback(38, f"Transcrição refinada com IA ({len(segments)} falas identificadas)!")
                 return {
                     "success": True,
                     "title": title,
@@ -445,36 +453,52 @@ class AudioIngestEngine:
             try:
                 from google import genai
                 client = genai.Client(api_key=api_key)
-                full_text = " ".join(w["word"] for w in current_words)
-                prompt = f"""
-Você é um Especialista em Fonética e Revisor de Legendagem em Português Brasileiro (padrão Globo / CapCut).
-Analise esta transcrição de áudio e identifique palavras ou expressões que soam parecido mas foram transcritas incorretamente:
+
+                # Processa em blocos de até 600 palavras para máxima atenção semântica
+                chunk_size = 600
+                all_corrections = []
+
+                for chunk_start in range(0, min(len(current_words), 1800), chunk_size):
+                    chunk_slice = current_words[chunk_start:chunk_start + chunk_size]
+                    full_text = " ".join(w["word"] for w in chunk_slice)
+                    if not full_text.strip():
+                        continue
+
+                    prompt = f"""
+Você é um Especialista em Fonética, Semântica e Revisor de Legendagem em Português Brasileiro (padrão Globo / CapCut Viral).
+Analise este trecho de transcrição de áudio captado automaticamente e identifique erros de reconhecimento de voz:
 "{full_text}"
 
-Contexto da Obra: "{video_title or 'Vídeo em Português'}".
-Exemplos de erros comuns do português falado:
-- "make calmo" -> "meio que calmo"
-- "APSE" ou "apse" -> "ápice"
-- "do série" -> "do sério"
-- "barba barba" -> "blá blá blá"
+Contexto e Título da Obra: "{video_title or 'Vídeo em Português'}".
 
-Identifique outros termos errados foneticamente ou palavras descontextualizadas e retorne ESTRITAMENTE em formato JSON:
+Instruções Críticas:
+1. NOMES PRÓPRIOS E TERMOS DO NICHO: Identifique personagens, autores, termos da obra ou marcas que foram transcritos com grafia incorreta (ex: Colleen Hoover, Verity, Lowen, Jeremy, Crew, Chastin, Harper, Malcolm, Olive, etc.).
+2. ERROS FONÉTICOS E CONCORDÂNCIA: Identifique palavras inexistentes ou trocadas pelo som (ex: 'sonobulismo' -> 'sonambulismo', 'est mais' -> 'estar mais', 'make calmo' -> 'meio que calmo', 'apse' -> 'ápice', 'do série' -> 'do sério').
+3. NUNCA invente palavras ou mude o sentido do que foi dito. Corrija apenas os termos visivelmente errados ou com trocadilho sonoro.
+
+Retorne ESTRITAMENTE em formato JSON:
 {{
   "corrections": [
-    {{"from": "termo errado no texto", "to": "termo correto em português"}}
+    {{"from": "termo errado", "to": "termo correto"}}
   ]
 }}
 """
-                res_llm = client.models.generate_content(
-                    model="gemini-3.1-flash-lite-preview",
-                    contents=prompt
-                )
-                raw = res_llm.text.strip()
-                if raw.startswith("```"):
-                    raw = re.sub(r"^```(?:json)?\s*", "", raw)
-                    raw = re.sub(r"\s*```$", "", raw)
-                data = json.loads(raw)
-                for c in data.get("corrections", []):
+                    res_llm = client.models.generate_content(
+                        model="gemini-3.1-flash-lite-preview",
+                        contents=prompt
+                    )
+                    raw = res_llm.text.strip()
+                    if raw.startswith("```"):
+                        raw = re.sub(r"^```(?:json)?\s*", "", raw)
+                        raw = re.sub(r"\s*```$", "", raw)
+                    try:
+                        data = json.loads(raw)
+                        all_corrections.extend(data.get("corrections", []))
+                    except Exception:
+                        pass
+
+                # Aplica as correções com preservação rigorosa da sincronia temporal
+                for c in all_corrections:
                     f_toks = norm(c.get("from", "")).split()
                     t_phrase = re.sub(r'<[^>]+>', ' ', c.get("to", "")).strip()
                     if not f_toks or not t_phrase:

@@ -397,7 +397,7 @@ async def start_analysis(payload: Dict[str, Any], background_tasks: BackgroundTa
     enable_drift = bool(payload.get("enable_drift", True))
     center_face = bool(payload.get("center_face", True))
     motion_graphics = bool(payload.get("motion_graphics", True))
-    sound_effects = bool(payload.get("sound_effects", True))
+    sound_effects = bool(payload.get("sound_effects", False))
 
     if broll_mode == "external" and broll_url:
         layout = "split_screen"
@@ -518,6 +518,18 @@ async def start_analysis(payload: Dict[str, Any], background_tasks: BackgroundTa
                     actual_source = source_cache_file
 
             update_progress(78, "Aplicando legendas dinâmicas e enquadramento 9:16...")
+
+            # Popula a transcrição completa de cada corte para o editor de legendas
+            for c in cuts:
+                c_start = c.get("start", 0)
+                c_end = c.get("end", 0)
+                c_words = [w for w in words if w.get("start", 0) >= (c_start - 0.25) and w.get("end", 0) <= (c_end + 0.25)]
+                if c_words:
+                    c["transcription"] = " ".join(w["word"] for w in c_words if w.get("word"))
+                    c["subtitles"] = c_words
+                else:
+                    c["transcription"] = c.get("hook", "")
+                    c["subtitles"] = []
 
             def render_one_cut(item):
                 idx, c = item
@@ -678,6 +690,19 @@ async def generate_more_cuts(payload: Dict[str, Any]):
     else:
         new_cuts = ai_director._heuristic_fallback([{"end": 600.0}], video_title=video_title, batch_index=batch_idx)
 
+    # Popula a transcrição completa de cada novo corte para o editor de legendas
+    p_words = project.get("words", [])
+    for c in new_cuts:
+        c_start = c.get("start", 0)
+        c_end = c.get("end", 0)
+        c_words = [w for w in p_words if w.get("start", 0) >= (c_start - 0.25) and w.get("end", 0) <= (c_end + 0.25)]
+        if c_words:
+            c["transcription"] = " ".join(w["word"] for w in c_words if w.get("word"))
+            c["subtitles"] = c_words
+        else:
+            c["transcription"] = c.get("hook", "")
+            c["subtitles"] = []
+
     # Renderiza os novos cortes em 9:16 com legendas animadas em paralelo
     def render_one_new(item):
         idx, c = item
@@ -706,7 +731,7 @@ async def generate_more_cuts(payload: Dict[str, Any]):
                 enable_drift=project.get("enable_drift", True),
                 center_face=project.get("center_face", True),
                 enable_motion_graphics=project.get("motion_graphics", True),
-                enable_sound_effects=project.get("sound_effects", True),
+                enable_sound_effects=project.get("sound_effects", False),
                 output_file=out_path
             )
             c["video_url"] = f"/outputs/{out_filename}"
@@ -894,21 +919,52 @@ async def update_cut_subtitles(payload: Dict[str, Any]):
     if custom_margin_v is not None: target_cut["custom_margin_v"] = custom_margin_v
     if custom_alignment is not None: target_cut["custom_alignment"] = custom_alignment
 
-    # Converte o texto editado em palavras sincronizadas
+    # Converte o texto editado em palavras sincronizadas com preservação de precisão temporal
     if edited_text:
-        target_cut["hook"] = edited_text
+        target_cut["edited_text"] = edited_text
+        target_cut["transcription"] = edited_text
+        target_cut["hook"] = edited_text[:120] + "..." if len(edited_text) > 120 else edited_text
+
         words_raw = edited_text.split()
-        dur = max(3.0, target_cut["end"] - target_cut["start"])
-        step = dur / max(1, len(words_raw))
+        orig_words = target_cut.get("subtitles") or [
+            w for w in project.get("words", [])
+            if w.get("start", 0) >= (target_cut["start"] - 0.25) and w.get("end", 0) <= (target_cut["end"] + 0.25)
+        ]
+
         rebuilt_words = []
-        for idx, w in enumerate(words_raw):
-            s = target_cut["start"] + idx * step
-            rebuilt_words.append({
-                "word": w,
-                "start": round(s, 2),
-                "end": round(s + min(step, 0.45), 2)
-            })
+        if orig_words and len(words_raw) == len(orig_words):
+            # Substituição 1-para-1 exata: preserva 100% dos timestamps acústicos de cada palavra
+            for idx, w in enumerate(words_raw):
+                rebuilt_words.append({
+                    "word": w,
+                    "start": orig_words[idx]["start"],
+                    "end": orig_words[idx]["end"]
+                })
+        elif orig_words and len(orig_words) > 0:
+            # Reconstrução proporcional ancorada nos limites reais da fala do corte
+            start_t = orig_words[0]["start"]
+            end_t = orig_words[-1]["end"]
+            total_dur = max(2.0, end_t - start_t)
+            step = total_dur / max(1, len(words_raw))
+            for idx, w in enumerate(words_raw):
+                s = start_t + idx * step
+                rebuilt_words.append({
+                    "word": w,
+                    "start": round(s, 2),
+                    "end": round(min(end_t, s + min(step, 0.45)), 2)
+                })
+        else:
+            dur = max(3.0, target_cut["end"] - target_cut["start"])
+            step = dur / max(1, len(words_raw))
+            for idx, w in enumerate(words_raw):
+                s = target_cut["start"] + idx * step
+                rebuilt_words.append({
+                    "word": w,
+                    "start": round(s, 2),
+                    "end": round(s + min(step, 0.45), 2)
+                })
         target_cut["edited_subtitles"] = rebuilt_words
+        target_cut["subtitles"] = rebuilt_words
 
     out_filename = f"{cut_id}_edited_{uuid.uuid4().hex[:6]}.mp4"
     out_path = os.path.join(video_pipeline.output_dir, out_filename)
@@ -942,7 +998,7 @@ async def update_cut_subtitles(payload: Dict[str, Any]):
             enable_drift=project.get("enable_drift", True),
             center_face=project.get("center_face", True),
             enable_motion_graphics=project.get("motion_graphics", True),
-            enable_sound_effects=project.get("sound_effects", True),
+            enable_sound_effects=project.get("sound_effects", False),
             output_file=out_path
         )
         target_cut["video_url"] = f"/outputs/{out_filename}"
