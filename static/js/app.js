@@ -315,6 +315,34 @@ const SAMPLE_PHRASES = [
     "COMO VIRALIZAR NO INSTAGRAM"
 ];
 
+// Mapeamento de cada um dos 24 presets para sua respectiva classe CSS visual
+const SUB_STYLE_CLASS_MAP = {
+    hormozi_pop: "sub-style-hormozi",
+    tiktok_bounce: "sub-style-neon",
+    beast_impact: "sub-style-beast",
+    cyan_electric: "sub-style-cyan",
+    purple_viral: "sub-style-purple",
+    clean_minimal: "sub-style-minimal",
+    gold_karaoke: "sub-style-gold",
+    fire_sunset: "sub-style-fire",
+    emerald_vip: "sub-style-emerald",
+    monochrome_3d: "sub-style-mono3d",
+    neobrutalist_black: "sub-style-neoblack",
+    neobrutalist_blue: "sub-style-neoblue",
+    retro_arcade: "sub-style-retro",
+    comic_pop: "sub-style-comic",
+    glitch_matrix: "sub-style-matrix",
+    cinema_letterbox: "sub-style-cinema",
+    breaking_news: "sub-style-news",
+    red_danger: "sub-style-danger",
+    sunset_glow: "sub-style-sunset",
+    midnight_neon: "sub-style-midnight",
+    lemon_lime: "sub-style-lemon",
+    typewriter_clean: "sub-style-typewriter",
+    hormozi_single_word: "sub-style-single",
+    pill_badge_viral: "sub-style-pill"
+};
+
 // Alternar Modelo de Legendas (24 Presets)
 function setSubStyle(styleKey) {
     selectedSubStyle = styleKey;
@@ -340,6 +368,21 @@ function setSubStyle(styleKey) {
 
     const hidden = document.getElementById("selected-sub-style-input");
     if (hidden) hidden.value = styleKey;
+
+    // Atualiza a classe visual no mockup para refletir fielmente o preset escolhido
+    const box = document.getElementById("mockup-sub-box");
+    if (box) {
+        Object.values(SUB_STYLE_CLASS_MAP).forEach(cls => box.classList.remove(cls));
+        const targetClass = SUB_STYLE_CLASS_MAP[styleKey] || "sub-style-hormozi";
+        box.classList.add(targetClass);
+        // Limpa estilos residuais para deixar a assinatura do estilo brilhar
+        box.style.backgroundColor = "";
+        box.style.border = "";
+        box.style.borderRadius = "";
+        box.style.boxShadow = "";
+        box.style.padding = "";
+        box.style.textShadow = "";
+    }
 
     const preset = SUBTITLE_PRESETS[styleKey];
     if (preset) {
@@ -456,6 +499,7 @@ function updateLiveSubtitlePreview() {
     const hlLbl = document.getElementById("custom-sub-highlight-label");
     if (hlLbl) hlLbl.innerText = highlightColor.toUpperCase();
 
+    // Formatação de caixa alta / baixa
     let formattedText = rawText;
     if (casing === "uppercase") {
         formattedText = rawText.toUpperCase();
@@ -463,8 +507,14 @@ function updateLiveSubtitlePreview() {
         formattedText = rawText.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
     }
 
+    const currentStyleKey = window.selectedSubStyle || "hormozi_pop";
     const words = formattedText.split(/\s+/).filter(Boolean);
-    if (words.length === 0) {
+
+    if (currentStyleKey === "hormozi_single_word") {
+        prefixEl.textContent = "";
+        highlightEl.textContent = words[0] || formattedText;
+        suffixEl.textContent = "";
+    } else if (words.length === 0) {
         prefixEl.textContent = "";
         highlightEl.textContent = "";
         suffixEl.textContent = "";
@@ -480,15 +530,33 @@ function updateLiveSubtitlePreview() {
         suffixEl.textContent = rest ? " " + rest : "";
     }
 
-    const scaledSize = Math.max(12, Math.round(size * 0.22));
+    // Ajuste responsivo de tamanho para garantir que qualquer frase caiba perfeitamente no mockup sem cortar
+    let baseFontSize = 17;
+    if (formattedText.length > 28) {
+        baseFontSize = 13;
+    } else if (formattedText.length > 20) {
+        baseFontSize = 14.5;
+    } else if (formattedText.length > 14) {
+        baseFontSize = 16;
+    }
+    const userRatio = size / 78;
+    const finalFontSize = Math.max(11, Math.min(22, Math.round(baseFontSize * userRatio)));
     const scaledOutline = Math.max(1, Math.round(outlineW * 0.22));
 
-    box.style.fontFamily = `"${font}", sans-serif`;
-    box.style.fontSize = `${scaledSize}px`;
-    box.style.lineHeight = "1.15";
-    box.style.fontWeight = (font === "Georgia" || font === "Courier New") ? "bold" : "900";
-    box.style.color = primaryColor;
+    box.style.setProperty("font-family", `"${font}", sans-serif`, "important");
+    box.style.setProperty("font-size", `${finalFontSize}px`, "important");
+    box.style.setProperty("line-height", "1.25", "important");
+    box.style.setProperty("font-weight", (font === "Georgia" || font === "Courier New") ? "bold" : "900", "important");
+    box.style.setProperty("color", primaryColor, "important");
+    box.style.setProperty("white-space", "normal", "important");
+    box.style.setProperty("word-break", "break-word", "important");
+    box.style.setProperty("text-wrap", "balance", "important");
+    box.style.setProperty("text-align", "center", "important");
 
+    // Força cor de destaque do preset
+    highlightEl.style.setProperty("color", highlightColor, "important");
+
+    // Contorno e sombra dinâmicos
     let textShadow = "";
     if (outlineW > 0) {
         const o = scaledOutline;
@@ -506,49 +574,77 @@ function updateLiveSubtitlePreview() {
         const shadowPart = `0 0 10px ${highlightColor}, 0 0 18px ${highlightColor}`;
         textShadow = textShadow ? `${textShadow}, ${shadowPart}` : shadowPart;
     }
-    box.style.textShadow = textShadow;
 
-    if (bgStyle === "black_box") {
-        box.style.backgroundColor = "#000000";
-        box.style.border = "2px solid #000000";
-        box.style.borderRadius = "4px";
-        box.style.boxShadow = "none";
-        box.style.padding = "2px 8px";
-    } else if (bgStyle === "translucent_box") {
-        box.style.backgroundColor = "rgba(0, 0, 0, 0.75)";
-        box.style.border = "1px solid rgba(255,255,255,0.2)";
-        box.style.borderRadius = "4px";
-        box.style.boxShadow = "none";
-        box.style.padding = "2px 8px";
-    } else if (bgStyle === "neobrutalist_orange") {
-        box.style.backgroundColor = "#FF5C00";
-        box.style.border = "2px solid #000000";
-        box.style.borderRadius = "0px";
-        box.style.boxShadow = "3px 3px 0px #000";
-        box.style.padding = "2px 8px";
-    } else if (bgStyle === "neobrutalist_blue") {
-        box.style.backgroundColor = "#0052FF";
-        box.style.border = "2px solid #000000";
-        box.style.borderRadius = "0px";
-        box.style.boxShadow = "3px 3px 0px #000";
-        box.style.padding = "2px 8px";
-    } else if (bgStyle === "pill") {
-        box.style.backgroundColor = "#FFFFFF";
-        box.style.border = "2px solid #000000";
-        box.style.borderRadius = "9999px";
-        box.style.boxShadow = "2px 2px 0px #000";
-        box.style.padding = "3px 12px";
+    // Glow especial para presets de estilo neon / cyber / arcade
+    if (currentStyleKey === "tiktok_bounce") {
+        highlightEl.style.setProperty("text-shadow", `0 0 10px ${highlightColor}, -1px -1px 0 #000, 1px 1px 0 #000`, "important");
+    } else if (currentStyleKey === "cyan_electric") {
+        highlightEl.style.setProperty("text-shadow", `0 0 10px #00F0FF, -1px -1px 0 #000, 1px 1px 0 #000`, "important");
+    } else if (currentStyleKey === "retro_arcade") {
+        highlightEl.style.setProperty("text-shadow", `0 0 10px #00F0FF, 2px 2px 0 #200030`, "important");
+    } else if (currentStyleKey === "glitch_matrix") {
+        highlightEl.style.setProperty("text-shadow", `0 0 8px #22C55E, 2px 2px 0 #052E16`, "important");
     } else {
-        box.style.backgroundColor = "transparent";
-        box.style.border = "none";
-        box.style.borderRadius = "0px";
-        box.style.boxShadow = "none";
-        box.style.padding = "0px";
+        highlightEl.style.removeProperty("text-shadow");
     }
 
-    highlightEl.style.color = highlightColor;
+    if (textShadow) {
+        box.style.setProperty("text-shadow", textShadow, "important");
+    }
+
+    // Fundos especiais dos presets
+    if (currentStyleKey === "neobrutalist_black" || bgStyle === "black_box") {
+        box.style.setProperty("background-color", "#000000", "important");
+        box.style.setProperty("border", "2px solid #FFE500", "important");
+        box.style.setProperty("border-radius", "4px", "important");
+        box.style.setProperty("padding", "3px 8px", "important");
+        box.style.setProperty("box-shadow", "2px 2px 0px #000", "important");
+    } else if (currentStyleKey === "neobrutalist_blue" || bgStyle === "neobrutalist_blue") {
+        box.style.setProperty("background-color", "#0052FF", "important");
+        box.style.setProperty("border", "2px solid #000000", "important");
+        box.style.setProperty("border-radius", "0px", "important");
+        box.style.setProperty("padding", "3px 8px", "important");
+        box.style.setProperty("box-shadow", "3px 3px 0px #000", "important");
+    } else if (currentStyleKey === "pill_badge_viral" || bgStyle === "pill") {
+        box.style.setProperty("background-color", "#FFFFFF", "important");
+        box.style.setProperty("border", "2px solid #000000", "important");
+        box.style.setProperty("border-radius", "9999px", "important");
+        box.style.setProperty("padding", "4px 12px", "important");
+        box.style.setProperty("box-shadow", "2px 2px 0px #000", "important");
+        box.style.setProperty("color", "#000000", "important");
+    } else if (currentStyleKey === "breaking_news") {
+        box.style.setProperty("background-color", "#DC2626", "important");
+        box.style.setProperty("border", "1.5px solid #000000", "important");
+        box.style.setProperty("border-radius", "2px", "important");
+        box.style.setProperty("padding", "3px 8px", "important");
+        box.style.setProperty("color", "#FFFFFF", "important");
+    } else if (currentStyleKey === "clean_minimal") {
+        box.style.setProperty("background-color", "#18181B", "important");
+        box.style.setProperty("border", "1.5px solid #3F3F46", "important");
+        box.style.setProperty("border-radius", "6px", "important");
+        box.style.setProperty("padding", "3px 8px", "important");
+        box.style.removeProperty("box-shadow");
+    } else if (bgStyle === "translucent_box") {
+        box.style.setProperty("background-color", "rgba(0, 0, 0, 0.75)", "important");
+        box.style.setProperty("border", "1px solid rgba(255,255,255,0.2)", "important");
+        box.style.setProperty("border-radius", "4px", "important");
+        box.style.setProperty("padding", "3px 8px", "important");
+    } else if (bgStyle === "neobrutalist_orange") {
+        box.style.setProperty("background-color", "#FF5C00", "important");
+        box.style.setProperty("border", "2px solid #000000", "important");
+        box.style.setProperty("border-radius", "0px", "important");
+        box.style.setProperty("padding", "3px 8px", "important");
+        box.style.setProperty("box-shadow", "3px 3px 0px #000", "important");
+    } else {
+        box.style.removeProperty("background-color");
+        box.style.removeProperty("border");
+        box.style.removeProperty("border-radius");
+        box.style.removeProperty("box-shadow");
+        box.style.removeProperty("padding");
+    }
+
+    // Animações
     highlightEl.className = "anim-word";
-    
     if (animType === "bounce") {
         highlightEl.classList.add("anim-bounce");
         if (animNameEl) animNameEl.textContent = "Animação: Salto Elástico";
@@ -565,9 +661,11 @@ function updateLiveSubtitlePreview() {
         highlightEl.classList.add("anim-fade");
         if (animNameEl) animNameEl.textContent = "Animação: Surgimento Suave";
     } else {
+        highlightEl.classList.add("anim-none");
         if (animNameEl) animNameEl.textContent = "Animação: Estático";
     }
 
+    // Posição vertical
     if (posVal >= 1100) {
         container.style.bottom = "72%";
     } else if (posVal >= 700) {

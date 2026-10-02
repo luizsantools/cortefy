@@ -803,7 +803,7 @@ body {
 }
 
 .anim-bounce { animation: animBounce 1.2s infinite ease-in-out; }
-.anim-pop_zoom { animation: animPopZoom 1.4s infinite ease-in-out; }
+.anim-pop_zoom, .anim-popzoom { animation: animPopZoom 1.4s infinite ease-in-out; }
 .anim-karaoke { animation: animKaraoke 1.1s infinite ease-in-out; }
 .anim-shake { animation: animShake 0.9s infinite ease-in-out; }
 .anim-fade { animation: animFade 1.6s infinite ease-in-out; }
@@ -861,8 +861,9 @@ body {
 
 .mockup-sub-container {
   position: absolute;
-  left: 8px;
-  right: 8px;
+  left: 6px;
+  right: 6px;
+  width: calc(100% - 12px);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -871,6 +872,27 @@ body {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
   z-index: 5;
+}
+
+/* Phone Mockup Subtitle Box - Respeita limites, quebra em 2 linhas e nunca vaza */
+.phone-mockup-frame #mockup-sub-box,
+#mockup-sub-box {
+  white-space: normal !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+  text-wrap: balance !important;
+  display: inline-block !important;
+  max-width: 92% !important;
+  width: auto !important;
+  text-align: center !important;
+  line-height: 1.25 !important;
+  box-sizing: border-box !important;
+}
+
+.phone-mockup-frame #mockup-sub-box span {
+  white-space: normal !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
 }
 
 /* Tabs de Filtro de Legendas */
