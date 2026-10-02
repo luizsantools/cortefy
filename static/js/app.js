@@ -1209,8 +1209,8 @@ function renderCutsList(cuts, append = false) {
                         <button type="button" onclick="openSubtitleEditorModal('${cut.id}')" class="btn-secondary text-xs py-2 px-3 font-black flex items-center gap-1.5" title="Corrigir termos, estilo ou frases faladas da legenda">
                             <span>✏️ Corrigir Legenda</span>
                         </button>
-                        <button type="button" onclick="generateThumbnailsForCut('${cut.id}')" class="btn-blue text-xs py-2 px-3 font-black flex items-center gap-1.5" title="Gerar 3 opções de Thumbnails para YouTube com Clickscore">
-                            <span>🎨 3 Thumbnails</span>
+                        <button type="button" onclick="generateThumbnailsForCut('${cut.id}')" class="btn-blue text-xs py-2 px-3 font-black flex items-center gap-1.5" title="Gerar 3 opções de Capas Verticais 9:16 para Reels, Shorts e TikTok">
+                            <span>📱 Capas Verticais (9:16)</span>
                         </button>
                     </div>
                 </div>
@@ -1714,11 +1714,11 @@ function renderThumbnailsList(thumbnails, subject) {
                     </div>
                 </div>
 
-                <!-- Preview 16:9 Imagem Ultra Qualidade -->
-                <div class="relative w-full aspect-video rounded-lg overflow-hidden border-2 border-black shadow-[3px_3px_0px_#000] bg-black group">
-                    <img src="${thumb.image_url}" alt="Thumbnail ${index + 1}" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy">
-                    <div class="absolute bottom-2 left-2 bg-black/80 text-white text-[10px] font-mono px-2 py-0.5 rounded border border-white/20">
-                        1280x720 • HD
+                <!-- Preview 9:16 Vertical Nativo Ultra HD -->
+                <div class="relative w-full max-w-[260px] mx-auto aspect-[9/16] rounded-xl overflow-hidden border-[3px] border-black shadow-[4px_4px_0px_#000] bg-black group">
+                    <img src="${thumb.image_url}" alt="Capa Vertical ${index + 1}" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy">
+                    <div class="absolute bottom-2 left-2 bg-black/85 text-[#FF5C00] text-[10px] font-mono px-2 py-0.5 rounded border border-black font-extrabold">
+                        📱 1080x1920 • 9:16 HD
                     </div>
                 </div>
 
@@ -1737,7 +1737,7 @@ function renderThumbnailsList(thumbnails, subject) {
                     </div>
                 </div>
 
-                <!-- Títulos Sugeridos para YouTube -->
+                <!-- Títulos Sugeridos para Redes Sociais -->
                 ${titles.length > 0 ? `
                 <div class="space-y-1.5 pt-1">
                     <span class="text-[10px] font-black text-zinc-800 uppercase tracking-wider block">Títulos Sugeridos para CTR Alto:</span>
@@ -1753,10 +1753,10 @@ function renderThumbnailsList(thumbnails, subject) {
                 ` : ''}
             </div>
 
-            <!-- Botão de Download da Imagem 1280x720 -->
+            <!-- Botão de Download da Imagem Vertical 1080x1920 -->
             <div class="pt-3 border-t-2 border-black flex gap-2">
-                <a href="${thumb.image_url}" download="thumb_${thumb.id || thumb.variation_id || index + 1}.jpg" class="btn-neon w-full justify-center text-xs py-2.5 font-black shadow-[2px_2px_0px_#000]">
-                    <span>⬇️ Baixar Thumbnail (1280x720)</span>
+                <a href="${thumb.image_url}" download="capa_vertical_${thumb.id || thumb.variation_id || index + 1}.jpg" class="btn-neon w-full justify-center text-xs py-2.5 font-black shadow-[2px_2px_0px_#000]">
+                    <span>⬇️ Baixar Capa Vertical (1080x1920)</span>
                 </a>
             </div>
         `;
@@ -2574,6 +2574,103 @@ async function renderStudioCut() {
     }
 }
 window.renderStudioCut = renderStudioCut;
+
+// ============================================================================
+// AS 2 FERRAMENTAS DO EDITIZE: CLIPS VIRAIS VS EDITOR COMPLETO COM IA
+// ============================================================================
+
+window.currentEditizeTool = 'clips'; // 'clips' | 'editor'
+window.editorFormat = 'portrait'; // 'portrait' | 'landscape'
+
+function setEditizeTool(tool) {
+    window.currentEditizeTool = tool;
+    const btnClips = document.getElementById("tab-tool-clips");
+    const btnEditor = document.getElementById("tab-tool-editor");
+    const containerClips = document.getElementById("container-tool-clips");
+    const containerEditor = document.getElementById("container-tool-editor");
+
+    if (tool === 'editor') {
+        if (btnEditor) btnEditor.classList.add("tool-mode-active");
+        if (btnClips) btnClips.classList.remove("tool-mode-active");
+        if (containerEditor) containerEditor.style.display = "block";
+        if (containerClips) containerClips.style.display = "none";
+        
+        // Sincroniza input de URL caso o usuário já tenha colado algo no Passo 1
+        const mainUrl = document.getElementById("input-main-url");
+        const editorUrl = document.getElementById("input-editor-url");
+        if (mainUrl && editorUrl && !editorUrl.value && mainUrl.value) {
+            editorUrl.value = mainUrl.value;
+        }
+        showToast("Modo: Editor Completo de Vídeo com IA ativado.", "info");
+    } else {
+        if (btnClips) btnClips.classList.add("tool-mode-active");
+        if (btnEditor) btnEditor.classList.remove("tool-mode-active");
+        if (containerClips) containerClips.style.display = "block";
+        if (containerEditor) containerEditor.style.display = "none";
+        showToast("Modo: Gerador de Cortes Virais ativado.", "info");
+    }
+}
+window.setEditizeTool = setEditizeTool;
+
+function setEditorFormat(fmt) {
+    window.editorFormat = fmt;
+    const cardVert = document.getElementById("format-card-vertical");
+    const cardHoriz = document.getElementById("format-card-horizontal");
+    if (fmt === 'landscape') {
+        if (cardHoriz) cardHoriz.classList.add("format-choice-active");
+        if (cardVert) cardVert.classList.remove("format-choice-active");
+        showToast("Formato definido para 16:9 Horizontal (YouTube / Podcasts / Aulas).", "info");
+    } else {
+        if (cardVert) cardVert.classList.add("format-choice-active");
+        if (cardHoriz) cardHoriz.classList.remove("format-choice-active");
+        showToast("Formato definido para 9:16 Vertical (Reels / TikTok / Shorts).", "info");
+    }
+}
+window.setEditorFormat = setEditorFormat;
+
+function convertFullVideoToViralCuts() {
+    const editorUrl = document.getElementById("input-editor-url");
+    const url = editorUrl ? editorUrl.value.trim() : "";
+    if (!url) {
+        showToast("Cole o link do YouTube para extrair os cortes virais.", "warning");
+        if (editorUrl) editorUrl.focus();
+        return;
+    }
+
+    // Transfere o vídeo imediatamente para a Ferramenta 1 (Gerador de Cortes)
+    setEditizeTool('clips');
+    const inputMain = document.getElementById("input-main-url");
+    if (inputMain) {
+        inputMain.value = url;
+        if (window.handleUrlChange) window.handleUrlChange(url);
+    }
+
+    showToast("Vídeo enviado para o Gerador de Cortes! Role para baixo e clique em Avançar para gerar.", "success");
+    const advBtn = document.getElementById("btn-advance");
+    if (advBtn) {
+        advBtn.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+}
+window.convertFullVideoToViralCuts = convertFullVideoToViralCuts;
+
+function openFullVideoInStudio() {
+    const editorUrl = document.getElementById("input-editor-url");
+    const url = editorUrl ? editorUrl.value.trim() : "";
+    if (!url) {
+        showToast("Insira o link ou arquivo de vídeo para abrir no editor.", "warning");
+        if (editorUrl) editorUrl.focus();
+        return;
+    }
+
+    // Se já tivermos cortes gerados, abre o primeiro corte na timeline Studio
+    if (currentCuts && currentCuts.length > 0) {
+        openStudioTimelineModal(currentCuts[0].id);
+    } else {
+        // Envia para o workflow para processar e permitir edição
+        convertFullVideoToViralCuts();
+    }
+}
+window.openFullVideoInStudio = openFullVideoInStudio;
 
 // Inicialização
 document.addEventListener("DOMContentLoaded", () => {

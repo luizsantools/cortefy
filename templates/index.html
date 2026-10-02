@@ -113,7 +113,60 @@
     </header>
 
     <!-- Conteúdo Principal -->
-    <main class="max-w-5xl mx-auto px-6 py-10 space-y-12">
+    <main class="max-w-5xl mx-auto px-6 py-10 space-y-10">
+
+        <!-- ==========================================================================
+             SELETOR DAS 2 FERRAMENTAS DO EDITIZE.NET
+             ========================================================================== -->
+        <div class="space-y-3">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-black text-zinc-800 uppercase tracking-wider flex items-center gap-1.5">
+                    <span class="radar-dot"></span>
+                    <span>SELECIONE A FERRAMENTA DO EDITIZE:</span>
+                </span>
+                <span class="badge-zinc text-[10px]">2 Modos com Inteligência Artificial</span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Ferramenta 1: Gerador de Cortes Virais -->
+                <button type="button" id="tab-tool-clips" onclick="setEditizeTool('clips')" class="tool-mode-card tool-mode-active text-left p-5 transition-all">
+                    <div class="flex items-start gap-3.5">
+                        <div class="tool-icon-badge bg-[#FF5C00] text-black">
+                            <span class="text-2xl font-black">⚡</span>
+                        </div>
+                        <div class="space-y-1">
+                            <div class="flex items-center gap-2">
+                                <span class="text-[11px] font-black uppercase text-[#FF5C00] tracking-wider">FERRAMENTA 01</span>
+                                <span class="badge-neon text-[9px]">Viral Clips</span>
+                            </div>
+                            <h2 class="text-base font-black text-black font-display">Gerador de Cortes Virais</h2>
+                            <p class="text-xs text-zinc-600 font-medium">Extraia automaticamente os melhores momentos (45s a 90s) com início, meio e fim, legendas dinâmicas e capas verticais 9:16.</p>
+                        </div>
+                    </div>
+                </button>
+
+                <!-- Ferramenta 2: Editor Completo de Vídeo com IA -->
+                <button type="button" id="tab-tool-editor" onclick="setEditizeTool('editor')" class="tool-mode-card text-left p-5 transition-all">
+                    <div class="flex items-start gap-3.5">
+                        <div class="tool-icon-badge bg-[#0052FF] text-white">
+                            <span class="text-2xl font-black">🎬</span>
+                        </div>
+                        <div class="space-y-1">
+                            <div class="flex items-center gap-2">
+                                <span class="text-[11px] font-black uppercase text-[#0052FF] tracking-wider">FERRAMENTA 02</span>
+                                <span class="badge-blue text-[9px]">Full Video Studio</span>
+                            </div>
+                            <h2 class="text-base font-black text-black font-display">Editor Completo de Vídeo com IA</h2>
+                            <p class="text-xs text-zinc-600 font-medium">Edite o vídeo inteiro (Vertical ou Horizontal) do zero: decupagem de silêncios, auto-reframe, legendas e <b>gere os cortes no fim</b>!</p>
+                        </div>
+                    </div>
+                </button>
+            </div>
+        </div>
+
+        <!-- ==========================================================================
+             FERRAMENTA 01: GERADOR DE CORTES VIRAIS (Viral Clips)
+             ========================================================================== -->
+        <div id="container-tool-clips" class="space-y-12">
 
         <!-- Apresentação -->
         <section class="text-center space-y-4 pt-2">
@@ -1003,26 +1056,26 @@
             </div>
         </section>
 
-        <!-- SEÇÃO DE THUMBNAILS PARA YOUTUBE COM CLICKSCORE -->
+        <!-- SEÇÃO DE CAPAS VERTICAIS 9:16 PARA REDES SOCIAIS COM CLICKSCORE -->
         <section id="thumbs-section" class="space-y-6 pt-6" style="display: none;">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b-2 border-black pb-4">
                 <div class="space-y-1">
                     <div class="flex items-center gap-2">
                         <span class="badge-neon text-xs">
                             <span class="radar-dot"></span>
-                            <span>YouTube 16:9 • 1280x720</span>
+                            <span>📱 9:16 Vertical • 1080x1920</span>
                         </span>
-                        <h2 class="text-xl font-black text-black font-display">3 Variáveis de Thumbnail para YouTube</h2>
+                        <h2 class="text-xl font-black text-black font-display">3 Capas Verticais para Reels, Shorts & TikTok</h2>
                     </div>
-                    <p class="text-xs text-zinc-600 font-medium">Recorte do interlocutor em alta definição, pôster/arte da obra buscada na web e análise de Clickscore (CTR).</p>
+                    <p class="text-xs text-zinc-600 font-medium">Extração de frames nativos em ultra-alta definição na Safe Zone mobile, títulos magnéticos de alta retenção e análise de Clickscore (CTR).</p>
                 </div>
                 <button type="button" onclick="generateProjectThumbnails()" class="btn-secondary text-xs py-2 px-4 font-bold flex items-center gap-1.5">
-                    <span>🔄 Regenerar Thumbnails</span>
+                    <span>🔄 Regenerar Capas</span>
                 </button>
             </div>
 
-            <!-- Grid das 3 Thumbnails com Clickscore -->
-            <div id="thumbs-container" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Grid das 3 Capas Verticais com Clickscore -->
+            <div id="thumbs-container" class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <!-- Preenchido via app.js -->
             </div>
         </section>
@@ -1039,6 +1092,155 @@
             <div class="progress-neon-bar">
                 <div id="render-progress-fill" class="progress-neon-fill" style="width: 0%;"></div>
             </div>
+        </div>
+
+        </div> <!-- /container-tool-clips -->
+
+        <!-- ==========================================================================
+             FERRAMENTA 02: EDITOR COMPLETO DE VÍDEO COM IA (Full Video Studio)
+             ========================================================================== -->
+        <div id="container-tool-editor" class="space-y-8" style="display: none;">
+            <!-- Apresentação do Editor -->
+            <section class="text-center space-y-4 pt-2">
+                <div class="badge-blue text-xs font-extrabold uppercase tracking-wider mb-1">
+                    <span>● Edição Completa de Vídeo 9:16 ou 16:9 do Zero com Inteligência Artificial</span>
+                </div>
+                <h1 class="text-4xl md:text-5xl font-black tracking-tight text-black font-display leading-tight">
+                    Editor de Vídeo Completo <br>
+                    <span class="text-[#0052FF] underline decoration-[#FF5C00] decoration-4 underline-offset-4">com Inteligência Artificial</span>
+                </h1>
+                <p class="text-zinc-700 font-medium text-sm md:text-base max-w-2xl mx-auto">
+                    Edite qualquer vídeo inteiro com IA: decupagem automática de silêncios, auto-reframe com rastreamento de rosto, legendas dinâmicas animadas e, no final, extraia cortes virais em 1 clique!
+                </p>
+            </section>
+
+            <!-- Painel de Configuração do Editor Completo -->
+            <section class="tech-card p-6 md:p-8 space-y-8">
+                
+                <!-- 1. Entrada do Vídeo Inteiro -->
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between border-b-2 border-black pb-3">
+                        <div class="flex items-center gap-3">
+                            <span class="text-[#0052FF] font-black text-sm uppercase">Etapa 1</span>
+                            <h2 class="text-lg font-black text-black font-display">Vídeo para Edição Completa</h2>
+                        </div>
+                        <span class="badge-zinc">YouTube ou Envio de Arquivo</span>
+                    </div>
+
+                    <div class="space-y-3">
+                        <label class="block text-xs font-black text-zinc-800 tracking-wider">LINK DO VÍDEO DO YOUTUBE</label>
+                        <input 
+                            type="text" 
+                            id="input-editor-url"
+                            class="tech-input w-full"
+                            placeholder="Cole o link do YouTube aqui (ex: https://www.youtube.com/watch?v=...)"
+                            value=""
+                            autocomplete="off"
+                        >
+                    </div>
+                </div>
+
+                <!-- 2. Escolha do Formato Principal de Vídeo -->
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between border-b-2 border-black pb-3">
+                        <div class="flex items-center gap-3">
+                            <span class="text-[#0052FF] font-black text-sm uppercase">Etapa 2</span>
+                            <h2 class="text-lg font-black text-black font-display">Formato Principal de Edição</h2>
+                        </div>
+                        <span class="badge-neon">Vertical ou Horizontal</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <!-- Opção Vertical 9:16 -->
+                        <div id="format-card-vertical" onclick="setEditorFormat('portrait')" class="format-choice-card format-choice-active space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-base font-black flex items-center gap-2">
+                                    <span>📱 Vertical 9:16</span>
+                                </span>
+                                <span class="badge-neon text-[9px]">Reels / Shorts / TikTok</span>
+                            </div>
+                            <p class="text-xs text-zinc-600 font-medium">Auto-reframe dinâmico com inteligência artificial para manter o orador sempre centralizado no formato de celular.</p>
+                        </div>
+
+                        <!-- Opção Horizontal 16:9 -->
+                        <div id="format-card-horizontal" onclick="setEditorFormat('landscape')" class="format-choice-card space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-base font-black flex items-center gap-2">
+                                    <span>🖥️ Horizontal 16:9</span>
+                                </span>
+                                <span class="badge-blue text-[9px]">YouTube / Podcasts / Aulas</span>
+                            </div>
+                            <p class="text-xs text-zinc-600 font-medium">Mantém o enquadramento original panorâmico em 1080p Full HD com legendas dinâmicas integradas.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Recursos Inteligentes de IA no Vídeo Inteiro -->
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between border-b-2 border-black pb-3">
+                        <div class="flex items-center gap-3">
+                            <span class="text-[#0052FF] font-black text-sm uppercase">Etapa 3</span>
+                            <h2 class="text-lg font-black text-black font-display">Automações de IA para o Vídeo Inteiro</h2>
+                        </div>
+                        <span class="badge-zinc">Ajuste com 1 Clique</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- Decupagem de Silêncio -->
+                        <div class="p-4 bg-[#FAF9F5] border-2 border-black rounded-lg space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-black text-black flex items-center gap-1.5">
+                                    <span>✂️ Decupagem de Silêncio</span>
+                                </span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="editor-toggle-silence" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <p class="text-[11px] text-zinc-600 font-medium">Remove pausas mortas e hesitações automaticamente para manter o ritmo acelerado.</p>
+                        </div>
+
+                        <!-- Legendas Automáticas no Vídeo Todo -->
+                        <div class="p-4 bg-[#FAF9F5] border-2 border-black rounded-lg space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-black text-black flex items-center gap-1.5">
+                                    <span>💬 Legendas Automáticas</span>
+                                </span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="editor-toggle-subtitles" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <p class="text-[11px] text-zinc-600 font-medium">Gera legendas sincronizadas palavra por palavra em mais de 24 modelos visuais.</p>
+                        </div>
+
+                        <!-- Punch-in Zooms -->
+                        <div class="p-4 bg-[#FAF9F5] border-2 border-black rounded-lg space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-black text-black flex items-center gap-1.5">
+                                    <span>🔍 Zooms em Início de Fala</span>
+                                </span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="editor-toggle-zooms" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <p class="text-[11px] text-zinc-600 font-medium">Aproximações de câmera automáticas nos inícios de frases para reter a atenção.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Barra de Ação do Editor Completo -->
+                <div class="pt-4 border-t-2 border-black flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <button type="button" id="btn-open-full-studio" onclick="openFullVideoInStudio()" class="btn-primary py-3.5 px-6 font-black text-sm flex items-center justify-center gap-2 shadow-[4px_4px_0px_#000] w-full sm:w-auto" style="background-color: #0052FF; color: #FFFFFF;">
+                        <span>🎬 Abrir no Studio Timeline Editor (Tela Cheia)</span>
+                    </button>
+                    
+                    <button type="button" id="btn-send-to-cuts-direct" onclick="convertFullVideoToViralCuts()" class="btn-neon py-3.5 px-6 font-black text-sm flex items-center justify-center gap-2 shadow-[4px_4px_0px_#000] w-full sm:w-auto">
+                        <span>⚡ Gerar Cortes Virais deste Vídeo</span>
+                    </button>
+                </div>
+            </section>
         </div>
 
     </main>

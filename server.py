@@ -1050,7 +1050,13 @@ async def generate_project_thumbnails(payload: Dict[str, Any]):
         actual_source = project["source_url"]
         video_title = project.get("title", "Vídeo Selecionado")
         target_cut = next((c for c in project.get("cuts", []) if c["id"] == cut_id), None) if cut_id else (project.get("cuts", [])[0] if project.get("cuts") else None)
-        cut_timestamp = target_cut["start"] + 3.0 if target_cut else 12.0
+        if target_cut:
+            c_dur = max(3.0, target_cut.get("end", 30.0) - target_cut.get("start", 0.0))
+            cut_timestamp = target_cut.get("start", 0.0) + min(6.0, c_dur * 0.25)
+            base_x = target_cut.get("base_x")
+        else:
+            cut_timestamp = 12.0
+            base_x = None
 
     topic_data = ai_director.generate_thumbnail_strategy(
         video_title=video_title,
@@ -1063,7 +1069,8 @@ async def generate_project_thumbnails(payload: Dict[str, Any]):
     thumbs = thumbnail_generator.generate_thumbnails_pack(
         video_path=actual_source,
         topic_data=topic_data,
-        cut_timestamp=cut_timestamp
+        cut_timestamp=cut_timestamp,
+        base_x=base_x
     )
 
     return {
