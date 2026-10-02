@@ -386,6 +386,12 @@ async def start_analysis(payload: Dict[str, Any], background_tasks: BackgroundTa
     custom_chunk_size = payload.get("custom_chunk_size")
     custom_alignment = payload.get("custom_alignment")
     layout = payload.get("layout", "portrait")
+    watermark_enabled = bool(payload.get("watermark_enabled", False))
+    watermark_text = payload.get("watermark_text", "").strip()
+    watermark_pos = payload.get("watermark_pos", "top_right").strip()
+    channel_name = payload.get("channel_name", "Cortes Virais").strip()
+    channel_handle = payload.get("channel_handle", "@cortesvirais").strip()
+    tweet_text = payload.get("tweet_text", "").strip()
     speed = float(payload.get("speed", 1.0))
     enable_zoom = bool(payload.get("enable_zoom", True))
     enable_drift = bool(payload.get("enable_drift", True))
@@ -526,6 +532,12 @@ async def start_analysis(payload: Dict[str, Any], background_tasks: BackgroundTa
                         layout=layout,
                         broll_mode=broll_mode,
                         broll_source=broll_url,
+                        channel_name=channel_name,
+                        channel_handle=channel_handle,
+                        tweet_text=tweet_text,
+                        watermark_enabled=watermark_enabled,
+                        watermark_text=watermark_text,
+                        watermark_pos=watermark_pos,
                         subtitle_style=subtitle_style,
                         custom_color=custom_color,
                         custom_font_size=custom_size,
@@ -603,6 +615,12 @@ async def start_analysis(payload: Dict[str, Any], background_tasks: BackgroundTa
                 "custom_chunk_size": custom_chunk_size,
                 "custom_alignment": custom_alignment,
                 "layout": layout,
+                "channel_name": channel_name,
+                "channel_handle": channel_handle,
+                "tweet_text": tweet_text,
+                "watermark_enabled": watermark_enabled,
+                "watermark_text": watermark_text,
+                "watermark_pos": watermark_pos,
                 "speed": speed,
                 "enable_zoom": enable_zoom,
                 "enable_drift": enable_drift,
@@ -674,6 +692,11 @@ async def generate_more_cuts(payload: Dict[str, Any]):
                 layout=project.get("layout", "portrait"),
                 broll_mode=project.get("broll_mode", "auto_extract"),
                 broll_source=project.get("broll_url"),
+                channel_name=project.get("channel_name", "Cortes Virais"),
+                channel_handle=project.get("channel_handle", "@cortesvirais"),
+                watermark_enabled=project.get("watermark_enabled", False),
+                watermark_text=project.get("watermark_text", ""),
+                watermark_pos=project.get("watermark_pos", "top_right"),
                 subtitle_style=project.get("subtitle_style", "hormozi_pop"),
                 custom_color=project.get("custom_color"),
                 custom_font_size=project.get("custom_size"),
@@ -995,8 +1018,22 @@ async def render_studio_custom_cut(payload: Dict[str, Any]):
     if not target_cut:
         raise HTTPException(status_code=404, detail="Corte não encontrado.")
 
+    layout = payload.get("layout", target_cut.get("layout", project.get("layout", "portrait")))
+    watermark_enabled = bool(payload.get("watermark_enabled", target_cut.get("watermark_enabled", project.get("watermark_enabled", False))))
+    watermark_text = payload.get("watermark_text", target_cut.get("watermark_text", project.get("watermark_text", "")))
+    watermark_pos = payload.get("watermark_pos", target_cut.get("watermark_pos", project.get("watermark_pos", "top_right")))
+    channel_name = payload.get("channel_name", target_cut.get("channel_name", project.get("channel_name", "Cortes Virais")))
+    channel_handle = payload.get("channel_handle", target_cut.get("channel_handle", project.get("channel_handle", "@cortesvirais")))
+    tweet_text = payload.get("tweet_text", target_cut.get("tweet_text", target_cut.get("hook", "")))
+
     target_cut["enable_zoom"] = enable_zoom
     target_cut["subtitle_style"] = subtitle_style
+    target_cut["layout"] = layout
+    target_cut["watermark_enabled"] = watermark_enabled
+    target_cut["watermark_text"] = watermark_text
+    target_cut["watermark_pos"] = watermark_pos
+    target_cut["channel_name"] = channel_name
+    target_cut["channel_handle"] = channel_handle
     if custom_highlight:
         target_cut["custom_highlight_color"] = custom_highlight
 
@@ -1011,7 +1048,13 @@ async def render_studio_custom_cut(payload: Dict[str, Any]):
             source_video=project["source_url"],
             cut_info=target_cut,
             words=target_cut.get("edited_subtitles") or project.get("words", []),
-            layout="portrait",
+            layout=layout,
+            channel_name=channel_name,
+            channel_handle=channel_handle,
+            tweet_text=tweet_text,
+            watermark_enabled=watermark_enabled,
+            watermark_text=watermark_text,
+            watermark_pos=watermark_pos,
             subtitle_style=subtitle_style,
             custom_highlight_color=custom_highlight or target_cut.get("custom_highlight_color"),
             enable_zoom=enable_zoom,

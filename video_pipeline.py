@@ -6,6 +6,7 @@ import subprocess
 import time
 import hashlib
 from typing import Dict, Any, List, Optional
+from PIL import Image, ImageDraw, ImageFont
 
 CREATE_NO_WINDOW = 0x08000000 if sys.platform == 'win32' else 0
 
@@ -21,6 +22,127 @@ def get_bin(name: str) -> str:
     if os.path.exists(local_bin2):
         return local_bin2
     return name
+
+def get_system_font(name: str, size: int):
+    """Localiza fontes padrão com suporte a caracteres e emojis."""
+    paths = [
+        f"C:/Windows/Fonts/{name}.ttf",
+        f"C:/Windows/Fonts/{name}.otf",
+        f"C:/Windows/Fonts/{name.lower()}.ttf",
+        f"C:/Windows/Fonts/{name.upper()}.ttf",
+    ]
+    for p in paths:
+        if os.path.exists(p):
+            try:
+                return ImageFont.truetype(p, size)
+            except Exception:
+                pass
+    try:
+        return ImageFont.truetype(name, size)
+    except Exception:
+        return ImageFont.load_default()
+
+def generate_twitter_card_image(
+    channel_name: str = "Cortes Virais",
+    channel_handle: str = "@cortesvirais",
+    tweet_text: str = "",
+    output_path: str = "temp_tweet_card.png",
+    card_w: int = 1000,
+    card_h: int = 460,
+    verified: bool = True
+) -> str:
+    """Gera o card de post do Twitter / X com visual moderno, avatar, nome, @ e gancho."""
+    clean_name = (channel_name or "Cortes Virais").strip()
+    clean_handle = (channel_handle or "@cortesvirais").strip()
+    if not clean_handle.startswith("@"):
+        clean_handle = f"@{clean_handle}"
+    clean_text = (tweet_text or "Confira este momento imperdível:").strip()
+    clean_text = re.sub(r'<[^>]+>', ' ', clean_text)
+    clean_text = re.sub(r'["“”]', '', clean_text).strip()
+
+    img = Image.new('RGBA', (card_w, card_h), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(img)
+
+    # Card background (Dark mode Twitter #0F1419 / #16181C com borda elegante)
+    draw.rounded_rectangle(
+        [0, 0, card_w - 1, card_h - 1],
+        radius=28,
+        fill=(15, 20, 25, 250),
+        outline=(47, 51, 54, 255),
+        width=2
+    )
+
+    # Avatar circular com gradiente ou cor vibrante
+    av_x, av_y, av_r = 35, 35, 42
+    draw.ellipse(
+        [av_x, av_y, av_x + av_r * 2, av_y + av_r * 2],
+        fill=(255, 92, 0, 255),
+        outline=(255, 255, 255, 180),
+        width=2
+    )
+
+    font_av = get_system_font('segoeuib', 38)
+    font_name = get_system_font('segoeuib', 32)
+    font_handle = get_system_font('segoeui', 24)
+    font_tweet = get_system_font('segoeui', 32)
+    font_metrics = get_system_font('segoeui', 20)
+
+    # Letra inicial no avatar
+    initial = (clean_name[0] if clean_name else 'C').upper()
+    draw.text((av_x + av_r, av_y + av_r), initial, fill=(255, 255, 255, 255), font=font_av, anchor='mm')
+
+    # Nome da Página / Perfil
+    name_x = av_x + av_r * 2 + 20
+    name_y = av_y + 12
+    draw.text((name_x, name_y), clean_name, fill=(245, 245, 245, 255), font=font_name)
+
+    # Selo de Verificado Azul do Twitter / X
+    if verified:
+        name_bbox = draw.textbbox((name_x, name_y), clean_name, font=font_name)
+        badge_x = name_bbox[2] + 12
+        badge_y = name_y + 4
+        badge_r = 13
+        draw.ellipse([badge_x, badge_y, badge_x + badge_r * 2, badge_y + badge_r * 2], fill=(29, 155, 240, 255))
+        draw.line([badge_x + 7, badge_y + 14, badge_x + 11, badge_y + 18], fill=(255, 255, 255, 255), width=3)
+        draw.line([badge_x + 11, badge_y + 18, badge_x + 20, badge_y + 9], fill=(255, 255, 255, 255), width=3)
+
+    # @handle da Página
+    handle_y = name_y + 40
+    draw.text((name_x, handle_y), clean_handle, fill=(113, 118, 123, 255), font=font_handle)
+
+    # Ícone estético do X no canto superior direito
+    x_c, y_c = card_w - 60, av_y + 20
+    draw.line([(x_c - 10, y_c - 10), (x_c + 10, y_c + 10)], fill=(200, 204, 208, 255), width=3)
+    draw.line([(x_c + 10, y_c - 10), (x_c - 10, y_c + 10)], fill=(200, 204, 208, 255), width=3)
+
+    # Quebra de linha inteligente do texto do Tweet
+    max_w = card_w - 70
+    words = clean_text.split()
+    lines, cur = [], []
+    for w in words:
+        test = ' '.join(cur + [w])
+        bb = draw.textbbox((0, 0), test, font=font_tweet)
+        if (bb[2] - bb[0]) > max_w and cur:
+            lines.append(' '.join(cur))
+            cur = [w]
+        else:
+            cur.append(w)
+    if cur:
+        lines.append(' '.join(cur))
+
+    text_y = av_y + av_r * 2 + 28
+    for line in lines[:4]:
+        draw.text((38, text_y), line, fill=(231, 233, 234, 255), font=font_tweet)
+        text_y += 44
+
+    # Rodapé com métricas de engajamento e branding
+    footer_y = card_h - 40
+    draw.line([35, footer_y - 10, card_w - 35, footer_y - 10], fill=(47, 51, 54, 180), width=1)
+    draw.text((38, footer_y), '14:28 • 1.8M Visualizações • Editize', fill=(113, 118, 123, 255), font=font_metrics)
+
+    img.save(output_path, 'PNG')
+    return output_path
+
 
 def hex_to_ass(hex_str: Optional[str], default_hex: str = "#FFFFFF", alpha: str = "00") -> str:
     """Converte hexadecimal (#RRGGBB) para o formato ASS (&HAABBGGRR)."""
@@ -341,9 +463,12 @@ class VideoPipeline:
         custom_margin_v: Optional[int] = None,
         custom_alignment: Optional[int] = None,
         cut_info: Optional[Dict[str, Any]] = None,
-        enable_motion_graphics: bool = True
+        enable_motion_graphics: bool = True,
+        watermark_enabled: bool = False,
+        watermark_text: Optional[str] = None,
+        watermark_pos: str = "top_right"
     ) -> str:
-        """Gera legendas ASS com 24 estilos de alta conversão, animações dinâmicas e controle total de tipografia, cores e efeitos."""
+        """Gera legendas ASS com 24 estilos de alta conversão, animações dinâmicas, marca d'água integrada e controle total de tipografia."""
         
         # Extrai preferências personalizadas de cut_info se disponíveis
         if cut_info:
@@ -362,6 +487,10 @@ class VideoPipeline:
             custom_chunk_size = custom_chunk_size or cut_info.get("custom_chunk_size")
             custom_margin_v = custom_margin_v or cut_info.get("custom_margin_v")
             custom_alignment = custom_alignment or cut_info.get("custom_alignment")
+            if "watermark_enabled" in cut_info:
+                watermark_enabled = bool(cut_info.get("watermark_enabled"))
+            watermark_text = watermark_text or cut_info.get("watermark_text")
+            watermark_pos = watermark_pos or cut_info.get("watermark_pos", "top_right")
 
         # 24 Presets Profissionais de Alta Retenção
         presets = get_subtitle_presets_dict()
@@ -395,6 +524,19 @@ class VideoPipeline:
             # Sombra projetada
             back_ass = hex_to_ass(shadow_hex, alpha="80")
 
+        # Configuração de Estilo de Marca d'Água (Watermark)
+        wm_style_line = ""
+        if watermark_enabled and watermark_text and watermark_text.strip():
+            # Mapeamento de posição para alinhamento ASS (7: top-left, 9: top-right, 1: bot-left, 3: bot-right)
+            pos_dict = {
+                "top_right": (9, 40, 50, 70),
+                "top_left": (7, 50, 40, 70),
+                "bottom_right": (3, 40, 50, 160),
+                "bottom_left": (1, 50, 40, 160),
+            }
+            wm_al, wm_ml, wm_mr, wm_mv = pos_dict.get(watermark_pos, (9, 40, 50, 70))
+            wm_style_line = f"\nStyle: Watermark,Segoe UI,34,&H40FFFFFF,&H000000FF,&H30000000,&H80000000,-1,0,0,0,100,100,1,0,1,3,2,{wm_al},{wm_ml},{wm_mr},{wm_mv},1"
+
         header = f"""[Script Info]
 ScriptType: v4.00+
 PlayResX: 1080
@@ -404,7 +546,7 @@ ScaledBorderAndShadow: yes
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
 Style: Default,{font_name},{font_size},{primary_ass},&H000000FF,{outline_ass},{back_ass},-1,0,0,0,100,100,1,0,{border_style},{outline_w},{shadow_val},{alignment},60,60,{margin_v},1
-Style: MotionPop,Arial,95,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,-1,0,0,0,100,100,0,0,1,3,0,2,60,60,{margin_v + 120},1
+Style: MotionPop,Arial,95,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,-1,0,0,0,100,100,0,0,1,3,0,2,60,60,{margin_v + 120},1{wm_style_line}
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -539,6 +681,12 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
                 anim_emoji = r"{\t(0,90,\fscx130\fscy130)\t(90,180,\fscx100\fscy100)}" + emoji_choice
                 dialogue_lines.append(f"Dialogue: 1,{fmt_time(s_time)},{fmt_time(min(e_time + 0.3, s_time + 1.2))},MotionPop,,0,0,0,,{anim_emoji}")
 
+        # Queima da Marca d'Água contínua em toda a duração do vídeo
+        if watermark_enabled and watermark_text and watermark_text.strip():
+            clean_wm = clean_word(watermark_text.strip())
+            total_dur = max(1.0, cut_end - cut_start)
+            dialogue_lines.append(f"Dialogue: 3,0:00:00.00,{fmt_time(total_dur)},Watermark,,0,0,0,,{clean_wm}")
+
         content = header + "\n".join(dialogue_lines)
         with open(output_path, "w", encoding="utf-8-sig") as f:
             f.write(content)
@@ -550,9 +698,15 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         source_video: str,
         cut_info: Dict[str, Any],
         words: List[Dict[str, Any]],
-        layout: str = "portrait", # "portrait" ou "split_screen"
+        layout: str = "portrait", # "portrait", "tweet_post", "split_screen", "headline_bar"
         broll_mode: str = "auto_extract", # "external" ou "auto_extract"
         broll_source: Optional[str] = None, # Link ou arquivo do trailer
+        channel_name: str = "Cortes Virais",
+        channel_handle: str = "@cortesvirais",
+        tweet_text: Optional[str] = None,
+        watermark_enabled: bool = False,
+        watermark_text: Optional[str] = None,
+        watermark_pos: str = "top_right",
         subtitle_style: str = "hormozi_pop",
         custom_color: Optional[str] = None,
         custom_font_size: Optional[int] = None,
@@ -580,13 +734,23 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         progress_cb = None,
         **kwargs
     ) -> str:
-        """Renderiza o corte viral final com alta retenção em formato 9:16 (1080x1920)."""
+        """Renderiza o corte viral final com alta retenção em formato 9:16 (1080x1920) e suporte a layouts como Post do Twitter / X."""
         ffmpeg_bin = get_bin("ffmpeg")
         cid = cut_info.get("id", "corte_01")
         title = cut_info.get("title", "corte")
         start = cut_info.get("start", 0.0)
         end = cut_info.get("end", 30.0)
         duration = max(5.0, end - start)
+
+        if cut_info:
+            layout = cut_info.get("layout") or layout
+            channel_name = cut_info.get("channel_name") or channel_name
+            channel_handle = cut_info.get("channel_handle") or channel_handle
+            tweet_text = cut_info.get("tweet_text") or tweet_text
+            if "watermark_enabled" in cut_info:
+                watermark_enabled = bool(cut_info.get("watermark_enabled"))
+            watermark_text = cut_info.get("watermark_text") or watermark_text
+            watermark_pos = cut_info.get("watermark_pos") or watermark_pos
 
         if progress_cb:
             progress_cb(10, f"Obtendo trecho em alta resolução ({int(duration)}s)...")
@@ -663,12 +827,13 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             # Gera arquivo de legenda ASS com animação e motion graphics
             if progress_cb:
                 progress_cb(35, "Gerando legendas dinâmicas animadas...")
+            effective_margin_v = custom_margin_v or (380 if layout == "tweet_post" else 420)
             self.generate_ass_subtitles(
                 cut_words_to_use, start, end, temp_ass,
                 style_key=subtitle_style,
                 custom_color=custom_color,
                 custom_font_size=custom_font_size,
-                custom_margin_v=custom_margin_v,
+                custom_margin_v=effective_margin_v,
                 custom_highlight_color=custom_highlight_color,
                 custom_font=custom_font,
                 custom_outline_color=custom_outline_color,
@@ -682,7 +847,10 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
                 custom_chunk_size=custom_chunk_size,
                 custom_alignment=custom_alignment,
                 cut_info=cut_info,
-                enable_motion_graphics=enable_motion_graphics
+                enable_motion_graphics=enable_motion_graphics,
+                watermark_enabled=watermark_enabled,
+                watermark_text=watermark_text,
+                watermark_pos=watermark_pos
             )
 
             # 3. Monta filtros de vídeo com efeitos dinâmicos completos em 9:16 direto
@@ -695,7 +863,42 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             filter_chains = []
 
             # Tratamento de Layout
-            if layout == "split_screen":
+            if layout == "tweet_post":
+                temp_card_png = os.path.join(self.temp_dir, f"tweet_card_{cid}_{timestamp_id}.png")
+                cleanup_files.append(temp_card_png)
+
+                effective_tweet = tweet_text or cut_info.get("hook") or cut_info.get("title") or "Confira este momento imperdível:"
+                generate_twitter_card_image(
+                    channel_name=channel_name or "Cortes Virais",
+                    channel_handle=channel_handle or "@cortesvirais",
+                    tweet_text=effective_tweet,
+                    output_path=temp_card_png,
+                    card_w=1000,
+                    card_h=460,
+                    verified=True
+                )
+
+                if center_face:
+                    base_x = self.detect_speaker_x_center(local_source, start, end)
+                else:
+                    base_x = 656
+                base_x = max(0, min(1920 - 608, int(base_x)))
+
+                crop_w = int(1080 * (1000 / 1040))
+                crop_x = max(0, min(1920 - crop_w, base_x - (crop_w - 608) // 2))
+                crop_expr = f"crop={crop_w}:1080:{crop_x}:0"
+
+                card_input_idx = inputs.count('-i')
+                inputs.extend(['-i', temp_card_png])
+
+                filter_chains.append(
+                    f"[0:v]scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,{crop_expr},scale=1000:1040:flags=lanczos,setsar=1[vcrop];"
+                    f"color=c=#0B0E14:s=1080x1920:d={duration:.3f}:r=30[bg];"
+                    f"[bg][vcrop]overlay=x=40:y=620[vbg];"
+                    f"[vbg][{card_input_idx}:v]overlay=x=40:y=140[vtweet]"
+                )
+                curr_v = "[vtweet]"
+            elif layout == "split_screen":
                 has_external_broll = False
                 if broll_mode == "external" and broll_source:
                     if broll_source.startswith("http://") or broll_source.startswith("https://"):

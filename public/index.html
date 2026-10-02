@@ -297,58 +297,249 @@
                 </div>
             </div>
 
-            <!-- PASSO 3: Vídeo de Apoio (Tela Dividida) -->
-            <div class="space-y-4">
+            <!-- PASSO 3: Layout do Vídeo & Marca d'Água -->
+            <div class="space-y-6">
                 <div class="flex items-center justify-between border-b-2 border-black pb-3">
                     <div class="flex items-center gap-3">
                         <span class="text-[#FF5C00] font-black text-sm uppercase">Passo 3</span>
-                        <h2 class="text-lg font-black text-black font-display">Vídeo de Apoio (Tela Dividida)</h2>
+                        <h2 class="text-lg font-black text-black font-display">Layout do Vídeo & Marca d'Água</h2>
                     </div>
-                    <span class="badge-zinc">Estilo Viral TikTok</span>
+                    <span class="badge-blue text-xs font-black">Design & Retenção</span>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Opção A: Cenas do próprio vídeo -->
-                    <div 
-                        id="btn-broll-auto"
-                        onclick="setBRollMode('auto_extract')"
-                        class="tech-card tech-card-active p-4 cursor-pointer flex flex-col justify-between"
-                    >
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="text-sm font-black text-black">✨ Pegar cenas do próprio vídeo</span>
-                            <span class="badge-neon text-[10px]">MAIS FÁCIL</span>
+                <!-- Inputs ocultos de layout e marca d'água -->
+                <input type="hidden" id="selected-layout-input" value="portrait">
+                <input type="hidden" id="watermark-enabled-input" value="0">
+                <input type="hidden" id="watermark-pos-input" value="top_right">
+
+                <!-- Grade de Seleção de Layout -->
+                <div class="space-y-3">
+                    <label class="block text-xs font-black text-zinc-800 tracking-wider uppercase">ESCOLHA O FORMATO DE LAYOUT DO CORTE:</label>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                        
+                        <!-- 1. 9:16 Vertical Cheio -->
+                        <div 
+                            id="layout-card-portrait"
+                            onclick="setLayoutMode('portrait')"
+                            class="layout-choice-card layout-choice-active p-4 flex flex-col justify-between"
+                        >
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-2xl">📱</span>
+                                    <span id="radio-layout-portrait" class="layout-radio text-[#FF5C00] font-black text-base">●</span>
+                                </div>
+                                <h3 class="text-sm font-black text-black">9:16 Vertical Cheio</h3>
+                                <p class="text-xs text-zinc-600 font-medium">Auto-Reframe inteligente com centralização de rosto para TikTok, Reels e Shorts.</p>
+                            </div>
+                            <div class="mt-3 pt-2 border-t border-zinc-200 flex items-center justify-between">
+                                <span class="text-[10px] font-bold text-zinc-500">Tela Cheia</span>
+                                <span class="badge-zinc text-[9px]">Padrão</span>
+                            </div>
                         </div>
-                        <p class="text-xs text-zinc-700 font-medium">
-                            Seleciona automaticamente os momentos mais dinâmicos do próprio vídeo para ilustrar o topo da tela.
-                        </p>
-                    </div>
 
-                    <!-- Opção B: Trailer ou Vídeo Externo -->
-                    <div 
-                        id="btn-broll-ext"
-                        onclick="setBRollMode('external')"
-                        class="tech-card p-4 cursor-pointer flex flex-col justify-between"
-                    >
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="text-sm font-black text-black">🎬 Colocar um trailer ou cena externa</span>
-                            <span class="badge-zinc text-[10px]">PERSONALIZADO</span>
+                        <!-- 2. Post do Twitter / X Viral -->
+                        <div 
+                            id="layout-card-tweet"
+                            onclick="setLayoutMode('tweet_post')"
+                            class="layout-choice-card p-4 flex flex-col justify-between"
+                        >
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-2xl">🐦</span>
+                                    <span id="radio-layout-tweet" class="layout-radio text-black font-black text-base">○</span>
+                                </div>
+                                <div class="flex items-center gap-1.5">
+                                    <h3 class="text-sm font-black text-black">Post do Twitter / X</h3>
+                                    <span class="badge-neon text-[9px] py-0">🔥 VIRAL</span>
+                                </div>
+                                <p class="text-xs text-zinc-600 font-medium">Card no topo com Avatar, Nome, @ da página, selo verificado e gancho; vídeo no centro com legendas.</p>
+                            </div>
+                            <div class="mt-3 pt-2 border-t border-zinc-200 flex items-center justify-between">
+                                <span class="text-[10px] font-bold text-zinc-500">Top Post Card</span>
+                                <span class="badge-blue text-[9px]">Alta Conversão</span>
+                            </div>
                         </div>
-                        <p class="text-xs text-zinc-700 font-medium">
-                            Cole o link de um trailer oficial, gameplay ou cena de ação para passar no topo enquanto o áudio roda.
-                        </p>
+
+                        <!-- 3. Tela Dividida -->
+                        <div 
+                            id="layout-card-split"
+                            onclick="setLayoutMode('split_screen')"
+                            class="layout-choice-card p-4 flex flex-col justify-between"
+                        >
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-2xl">🎬</span>
+                                    <span id="radio-layout-split" class="layout-radio text-black font-black text-base">○</span>
+                                </div>
+                                <h3 class="text-sm font-black text-black">Tela Dividida (Split)</h3>
+                                <p class="text-xs text-zinc-600 font-medium">Vídeo de orador na metade inferior + vídeo b-roll ou gameplay de retenção no topo.</p>
+                            </div>
+                            <div class="mt-3 pt-2 border-t border-zinc-200 flex items-center justify-between">
+                                <span class="text-[10px] font-bold text-zinc-500">Split-Screen</span>
+                                <span class="badge-zinc text-[9px]">Dinamismo</span>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 
-                <!-- Input Condicional de Vídeo Externo -->
-                <div id="broll-external-input" class="space-y-2 pt-1" style="display: none;">
-                    <label class="block text-xs font-black text-zinc-800 tracking-wider">LINK DO TRAILER OU CENA NO YOUTUBE</label>
-                    <input 
-                        type="text" 
-                        id="input-broll-url"
-                        class="tech-input w-full"
-                        placeholder="Cole aqui o link do trailer ou cena (ex: https://www.youtube.com/watch?v=...)"
-                    >
+                <!-- GAVETA CONDICIONAL DO POST DO TWITTER / X -->
+                <div id="drawer-layout-tweet" class="preview-card p-4 space-y-4" style="display: none;">
+                    <div class="flex items-center justify-between border-b-2 border-black pb-2">
+                        <div class="flex items-center gap-2">
+                            <span class="radar-dot"></span>
+                            <span class="text-xs font-black text-black uppercase">Personalização do Card do Twitter / X</span>
+                        </div>
+                        <span class="text-[11px] font-bold text-zinc-600">Atualiza a prévia ao vivo no celular</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="space-y-1">
+                            <label class="block text-[11px] font-black text-zinc-800 uppercase">NOME DA PÁGINA OU CANAL:</label>
+                            <input 
+                                type="text" 
+                                id="input-tweet-name"
+                                class="tech-input w-full text-xs font-bold"
+                                placeholder="ex: Cortes do Pod"
+                                value="Cortes Virais"
+                                oninput="updateTwitterPreview()"
+                            >
+                        </div>
+                        <div class="space-y-1">
+                            <label class="block text-[11px] font-black text-zinc-800 uppercase">@ DA PÁGINA (HANDLE):</label>
+                            <input 
+                                type="text" 
+                                id="input-tweet-handle"
+                                class="tech-input w-full text-xs font-bold"
+                                placeholder="ex: @cortespod"
+                                value="@cortesvirais"
+                                oninput="updateTwitterPreview()"
+                            >
+                        </div>
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="block text-[11px] font-black text-zinc-800 uppercase flex items-center justify-between">
+                            <span>FRASE OU GANCHO DO TWEET (OPCIONAL):</span>
+                            <span class="text-[10px] font-normal text-zinc-600">Se deixar em branco, a IA usa o melhor gancho do corte!</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            id="input-tweet-text"
+                            class="tech-input w-full text-xs font-medium"
+                            placeholder="ex: O segredo que ninguém te conta sobre foco nos primeiros 30 dias:"
+                            value=""
+                            oninput="updateTwitterPreview()"
+                        >
+                    </div>
+
+                    <div class="flex items-center justify-between pt-1">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold text-zinc-800">Selo Azul de Verificado (✓):</span>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="toggle-tweet-verified" checked onchange="updateTwitterPreview()">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
                 </div>
+
+                <!-- GAVETA CONDICIONAL DE TELA DIVIDIDA (B-Roll) -->
+                <div id="drawer-layout-split" class="preview-card p-4 space-y-4" style="display: none;">
+                    <div class="flex items-center justify-between border-b-2 border-black pb-2">
+                        <span class="text-xs font-black text-black uppercase">Vídeo de Apoio para o Topo (Tela Dividida)</span>
+                        <span class="badge-neon text-[10px]">TikTok Style</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div 
+                            id="btn-broll-auto"
+                            onclick="setBRollMode('auto_extract')"
+                            class="tech-card tech-card-active p-3 cursor-pointer flex flex-col justify-between"
+                        >
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-xs font-black text-black">✨ Cenas do próprio vídeo</span>
+                                <span class="badge-neon text-[9px]">Automático</span>
+                            </div>
+                            <p class="text-[11px] text-zinc-700 font-medium">Momentos mais dinâmicos do próprio vídeo no topo.</p>
+                        </div>
+
+                        <div 
+                            id="btn-broll-ext"
+                            onclick="setBRollMode('external')"
+                            class="tech-card p-3 cursor-pointer flex flex-col justify-between"
+                        >
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-xs font-black text-black">🎬 Trailer ou Cena Externa</span>
+                                <span class="badge-zinc text-[9px]">Personalizado</span>
+                            </div>
+                            <p class="text-[11px] text-zinc-700 font-medium">Link do YouTube de gameplay, trailer ou cena de apoio.</p>
+                        </div>
+                    </div>
+
+                    <div id="broll-external-input" class="space-y-1 pt-1" style="display: none;">
+                        <label class="block text-[11px] font-black text-zinc-800">LINK DO VÍDEO DE APOIO NO YOUTUBE:</label>
+                        <input 
+                            type="text" 
+                            id="input-broll-url"
+                            class="tech-input w-full text-xs"
+                            placeholder="Cole aqui o link do trailer ou cena (ex: https://www.youtube.com/watch?v=...)"
+                        >
+                    </div>
+                </div>
+
+                <!-- SEÇÃO DE MARCA D'ÁGUA DO CANAL (Watermark) -->
+                <div class="tech-card p-4 space-y-3.5 border-2 border-black bg-[#FAF9F5]">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
+                            <span class="text-lg">🛡️</span>
+                            <div>
+                                <h3 class="text-xs font-black text-black uppercase">Marca d'Água do Canal (Watermark)</h3>
+                                <p class="text-[11px] text-zinc-600 font-medium">Proteja seus cortes contra cópias e divulgue seu canal em todo o vídeo.</p>
+                            </div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="toggle-watermark" onchange="toggleWatermarkSetting(this.checked)">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <!-- Drawer de Configuração da Marca d'Água -->
+                    <div id="watermark-drawer" class="space-y-3 pt-2 border-t border-zinc-300" style="display: none;">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div class="space-y-1">
+                                <label class="block text-[10px] font-black text-zinc-800 uppercase">TEXTO OU @ DA MARCA D'ÁGUA:</label>
+                                <input 
+                                    type="text" 
+                                    id="input-watermark-text"
+                                    class="tech-input w-full text-xs font-bold"
+                                    placeholder="ex: @meucanal"
+                                    value="@editize.net"
+                                    oninput="updateWatermarkPreview()"
+                                >
+                            </div>
+
+                            <div class="space-y-1">
+                                <label class="block text-[10px] font-black text-zinc-800 uppercase">POSIÇÃO NA TELA:</label>
+                                <div class="grid grid-cols-2 gap-1.5">
+                                    <button type="button" onclick="setWatermarkPos('top_right')" id="btn-wm-top_right" class="watermark-pos-btn watermark-pos-active text-[11px] font-bold py-1.5 px-2 rounded border border-black flex items-center justify-center gap-1">
+                                        <span>↗️ Sup. Direito</span>
+                                    </button>
+                                    <button type="button" onclick="setWatermarkPos('top_left')" id="btn-wm-top_left" class="watermark-pos-btn text-[11px] font-bold py-1.5 px-2 rounded border border-black flex items-center justify-center gap-1">
+                                        <span>↖️ Sup. Esquerdo</span>
+                                    </button>
+                                    <button type="button" onclick="setWatermarkPos('bottom_right')" id="btn-wm-bottom_right" class="watermark-pos-btn text-[11px] font-bold py-1.5 px-2 rounded border border-black flex items-center justify-center gap-1">
+                                        <span>↘️ Inf. Direito</span>
+                                    </button>
+                                    <button type="button" onclick="setWatermarkPos('bottom_left')" id="btn-wm-bottom_left" class="watermark-pos-btn text-[11px] font-bold py-1.5 px-2 rounded border border-black flex items-center justify-center gap-1">
+                                        <span>↙️ Inf. Esquerdo</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
             <!-- PASSO 4: Estúdio de Legendas (24 Estilos de Alta Conversão + Preview ao Vivo + Personalizador Profissional) -->
@@ -414,8 +605,36 @@
                             <div id="mockup-video-stage" class="relative w-full h-full flex flex-col justify-between py-6 overflow-hidden">
                                 <!-- Top status bar simulado -->
                                 <div class="flex items-center justify-between px-2 text-white/50 text-[9px] font-mono">
-                                    <span>9:16 Vertical</span>
+                                    <span id="mockup-format-badge">9:16 Vertical</span>
                                     <span>HD • 60 FPS</span>
+                                </div>
+
+                                <!-- Marca d'Água ao Vivo no Celular -->
+                                <div id="mockup-watermark" class="mockup-watermark-badge" style="display: none; top: 28px; right: 8px;">
+                                    <span id="mockup-watermark-text">@editize.net</span>
+                                </div>
+
+                                <!-- Card do Twitter / X ao Vivo no Mockup -->
+                                <div id="mockup-twitter-card" class="mockup-twitter-card mx-2 mt-1 shrink-0" style="display: none;">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <div class="flex items-center gap-1.5">
+                                            <div id="mockup-tw-avatar" class="w-4 h-4 rounded-full bg-[#FF5C00] text-[8px] font-black text-white flex items-center justify-center shrink-0">C</div>
+                                            <div class="leading-none truncate">
+                                                <div class="flex items-center gap-1">
+                                                    <span id="mockup-tw-name" class="text-[9px] font-black text-white truncate">Cortes Virais</span>
+                                                    <span id="mockup-tw-badge" class="text-[8px] text-[#1D9BF0] font-black">✓</span>
+                                                </div>
+                                                <span id="mockup-tw-handle" class="text-[7.5px] text-zinc-400">@cortesvirais</span>
+                                            </div>
+                                        </div>
+                                        <span class="text-[8px] text-zinc-400 font-bold">𝕏</span>
+                                    </div>
+                                    <p id="mockup-tw-text" class="text-[8px] text-white/95 leading-tight line-clamp-3 font-medium">O segredo que ninguém te conta sobre foco nos primeiros 30 dias:</p>
+                                </div>
+
+                                <!-- Divisor da Tela Dividida (Split Screen) -->
+                                <div id="mockup-split-divider" class="w-full py-1 text-center bg-black/70 border-y border-[#FF5C00] text-[8px] font-mono text-[#FF5C00] font-black uppercase tracking-wider" style="display: none;">
+                                    <span>▲ Cenas / B-Roll • ▼ Orador</span>
                                 </div>
 
                                 <!-- Legenda Renderizada Dinamicamente -->

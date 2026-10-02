@@ -132,6 +132,162 @@ function setBRollMode(mode) {
     }
 }
 
+// ==========================================================================
+// SELETOR DE LAYOUTS & MARCA D'ÁGUA
+// ==========================================================================
+let activeLayout = 'portrait';
+let watermarkEnabled = false;
+let watermarkPos = 'top_right';
+
+function setLayoutMode(mode) {
+    activeLayout = mode;
+    const hidden = document.getElementById("selected-layout-input");
+    if (hidden) hidden.value = mode;
+
+    const modes = ['portrait', 'tweet_post', 'split_screen'];
+    modes.forEach(m => {
+        const key = (m === 'tweet_post' ? 'tweet' : (m === 'split_screen' ? 'split' : 'portrait'));
+        const card = document.getElementById(`layout-card-${key}`);
+        const radio = document.getElementById(`radio-layout-${key}`);
+        if (card) {
+            if (m === mode) {
+                card.classList.add("layout-choice-active");
+                if (radio) {
+                    radio.innerText = "●";
+                    radio.style.color = "#FF5C00";
+                }
+            } else {
+                card.classList.remove("layout-choice-active");
+                if (radio) {
+                    radio.innerText = "○";
+                    radio.style.color = "#000000";
+                }
+            }
+        }
+    });
+
+    const drawerTweet = document.getElementById("drawer-layout-tweet");
+    const drawerSplit = document.getElementById("drawer-layout-split");
+    if (drawerTweet) drawerTweet.style.display = (mode === 'tweet_post') ? 'block' : 'none';
+    if (drawerSplit) drawerSplit.style.display = (mode === 'split_screen') ? 'block' : 'none';
+
+    updateLayoutMockup();
+}
+window.setLayoutMode = setLayoutMode;
+
+function updateLayoutMockup() {
+    const twCard = document.getElementById("mockup-twitter-card");
+    const splitDiv = document.getElementById("mockup-split-divider");
+    const formatBadge = document.getElementById("mockup-format-badge");
+
+    if (twCard) twCard.style.display = (activeLayout === 'tweet_post') ? 'block' : 'none';
+    if (splitDiv) splitDiv.style.display = (activeLayout === 'split_screen') ? 'block' : 'none';
+
+    if (formatBadge) {
+        if (activeLayout === 'tweet_post') formatBadge.innerText = "🐦 Twitter / X Post";
+        else if (activeLayout === 'split_screen') formatBadge.innerText = "🎬 Tela Dividida";
+        else formatBadge.innerText = "9:16 Vertical";
+    }
+
+    if (activeLayout === 'tweet_post') {
+        updateTwitterPreview();
+    }
+}
+window.updateLayoutMockup = updateLayoutMockup;
+
+function updateTwitterPreview() {
+    const inputName = document.getElementById("input-tweet-name");
+    const inputHandle = document.getElementById("input-tweet-handle");
+    const inputText = document.getElementById("input-tweet-text");
+    const toggleBadge = document.getElementById("toggle-tweet-verified");
+
+    const name = (inputName && inputName.value.trim()) ? inputName.value.trim() : "Cortes Virais";
+    let handle = (inputHandle && inputHandle.value.trim()) ? inputHandle.value.trim() : "@cortesvirais";
+    if (!handle.startsWith("@")) handle = "@" + handle;
+    const text = (inputText && inputText.value.trim()) ? inputText.value.trim() : "O segredo que ninguém te conta sobre foco nos primeiros 30 dias:";
+    const hasBadge = toggleBadge ? toggleBadge.checked : true;
+
+    const mockName = document.getElementById("mockup-tw-name");
+    const mockHandle = document.getElementById("mockup-tw-handle");
+    const mockText = document.getElementById("mockup-tw-text");
+    const mockBadge = document.getElementById("mockup-tw-badge");
+    const mockAvatar = document.getElementById("mockup-tw-avatar");
+
+    if (mockName) mockName.innerText = name;
+    if (mockHandle) mockHandle.innerText = handle;
+    if (mockText) mockText.innerText = text;
+    if (mockBadge) mockBadge.style.display = hasBadge ? "inline" : "none";
+    if (mockAvatar) mockAvatar.innerText = (name[0] || "C").toUpperCase();
+}
+window.updateTwitterPreview = updateTwitterPreview;
+
+function toggleWatermarkSetting(enabled) {
+    watermarkEnabled = !!enabled;
+    const hidden = document.getElementById("watermark-enabled-input");
+    if (hidden) hidden.value = watermarkEnabled ? "1" : "0";
+
+    const drawer = document.getElementById("watermark-drawer");
+    if (drawer) drawer.style.display = watermarkEnabled ? "block" : "none";
+
+    updateWatermarkPreview();
+}
+window.toggleWatermarkSetting = toggleWatermarkSetting;
+
+function setWatermarkPos(pos) {
+    watermarkPos = pos;
+    const hidden = document.getElementById("watermark-pos-input");
+    if (hidden) hidden.value = pos;
+
+    const positions = ['top_right', 'top_left', 'bottom_right', 'bottom_left'];
+    positions.forEach(p => {
+        const btn = document.getElementById(`btn-wm-${p}`);
+        if (btn) {
+            if (p === pos) btn.classList.add("watermark-pos-active");
+            else btn.classList.remove("watermark-pos-active");
+        }
+    });
+
+    updateWatermarkPreview();
+}
+window.setWatermarkPos = setWatermarkPos;
+
+function updateWatermarkPreview() {
+    const mockWm = document.getElementById("mockup-watermark");
+    const mockWmText = document.getElementById("mockup-watermark-text");
+    const inputWm = document.getElementById("input-watermark-text");
+
+    if (!mockWm) return;
+
+    if (!watermarkEnabled) {
+        mockWm.style.display = "none";
+        return;
+    }
+
+    mockWm.style.display = "block";
+    const text = (inputWm && inputWm.value.trim()) ? inputWm.value.trim() : "@editize.net";
+    if (mockWmText) mockWmText.innerText = text;
+
+    mockWm.style.top = "";
+    mockWm.style.bottom = "";
+    mockWm.style.left = "";
+    mockWm.style.right = "";
+
+    if (watermarkPos === 'top_right') {
+        mockWm.style.top = "28px";
+        mockWm.style.right = "8px";
+    } else if (watermarkPos === 'top_left') {
+        mockWm.style.top = "28px";
+        mockWm.style.left = "8px";
+    } else if (watermarkPos === 'bottom_right') {
+        mockWm.style.bottom = "36px";
+        mockWm.style.right = "8px";
+    } else if (watermarkPos === 'bottom_left') {
+        mockWm.style.bottom = "36px";
+        mockWm.style.left = "8px";
+    }
+}
+window.updateWatermarkPreview = updateWatermarkPreview;
+
 // 24 Presets Profissionais de Alta Retenção Visual
 const SUBTITLE_PRESETS = {
     hormozi_pop: {
@@ -1035,7 +1191,13 @@ async function startAnalysis() {
                 center_face: toggleCenterFace,
                 motion_graphics: toggleMotionGraphics,
                 sound_effects: toggleSoundEffects,
-                layout: (brollUrl && !isAutoBroll) ? "split_screen" : "portrait"
+                layout: (brollUrl && !isAutoBroll) ? "split_screen" : activeLayout,
+                watermark_enabled: watermarkEnabled,
+                watermark_text: (document.getElementById("input-watermark-text")?.value || "@editize.net").trim(),
+                watermark_pos: watermarkPos,
+                channel_name: (document.getElementById("input-tweet-name")?.value || "Cortes Virais").trim(),
+                channel_handle: (document.getElementById("input-tweet-handle")?.value || "@cortesvirais").trim(),
+                tweet_text: (document.getElementById("input-tweet-text")?.value || "").trim()
             })
         });
 
@@ -1152,12 +1314,18 @@ function renderCutsList(cuts, append = false) {
 
             <!-- Informações, Ganchos, SEO e Botões -->
             <div class="flex-1 flex flex-col justify-between gap-3 w-full">
-                <!-- Cabeçalho do Card: Selo de Viralidade e Minutagem -->
+                <!-- Cabeçalho do Card: Selo de Viralidade, Minutagem e Layout -->
                 <div class="flex items-center justify-between gap-2 flex-wrap">
-                    <span class="${scoreBadgeClass}">
-                        <span>${score}/100</span>
-                        <span>${tagText}</span>
-                    </span>
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                        <span class="${scoreBadgeClass}">
+                            <span>${score}/100</span>
+                            <span>${tagText}</span>
+                        </span>
+                        <span class="badge-blue text-[10px] font-black uppercase">
+                            ${cut.layout === 'tweet_post' ? '🐦 Twitter Post' : (cut.layout === 'split_screen' ? '🎬 Tela Dividida' : '📱 9:16 Vertical')}
+                        </span>
+                        ${cut.watermark_enabled ? `<span class="badge-zinc text-[10px] font-bold">🛡️ ${escapeHtml(cut.watermark_text || '@editize.net')}</span>` : ''}
+                    </div>
                     <span class="text-xs font-mono text-black font-extrabold bg-[#F4F3EE] px-2.5 py-1 rounded-md border-2 border-black shadow-[2px_2px_0px_#000]">
                         ⏱️ ${startFmt} - ${endFmt} (${durationSec}s)
                     </span>
