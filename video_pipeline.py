@@ -798,6 +798,10 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
                 cut_words_to_use = cut_info["edited_subtitles"]
             elif cut_info and cut_info.get("edited_words"):
                 cut_words_to_use = cut_info["edited_words"]
+            elif cut_info and cut_info.get("subtitles"):
+                cut_words_to_use = cut_info["subtitles"]
+            elif words and len(words) > 0:
+                cut_words_to_use = [w for w in words if w.get("start", 0) >= (start - 0.25) and w.get("end", 0) <= (end + 0.25)]
             else:
                 try:
                     if progress_cb:
@@ -1033,6 +1037,10 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
                     audio_map = main_audio
             else:
                 audio_map = main_audio
+
+            # Garante que streams sem filtros de áudio sejam mapeados como 0:a (sem colchetes de filtro)
+            if audio_map == "[0:a]":
+                audio_map = "0:a"
 
             if audio_chains:
                 filter_chains.extend(audio_chains)
