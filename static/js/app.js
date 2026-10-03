@@ -1232,6 +1232,21 @@ function pollTask(taskId) {
     pollingInterval = setInterval(async () => {
         try {
             const res = await fetch(`/api/task/${taskId}`);
+            if (!res.ok) {
+                if (res.status === 404) {
+                    clearInterval(pollingInterval);
+                    const progSec = document.getElementById("progress-section");
+                    if (progSec) progSec.style.display = "none";
+                    const btn = document.getElementById("btn-advance");
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = `<span>⚡ Avançar e Gerar Cortes Virais</span>`;
+                    }
+                    showToast("Sessão anterior finalizada. Clique em 'Avançar' para processar novamente.", "info");
+                    return;
+                }
+                return;
+            }
             const task = await res.json();
 
             updateProgress(task.progress, task.message);
